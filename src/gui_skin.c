@@ -122,52 +122,59 @@ int uiSkinOptionsLoop() {
       
         // Footer con acciones (pantalla principal del editor)
         int baseY = gsGlobal->Height - footerHeight;
-        int baseX = keepoutArea + 10;
+        int curX  = keepoutArea + 10;
 
         // CROSS → Editar
-        drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
-        drawTextWindow(baseX + getIconWidth(ICON_CROSS) + 5, baseY,
-                       0, gsGlobal->Height - 1, 0,
+        curX += getIconWidth(ICON_CROSS) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Editar");
+        curX += getLineWidth("Editar") + 40; // espacio extra
 
         // START → Guardar
-        drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
-        drawTextWindow(baseX + 200 + getIconWidth(ICON_START) + 5, baseY,
-                       0, gsGlobal->Height - 1, 0,
+        curX += getIconWidth(ICON_START) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Guardar");
+        curX += getLineWidth("Guardar") + 40;
 
         // TRIANGLE → Cancelar
-        drawIconWindow(baseX + 400, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_TRIANGLE);
-        drawTextWindow(baseX + 400 + getIconWidth(ICON_TRIANGLE) + 5, baseY,
-                       0, gsGlobal->Height - 1, 0,
+        curX += getIconWidth(ICON_TRIANGLE) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
+        curX += getLineWidth("Cancelar") + 40;
 
         // SQUARE → Reset
-        drawIconWindow(baseX + 600, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_SQUARE);
-        drawTextWindow(baseX + 600 + getIconWidth(ICON_SQUARE) + 5, baseY,
-                       0, gsGlobal->Height - 1, 0,
+        curX += getIconWidth(ICON_SQUARE) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Reset");
+        curX += getLineWidth("Reset") + 40;
 
         // UP/DOWN → Navegar
-        drawIconWindow(baseX + 800, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_UP);
-        drawIconWindow(baseX + 800 + getIconWidth(ICON_UP) + 10, baseY, 0, gsGlobal->Height, 0,
+        curX += getIconWidth(ICON_UP) + 10;
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_DOWN);
-        drawTextWindow(baseX + 800 + getIconWidth(ICON_UP) + getIconWidth(ICON_DOWN) + 20, baseY,
-                       0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Navegar");
+        curX += getIconWidth(ICON_DOWN) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+               currentTheme.headerText, ALIGN_VCENTER, "Navegar");
+        curX += getLineWidth("Navegar") + 40;
 
         // LEFT/RIGHT → Cambiar opción
-        drawIconWindow(baseX + 1000, baseY, 0, gsGlobal->Height, 0,
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_LEFT);
-        drawIconWindow(baseX + 1000 + getIconWidth(ICON_LEFT) + 10, baseY, 0, gsGlobal->Height, 0,
+        curX += getIconWidth(ICON_LEFT) + 10;
+        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                        currentTheme.iconFrame, ALIGN_CENTER, ICON_RIGHT);
-        drawTextWindow(baseX + 1000 + getIconWidth(ICON_LEFT) + getIconWidth(ICON_RIGHT) + 20, baseY,
-                       0, gsGlobal->Height - 1, 0,
+        curX += getIconWidth(ICON_RIGHT) + 5;
+        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Cambiar opción");
 
 
@@ -250,6 +257,10 @@ int uiSkinOptionsLoop() {
                 // Usamos pollInput() para permitir repetición al mantener presionado
                 int editInput = pollInput();
 
+                static int repeatCounter = 0;
+                static const int repeatDelay = 60; // ~1 segundo a 60fps
+                static const int repeatSpeed = 2;  // cada 2 frames después del delay
+
                 if (editInput & PAD_L1) {
                     channel = (channel - 1 + 4) % 4;
                 } else if (editInput & PAD_R1) {
@@ -259,25 +270,19 @@ int uiSkinOptionsLoop() {
                     const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
                     int idx = channelMap[channel];
 
-                    static int repeatCounter = 0;
-                    static int repeatDelay   = 8; // frames antes de empezar a repetir
-                    static int repeatSpeed   = 2; // cada 2 frames repite
-
-                    // Ajuste inicial
-                    if (editInput & PAD_LEFT) {
-                        if (bytes[idx] > 0) bytes[idx] -= 1;
-                    } else if (editInput & PAD_RIGHT) {
-                        if (bytes[idx] < 255) bytes[idx] += 1;
+                    // Primer ajuste inmediato (solo una vez al presionar)
+                    if (repeatCounter == 0) {
+                        if ((editInput & PAD_LEFT) && bytes[idx] > 0) bytes[idx] -= 1;
+                        if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
                     }
 
-                    // Auto‑repeat si se mantiene presionado
+                    // Incrementar contador mientras se mantiene presionado
                     repeatCounter++;
+
+                    // Después del delay, aplicar repetición acelerada
                     if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
-                        if (editInput & PAD_LEFT) {
-                            if (bytes[idx] > 0) bytes[idx] -= 1;
-                        } else if (editInput & PAD_RIGHT) {
-                            if (bytes[idx] < 255) bytes[idx] += 1;
-                        }
+                        if ((editInput & PAD_LEFT) && bytes[idx] > 0) bytes[idx] -= 1;
+                        if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
                     }
                 } else {
                     // Resetear contador si no hay tecla presionada
