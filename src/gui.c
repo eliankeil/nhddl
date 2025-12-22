@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "gui_skin.h"
+#include "skin_layout.h"
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
