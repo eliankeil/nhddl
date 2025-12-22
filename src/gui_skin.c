@@ -152,6 +152,25 @@ int uiSkinOptionsLoop() {
                        0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Reset");
 
+        // UP/DOWN → Navegar
+        drawIconWindow(baseX + 800, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_UP);
+        drawIconWindow(baseX + 800 + getIconWidth(ICON_UP) + 10, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_DOWN);
+        drawTextWindow(baseX + 800 + getIconWidth(ICON_UP) + getIconWidth(ICON_DOWN) + 20, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Navegar");
+
+        // LEFT/RIGHT → Cambiar opción
+        drawIconWindow(baseX + 1000, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_LEFT);
+        drawIconWindow(baseX + 1000 + getIconWidth(ICON_LEFT) + 10, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_RIGHT);
+        drawTextWindow(baseX + 1000 + getIconWidth(ICON_LEFT) + getIconWidth(ICON_RIGHT) + 20, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Cambiar opción");
+
+
         gsKit_queue_exec(gsGlobal);
         gsKit_finish();
         gsKit_sync_flip(gsGlobal);
