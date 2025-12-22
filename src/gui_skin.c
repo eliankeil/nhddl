@@ -118,12 +118,38 @@ int uiSkinOptionsLoop() {
                          (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
                          buf);
         }
+      
+        // Footer con acciones (pantalla principal del editor)
+        int baseY = gsGlobal->Height - footerHeight;
+        int baseX = keepoutArea + 10;
 
-        // Footer con acciones
-        drawTextWindow(0, gsGlobal->Height - footerHeight,
-                       gsGlobal->Width, gsGlobal->Height, 0,
-                       currentTheme.headerText, ALIGN_CENTER,
-                       "[CROSS] Editar   [START] Guardar   [TRIANGLE] Cancelar   [SQUARE] Reset");
+        // CROSS → Editar
+        drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
+        drawTextWindow(baseX + getIconWidth(ICON_CROSS) + 5, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Editar");
+
+        // START → Guardar
+        drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+        drawTextWindow(baseX + 200 + getIconWidth(ICON_START) + 5, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Guardar");
+
+        // TRIANGLE → Cancelar
+        drawIconWindow(baseX + 400, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_TRIANGLE);
+        drawTextWindow(baseX + 400 + getIconWidth(ICON_TRIANGLE) + 5, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
+
+        // SQUARE → Reset
+        drawIconWindow(baseX + 600, baseY, 0, gsGlobal->Height, 0,
+                       currentTheme.iconFrame, ALIGN_CENTER, ICON_SQUARE);
+        drawTextWindow(baseX + 600 + getIconWidth(ICON_SQUARE) + 5, baseY,
+                       0, gsGlobal->Height - 1, 0,
+                       currentTheme.headerText, ALIGN_VCENTER, "Reset");
 
         gsKit_queue_exec(gsGlobal);
         gsKit_finish();
@@ -153,13 +179,45 @@ int uiSkinOptionsLoop() {
                 drawTextWindow(0, headerHeight + 2*getFontLineHeight(),
                                gsGlobal->Width, 0, 0,
                                currentTheme.listText, ALIGN_HCENTER, buf);
-              
+
+                // Preview del color
                 gsKit_prim_sprite(gsGlobal, 50, 200, 250, 250, 0, *colorPtr);
 
-                drawTextWindow(0, gsGlobal->Height - footerHeight,
-                               gsGlobal->Width, gsGlobal->Height, 0,
-                               currentTheme.headerText, ALIGN_CENTER,
-                               "[L1/R1] Cambiar canal   [LEFT/RIGHT] Ajustar valor   [START] OK   [TRIANGLE] Cancelar");
+                // Footer con íconos en el submenú
+                int subBaseY = gsGlobal->Height - footerHeight;
+                int subBaseX = keepoutArea + 10;
+
+                // L1/R1 → Cambiar canal
+                drawIconWindow(subBaseX, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_L1);
+                drawIconWindow(subBaseX + getIconWidth(ICON_L1) + 10, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_R1);
+                drawTextWindow(subBaseX + getIconWidth(ICON_L1) + getIconWidth(ICON_R1) + 20, subBaseY,
+                               0, gsGlobal->Height - 1, 0,
+                               currentTheme.headerText, ALIGN_VCENTER, "Cambiar canal");
+
+                // LEFT/RIGHT → Ajustar valor
+                drawIconWindow(subBaseX + 250, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_LEFT);
+                drawIconWindow(subBaseX + 250 + getIconWidth(ICON_LEFT) + 10, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_RIGHT);
+                drawTextWindow(subBaseX + 250 + getIconWidth(ICON_LEFT) + getIconWidth(ICON_RIGHT) + 20, subBaseY,
+                               0, gsGlobal->Height - 1, 0,
+                               currentTheme.headerText, ALIGN_VCENTER, "Ajustar valor");
+
+                // START → OK
+                drawIconWindow(subBaseX + 500, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+                drawTextWindow(subBaseX + 500 + getIconWidth(ICON_START) + 5, subBaseY,
+                               0, gsGlobal->Height - 1, 0,
+                               currentTheme.headerText, ALIGN_VCENTER, "OK");
+
+                // TRIANGLE → Cancelar
+                drawIconWindow(subBaseX + 700, subBaseY, 0, gsGlobal->Height, 0,
+                               currentTheme.iconFrame, ALIGN_CENTER, ICON_TRIANGLE);
+                drawTextWindow(subBaseX + 700 + getIconWidth(ICON_TRIANGLE) + 5, subBaseY,
+                               0, gsGlobal->Height - 1, 0,
+                               currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
 
                 gsKit_queue_exec(gsGlobal);
                 gsKit_finish();
