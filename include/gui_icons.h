@@ -12,6 +12,22 @@ typedef struct Icon {
   uint16_t height;
 } Icon;
 
+typedef enum {
+  ICON_CIRCLE,
+  ICON_CROSS,
+  ICON_SQUARE,
+  ICON_TRIANGLE,
+  ICON_L1,
+  ICON_R1,
+  ICON_SELECT,
+  ICON_START,
+  ICON_ENABLED,
+  ICON_UP,
+  ICON_DOWN,
+  ICON_LEFT,
+  ICON_RIGHT
+} IconType;
+
 const Icon ICONS[] = {
     {0, 0, 25, 25},   // Circle
     {25, 0, 25, 25},  // Cross
