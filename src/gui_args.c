@@ -85,14 +85,14 @@ static const ArgValueMap gcValueMap[] = {
 //
 int gcDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int maxWidth, int maxHeight) {
   // Draw title
-  y = drawTextWindow(x, y, gsGlobal->Width - x, 0, 0, FontMainColor, ALIGN_HCENTER, arg->name);
+  y = drawTextWindow(x, y, gsGlobal->Width - x, 0, 0, currentTheme.listText, ALIGN_HCENTER, arg->name);
 
   // Draw compatibility modes
   for (int idx = 0; idx < ARG_GC_NUM_MODES; idx++) {
     if (arg->state & gcValueMap[idx].mode) {
-      drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, FontMainColor, ALIGN_CENTER, ICON_ENABLED);
+      drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.listText, ALIGN_CENTER, ICON_ENABLED);
     }
-    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? ColorSelected : FontMainColor),
+    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.selectedText : currentTheme.listText),
                  gcValueMap[idx].name);
   }
 
@@ -201,12 +201,12 @@ static const ArgValueMap gsmValueMap[] = {
 
 int gsmDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int maxWidth, int maxHeight) {
   // Draw title
-  y = drawTextWindow(x, y, gsGlobal->Width - x, 0, 0, FontMainColor, ALIGN_HCENTER, arg->name);
+  y = drawTextWindow(x, y, gsGlobal->Width - x, 0, 0, currentTheme.listText, ALIGN_HCENTER, arg->name);
   for (int idx = 0; idx < sizeof(gsmValueMap) / sizeof(ArgValueMap); idx++) {
     if (arg->state & gsmValueMap[idx].mode) {
-      drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, FontMainColor, ALIGN_CENTER, ICON_ENABLED);
+      drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.listText, ALIGN_CENTER, ICON_ENABLED);
     }
-    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? ColorSelected : FontMainColor),
+    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.selectedText : currentTheme.listText),
                  gsmValueMap[idx].name);
   }
 
@@ -412,8 +412,8 @@ fail:
 int toggleDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int maxWidth, int maxHeight) {
   // Draw argument
   if (arg->state)
-    drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, FontMainColor, ALIGN_CENTER, ICON_ENABLED);
-  return drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, ((isActive) ? ColorSelected : FontMainColor), arg->name);
+    drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.listText, ALIGN_CENTER, ICON_ENABLED);
+  return drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, ((isActive) ? currentTheme.selectedText : currentTheme.listText), arg->name);
 }
 
 ActionType toggleInput(NeutrinoArgument *arg, int input) {
