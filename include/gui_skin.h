@@ -7,7 +7,6 @@ typedef struct {
     uint64_t headerText;
     uint64_t listText;
     uint64_t selectedText;
-    uint64_t optionText;
     uint64_t warnText;
     uint64_t errorText;
     uint64_t coverFrame;
