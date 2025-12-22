@@ -267,18 +267,23 @@ int uiSkinOptionsLoop() {
                 gsKit_sync_flip(gsGlobal);
 
                 // Usamos pollInput() para permitir repetición al mantener presionado
+                static int prevInput = 0; // estado anterior del mando
                 int editInput = pollInput();
 
                 static int repeatCounter = 0;
                 static const int repeatDelay = 30; // ~1 segundo a 60fps
                 static const int repeatSpeed = 2;  // cada 2 frames después del delay
 
-                if (new_pad & PAD_L1) {
+                // --- L1/R1: solo una vez por pulsación ---
+                if ((editInput & PAD_L1) && !(prevInput & PAD_L1)) {
                     channel = (channel - 1 + 4) % 4;
                 }
-                else if (new_pad & PAD_R1) {
+                else if ((editInput & PAD_R1) && !(prevInput & PAD_R1)) {
                     channel = (channel + 1) % 4;
-                } else if (editInput & (PAD_LEFT | PAD_RIGHT)) {
+                }
+
+                // --- LEFT/RIGHT: repetición controlada ---
+                else if (editInput & (PAD_LEFT | PAD_RIGHT)) {
                     uint8_t *bytes = (uint8_t*)colorPtr;
                     const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
                     int idx = channelMap[channel];
@@ -297,26 +302,23 @@ int uiSkinOptionsLoop() {
                         if ((editInput & PAD_LEFT) && bytes[idx] > 0) bytes[idx] -= 1;
                         if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
                     }
-                } else {
+                }
+                else {
                     // Resetear contador si no hay tecla presionada
                     repeatCounter = 0;
                 }
 
+                // --- START/TRIANGLE: salir ---
                 if (editInput & PAD_START) {
                     break; // aplicar cambios
-                } else if (editInput & PAD_TRIANGLE) {
+                }
+                else if (editInput & PAD_TRIANGLE) {
                     break; // salir sin cambios adicionales
                 }
-            }
-        } else if (input & PAD_SQUARE) {
-            setDefaultSkin(); // Reset a valores por defecto
-        } else if (input & PAD_START) {
-            saveSkin("mc0:/APP_NHDDL/skin.yaml");
-            break; // salir guardando
-        } else if (input & PAD_TRIANGLE) {
-            break; // salir sin guardar
-        }
-    }
+
+                // actualizar estado anterior
+                prevInput = editInput;
+          }
 
     return res;
 }
