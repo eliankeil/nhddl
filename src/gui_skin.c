@@ -211,8 +211,20 @@ int uiSkinOptionsLoop() {
                                gsGlobal->Width, 0, 0,
                                currentTheme.listText, ALIGN_HCENTER, buf);
 
-                // Preview del color
-                gsKit_prim_sprite(gsGlobal, 50, 200, 250, 250, 0, *colorPtr);
+                // Preview del color centrado horizontalmente
+                int previewWidth  = 200;   // ancho del cuadro
+                int previewHeight = 250;   // alto del cuadro
+                int previewY      = 200;   // posición vertical fija
+
+                // cálculo centrado
+                int previewX = (gsGlobal->Width - previewWidth) / 2;
+
+                // dibujar sprite centrado
+                gsKit_prim_sprite(gsGlobal,
+                                  previewX, previewY,                       // esquina superior izquierda
+                                  previewX + previewWidth, previewY + previewHeight, // esquina inferior derecha
+                                  0, *colorPtr);
+
 
                 // Footer con íconos en el submenú
                 int subBaseY = gsGlobal->Height - footerHeight;
@@ -258,12 +270,12 @@ int uiSkinOptionsLoop() {
                 int editInput = pollInput();
 
                 static int repeatCounter = 0;
-                static const int repeatDelay = 60; // ~1 segundo a 60fps
+                static const int repeatDelay = 30; // ~1 segundo a 60fps
                 static const int repeatSpeed = 2;  // cada 2 frames después del delay
 
-                if (editInput & PAD_L1) {
+                if (new_pad & PAD_L1) {
                     channel = (channel - 1 + 4) % 4;
-                } else if (editInput & PAD_R1) {
+                else if (new_pad & PAD_R1) {
                     channel = (channel + 1) % 4;
                 } else if (editInput & (PAD_LEFT | PAD_RIGHT)) {
                     uint8_t *bytes = (uint8_t*)colorPtr;
