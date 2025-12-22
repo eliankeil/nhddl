@@ -257,50 +257,54 @@ int uiLoop(TargetList *titles) {
     prevInput = input;
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
-      // Copy target, free title list and launch
-      Target *target = copyTarget(curTarget);
-      freeTargetList(titles);
-      uiLaunchTitle(target, NULL);
-      // Something went wrong, main loop must exit immediately
-      return -1;
-    } else if (input & PAD_UP) {
-      // Point to the previous title
-      selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-    } else if (input & PAD_DOWN) {
-      // Advance to the next title
-      selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-    } else if (input & PAD_R1) {
-      // Switch to the next page
-      if (selectedTitleIdx == titles->total - 1) {
-        selectedTitleIdx = 0; // Wrap around if the last title is selected
-      } else {
-        selectedTitleIdx += maxTitlesPerPage;
-        if (selectedTitleIdx >= titles->total)
-          selectedTitleIdx = titles->total - 1;
-      }
-    } else if (input & PAD_L1) {
-      // Switch to the previous page
-      if (selectedTitleIdx == 0) {
-        selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
-      } else {
-        selectedTitleIdx -= maxTitlesPerPage;
-        if (selectedTitleIdx < 0)
-          selectedTitleIdx = 0;
-      }
-    } else if (input & PAD_TRIANGLE) {
-      input = -1;    // Force UI loop to wait once uiTitleOptionsLoop returns
-      prevInput = 0; // Reset previous input
-      // Enter title options screen
-      if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+        // Copy target, free title list and launch
+        Target *target = copyTarget(curTarget);
+        freeTargetList(titles);
+        uiLaunchTitle(target, NULL);
         // Something went wrong, main loop must exit immediately
         return -1;
-      }
+    } else if (input & PAD_UP) {
+        // Point to the previous title
+        selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
+    } else if (input & PAD_DOWN) {
+        // Advance to the next title
+        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+    } else if (input & PAD_R1) {
+        // Switch to the next page
+        if (selectedTitleIdx == titles->total - 1) {
+            selectedTitleIdx = 0; // Wrap around if the last title is selected
+        } else {
+            selectedTitleIdx += maxTitlesPerPage;
+            if (selectedTitleIdx >= titles->total)
+                selectedTitleIdx = titles->total - 1;
+        }
+    } else if (input & PAD_L1) {
+        // Switch to the previous page
+        if (selectedTitleIdx == 0) {
+            selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
+        } else {
+            selectedTitleIdx -= maxTitlesPerPage;
+            if (selectedTitleIdx < 0)
+                selectedTitleIdx = 0;
+        }
+    } else if (input & PAD_TRIANGLE) {
+        input = -1;    // Force UI loop to wait once uiTitleOptionsLoop returns
+        prevInput = 0; // Reset previous input
+        // Enter title options screen
+        if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+            // Something went wrong, main loop must exit immediately
+            return -1;
+        }
     } else if (input & PAD_START) {
-      // Quit
-      break;
+        // Quit
+        break;
+    } else if (input & PAD_SELECT) {
+        // Entrar al editor de skin
+        if ((res = uiSkinOptionsLoop()) < 0) {
+            return -1;
+        }
     }
-  }
-
+    
 exit:
   closePad();
   closeUI();
@@ -314,6 +318,10 @@ void drawTitleListFooter(int baseX) {
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Launch title");
 
+  drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_SELECT);
+  drawTextWindow(baseX + 200 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER, "Skin");
+  
+  
   drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
   drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
 
