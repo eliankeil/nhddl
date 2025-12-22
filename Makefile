@@ -7,8 +7,9 @@ EE_BIN = $(ELF_BASE_NAME)_unc.elf
 EE_BIN_PKD = $(ELF_BASE_NAME).elf
 
 EE_OBJS = main.o module_init.o common.o options.o launcher.o title_id.o target.o
-EE_OBJS += gui.o gui_graphics.o gui_args.o pad.o
+EE_OBJS += gui.o gui_graphics.o gui_args.o gui_skin.o pad.o
 EE_OBJS += devices.o devices_mmce.o devices_bdm.o devices_iso.o devices_hdl.o
+
 # Basic modules
 IRX_FILES += sio2man.irx mcman.irx mcserv.irx fileXio.irx iomanX.irx freepad.irx mmceman.irx
 # BDM modules
