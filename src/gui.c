@@ -385,7 +385,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
     // Since cover art has nothing to blend, we can bypass the issue altogether
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2, selectedTitleCover->Width,
-                              selectedTitleCover->Height, 2, currentTheme.iconFrame);
+                              selectedTitleCover->Height, 2, FontMainColor);
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
     gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.background);
@@ -545,7 +545,7 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
       // Draw argument
       if (!argument->isDisabled)
-        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.listText, ALIGN_CENTER, ICON_ENABLED);
+        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.selectedText, ALIGN_CENTER, ICON_ENABLED);
 
       snprintf(lineBuffer, 255, "%s%s%s %s", ((argument->isGlobal) ? "[G] " : ""), argument->arg, (!strlen(argument->value)) ? "" : ":",
                argument->value);
