@@ -14,6 +14,7 @@
 #include <ps2sdkapi.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "gui_skin.h"
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
@@ -82,6 +83,10 @@ void initVMode(GSGLOBAL *gsGlobal) {
 }
 
 int uiInit() {
+  setDefaultSkin();
+  if (loadSkin("mc0:/APP_NHDDL/skin.yaml") < 0) {
+        saveSkin("mc0:/APP_NHDDL/skin.yaml");
+    }
   if (gsGlobal != NULL) {
     printf("Reinitializing UI\n");
     closeUI();
@@ -106,7 +111,10 @@ int uiInit() {
     return res;
   }
 
-  // Init screen
+  gsKit_clear(gsGlobal, currentTheme.background);
+}
+
+// Init screen
   gsKit_vram_clear(gsGlobal);
   gsKit_init_screen(gsGlobal);
   gsKit_display_buffer(gsGlobal); // Switch display buffer to avoid garbage appearing on screen
@@ -115,7 +123,7 @@ int uiInit() {
   gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
   gsKit_set_test(gsGlobal, GS_ATEST_ON);
   gsKit_mode_switch(gsGlobal, GS_ONESHOT);
-  gsKit_clear(gsGlobal, BGColor);
+  gsKit_clear(gsGlobal, currentTheme.background);
 
   // Initialize resources
   if (initGraphics()) {
@@ -213,7 +221,7 @@ int uiLoop(TargetList *titles) {
   int prevInput = 0;
   int input = 0;
   while (1) {
-    gsKit_clear(gsGlobal, BGColor);
+    gsKit_clear(gsGlobal, currentTheme.background);
     gsKit_TexManager_nextFrame(gsGlobal);
 
     // Reload target if index has changed
@@ -302,17 +310,17 @@ exit:
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
-  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
-  drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, HeaderTextColor, ALIGN_VCENTER,
+  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
+  drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Launch title");
 
-  drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_START);
-  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, HeaderTextColor, ALIGN_CENTER, "Exit");
+  drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"), baseY, gsGlobal->Width - baseX,
-                 gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, HeaderTextColor, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
+                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
 }
 
 // Draws title list
@@ -322,9 +330,9 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
   // Draw header and footer
   int titleY = headerHeight;
   int baseX = keepoutArea + 10;
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, HeaderTextColor, ALIGN_HCENTER, "Title List");
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, "Title List");
   snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1, DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1, titles->total);
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, HeaderTextColor, ALIGN_RIGHT, lineBuffer);
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
 
   drawTitleListFooter(baseX);
 
@@ -346,20 +354,20 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
     if (selectedTitleIdx == curTitle->idx) {
       // Draw title ID and device type under the cover art
       drawTextWindow(coverArtX1,
-                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0, FontMainColor, ALIGN_HCENTER,
+                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
                                     curTitle->id), // Use y coordinate return by title ID drawing function as an argument
-                     coverArtX2, 0, 0, FontMainColor, ALIGN_HCENTER, modeToString(curTitle->device->mode));
+                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER, modeToString(curTitle->device->mode));
     }
 
     // Draw title name
-    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0, ((selectedTitleIdx == curTitle->idx) ? ColorSelected : FontMainColor), curTitle->name);
+    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0, ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText), curTitle->name);
 
   next:
     curTitle = curTitle->next;
   }
 
   // Draw cover art placeholder/frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2, coverArtY2 + 2, 1, FontMainColor);
+  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
 
   // Draw cover art if it exists
   if (selectedTitleCover != NULL) {
@@ -368,41 +376,41 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
     // Since cover art has nothing to blend, we can bypass the issue altogether
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2, selectedTitleCover->Width,
-                              selectedTitleCover->Height, 2, FontMainColor);
+                              selectedTitleCover->Height, 2, currentTheme.iconFrame);
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, BGColor);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, FontMainColor, ALIGN_CENTER, "No cover art");
+    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.background);
+    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
 }
 
 void drawTitleOptionsFooter(int baseX) {
-  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
+  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), gsGlobal->Height - 1 - footerHeight, 0, gsGlobal->Height, 0,
-                 HeaderTextColor, ALIGN_VCENTER, "Toggle");
+                 currentTheme.headerText, ALIGN_VCENTER, "Toggle");
 
   drawIconWindow((gsGlobal->Width * 3 / 8) - getIconWidth(ICON_SQUARE), gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
-                 FontMainColor, ALIGN_VCENTER, ICON_SQUARE);
-  drawTextWindow((gsGlobal->Width * 3 / 8) + 5, gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0, HeaderTextColor, ALIGN_VCENTER,
+                 currentTheme.iconFrame, ALIGN_VCENTER, ICON_SQUARE);
+  drawTextWindow((gsGlobal->Width * 3 / 8) + 5, gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Test");
 
   drawIconWindow((gsGlobal->Width * 5 / 8), gsGlobal->Height - footerHeight, gsGlobal->Width - getLineWidth("Save") - 5, gsGlobal->Height, 0,
-                 FontMainColor, ALIGN_VCENTER, ICON_START);
+                 currentTheme.iconFrame, ALIGN_VCENTER, ICON_START);
   drawTextWindow((gsGlobal->Width * 5 / 8) + 5 + getIconWidth(ICON_START), gsGlobal->Height - 1 - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
-                 HeaderTextColor, ALIGN_VCENTER, "Save");
+                 currentTheme.headerText, ALIGN_VCENTER, "Save");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Cancel"), gsGlobal->Height - footerHeight,
-                 gsGlobal->Width - baseX, gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight, gsGlobal->Width - baseX, gsGlobal->Height, 0, HeaderTextColor, ALIGN_VCENTER | ALIGN_RIGHT,
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight, gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
                  "Cancel");
 
-  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2, gsGlobal->Width, gsGlobal->Height, 0, HeaderTextColor,
+  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText,
                  ALIGN_TOP | ALIGN_HCENTER, "Switch views");
   drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2, (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
+                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
   drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5, gsGlobal->Height - footerHeight - getFontLineHeight() / 2, gsGlobal->Width,
-                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
+                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
 }
 
 // Draws well-known Neutrino arguments
@@ -422,11 +430,11 @@ int uiTitleOptionsLoop(Target *target) {
   int baseX = keepoutArea + 10;
   int i = 0;
   while (1) {
-    gsKit_clear(gsGlobal, BGColor);
+    gsKit_clear(gsGlobal, currentTheme.background);
 
     // Draw header
     snprintf(lineBuffer, 255, "%s\n%s", target->name, target->id);
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, HeaderTextColor, ALIGN_HCENTER, lineBuffer);
+    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, lineBuffer);
 
     int startY = headerHeight + 1.5 * getFontLineHeight();
     for (i = 0; i < uiArgumentsTotal; i++) {
@@ -493,13 +501,13 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
   Argument *curArgument = titleArguments->first;
   while (1) {
-    gsKit_clear(gsGlobal, BGColor);
+    gsKit_clear(gsGlobal, currentTheme.background);
     int baseX = keepoutArea + 10;
 
     // Draw header
     snprintf(lineBuffer, 255, "%s\n%s", target->name, target->id);
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, HeaderTextColor, ALIGN_HCENTER, lineBuffer);
-    drawTextWindow(baseX, headerHeight + 1.5 * getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, FontMainColor, ALIGN_HCENTER, "Launch arguments");
+    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, lineBuffer);
+    drawTextWindow(baseX, headerHeight + 1.5 * getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.listText, ALIGN_HCENTER, "Launch arguments");
 
     // Draw footer
     drawTitleOptionsFooter(baseX);
@@ -512,7 +520,7 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
     int curPage = selectedArgIdx / maxArguments;
 
     snprintf(lineBuffer, 255, "Page %d/%d", curPage + 1, (!titleArguments->total) ? 1 : DIV_ROUND(titleArguments->total, maxArguments));
-    startY = drawTextWindow(baseX, startY - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, HeaderTextColor, ALIGN_RIGHT, lineBuffer);
+    startY = drawTextWindow(baseX, startY - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
 
     Argument *argument = titleArguments->first;
     while (argument != NULL) {
@@ -528,11 +536,11 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
       // Draw argument
       if (!argument->isDisabled)
-        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, FontMainColor, ALIGN_CENTER, ICON_ENABLED);
+        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.listText, ALIGN_CENTER, ICON_ENABLED);
 
       snprintf(lineBuffer, 255, "%s%s%s %s", ((argument->isGlobal) ? "[G] " : ""), argument->arg, (!strlen(argument->value)) ? "" : ":",
                argument->value);
-      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0, ((selectedArgIdx == idx) ? ColorSelected : FontMainColor), lineBuffer);
+      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0, ((selectedArgIdx == idx) ? currentTheme.selectedText : currentTheme.listText), lineBuffer);
 
       idx++;
     next:
@@ -587,11 +595,11 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
     arguments = loadLaunchArgumentLists(target);
   }
 
-  gsKit_clear(gsGlobal, BGColor);
+  gsKit_clear(gsGlobal, currentTheme.background);
 
   // Draw screen with GameID and title parameters
   snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s", target->name, target->id, target->fullPath);
-  drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, lineBuffer);
+  drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.listText, ALIGN_CENTER, lineBuffer);
   drawGameID(target->id);
 
   gsKit_queue_exec(gsGlobal);
@@ -705,7 +713,7 @@ void uiSplashThread() {
   // Draw logo and version
   gsKit_mode_switch(gsGlobal, GS_PERSISTENT);
   gsKit_TexManager_nextFrame(gsGlobal);
-  gsKit_clear(gsGlobal, BGColor);
+  gsKit_clear(gsGlobal, currentTheme.background);
   drawLogo((gsGlobal->Width - getLogoWidth()) / 2, gsGlobal->Height / 4, 2);
   drawTextWindow(0, (gsGlobal->Height / 4 + getLogoHeight() + 10), gsGlobal->Width, 0, 0, GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80), ALIGN_HCENTER,
                  GIT_VERSION);
@@ -713,7 +721,7 @@ void uiSplashThread() {
 
   drawGameID("NHDDL");
 
-  uint64_t color = HeaderTextColor;
+  uint64_t color = currentTheme.headerText;
   int logStartY = gsGlobal->Height - footerHeight - getFontLineHeight() * 3;
   // Loop until something sends a signal
   while (PollSema(logBuffer.doneSema) != logBuffer.doneSema) {
@@ -726,13 +734,13 @@ void uiSplashThread() {
     switch (logBuffer.level) {
     case LEVEL_INFO_NODELAY:
     case LEVEL_INFO:
-      color = HeaderTextColor;
+      color = currentTheme.headerText;
       break;
     case LEVEL_WARN:
-      color = WarnTextColor;
+      color = currentTheme.warnText;
       break;
     case LEVEL_ERROR:
-      color = ErrorTextColor;
+      color = currentTheme.errorText;
       break;
     }
     drawTextWindow(0, logStartY, gsGlobal->Width, gsGlobal->Height - footerHeight, 0, color, ALIGN_CENTER, logBuffer.buf);
