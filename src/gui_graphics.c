@@ -8,6 +8,33 @@
 #include <png.h>
 #include <stdlib.h>
 
+// Definiciones reales de íconos y texturas
+const Icon ICONS[] = {
+    {0, 0, 25, 25},   // Circle
+    {25, 0, 25, 25},  // Cross
+    {50, 0, 25, 25},  // Square
+    {75, 0, 25, 25},  // Triangle
+    {0, 28, 25, 17},  // L1
+    {25, 28, 25, 17}, // R1
+    {0, 46, 22, 12},  // Select
+    {22, 46, 22, 12}, // Start
+    {0, 60, 10, 10},  // Enabled
+    {0, 75, 25, 25},  // Up
+    {25, 75, 25, 25}, // Down
+    {50, 75, 25, 25}, // Left
+    {75, 75, 25, 25}  // Right
+};
+
+unsigned int SIZE_ICONS_PNG = 7016;
+unsigned char ICONS_PNG[] __attribute__((aligned(16))) = {
+    // binario del PNG
+};
+
+unsigned int SIZE_LOGO_PNG = ...;
+unsigned char LOGO_PNG[] __attribute__((aligned(16))) = {
+    // binario del logo
+};
+
 // Loads 32-bit RGBA PNG texture from memory into GSTEXTURE and uploads it to GS VRAM.
 int gsKit_texture_png_mem(GSGLOBAL *gsGlobal, GSTEXTURE *texture, void *buf, size_t size);
 
