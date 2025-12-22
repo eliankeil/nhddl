@@ -319,7 +319,7 @@ int uiSkinOptionsLoop() {
                 // actualizar estado anterior
                 prevInput = editInput;
           }
-
+        }
     return res;
 }
 
