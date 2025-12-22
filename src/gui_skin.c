@@ -165,18 +165,44 @@ int uiSkinOptionsLoop() {
                 gsKit_finish();
                 gsKit_sync_flip(gsGlobal);
 
-                int editInput = waitForInput(-1);
+                // Usamos pollInput() para permitir repetición al mantener presionado
+                int editInput = pollInput();
+
                 if (editInput & PAD_L1) {
                     channel = (channel - 1 + 4) % 4;
                 } else if (editInput & PAD_R1) {
                     channel = (channel + 1) % 4;
-                } else if (editInput & PAD_LEFT) {
+                } else if (editInput & (PAD_LEFT | PAD_RIGHT)) {
                     uint8_t *bytes = (uint8_t*)colorPtr;
-                    if (bytes[channel] > 0) bytes[channel] -= 1;
-                } else if (editInput & PAD_RIGHT) {
-                    uint8_t *bytes = (uint8_t*)colorPtr;
-                    if (bytes[channel] < 255) bytes[channel] += 1;
-                } else if (editInput & PAD_START) {
+                    const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
+                    int idx = channelMap[channel];
+
+                    static int repeatCounter = 0;
+                    static int repeatDelay   = 8; // frames antes de empezar a repetir
+                    static int repeatSpeed   = 2; // cada 2 frames repite
+
+                    // Ajuste inicial
+                    if (editInput & PAD_LEFT) {
+                        if (bytes[idx] > 0) bytes[idx] -= 1;
+                    } else if (editInput & PAD_RIGHT) {
+                        if (bytes[idx] < 255) bytes[idx] += 1;
+                    }
+
+                    // Auto‑repeat si se mantiene presionado
+                    repeatCounter++;
+                    if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+                        if (editInput & PAD_LEFT) {
+                            if (bytes[idx] > 0) bytes[idx] -= 1;
+                        } else if (editInput & PAD_RIGHT) {
+                            if (bytes[idx] < 255) bytes[idx] += 1;
+                        }
+                    }
+                } else {
+                    // Resetear contador si no hay tecla presionada
+                    repeatCounter = 0;
+                }
+
+                if (editInput & PAD_START) {
                     break; // aplicar cambios
                 } else if (editInput & PAD_TRIANGLE) {
                     break; // salir sin cambios adicionales
