@@ -112,7 +112,6 @@ int uiInit() {
   }
 
   gsKit_clear(gsGlobal, currentTheme.background);
-}
 
 // Init screen
   gsKit_vram_clear(gsGlobal);
