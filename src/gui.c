@@ -303,6 +303,7 @@ int uiLoop(TargetList *titles) {
         if ((res = uiSkinOptionsLoop()) < 0) {
             return -1;
         }
+      }
     }
     
 exit:
