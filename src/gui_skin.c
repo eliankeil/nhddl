@@ -1,11 +1,12 @@
 #include "gui_skin.h"
-#include "gui_graphics.h"
+#include "gui_graphics.h" 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 ThemeColors currentTheme;
 
+// Inicializa los colores por defecto en currentTheme
 void setDefaultSkin() {
     currentTheme.background   = BGColor;
     currentTheme.headerText   = HeaderTextColor;
@@ -36,6 +37,32 @@ int saveSkin(const char *path) {
     fprintf(f, "errorText:    0x%08X # Original: 0x%08X\n", (unsigned int)ErrorTextColor, (unsigned int)ErrorTextColor);
     fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
     fprintf(f, "iconFrame:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
+
+    fclose(f);
+    return 0;
+}
+
+// Carga skin.yaml y aplica los valores a currentTheme
+int loadSkin(const char *path) {
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        printf("WARN: No se pudo abrir skin.yaml en %s\n", path);
+        return -1;
+    }
+
+    char key[64];
+    unsigned int value;
+
+    while (fscanf(f, "%63s 0x%08X", key, &value) == 2) {
+        if (strcmp(key, "background:") == 0)   currentTheme.background   = value;
+        else if (strcmp(key, "headerText:") == 0)   currentTheme.headerText   = value;
+        else if (strcmp(key, "listText:") == 0)     currentTheme.listText     = value;
+        else if (strcmp(key, "selectedText:") == 0) currentTheme.selectedText = value;
+        else if (strcmp(key, "warnText:") == 0)     currentTheme.warnText     = value;
+        else if (strcmp(key, "errorText:") == 0)    currentTheme.errorText    = value;
+        else if (strcmp(key, "coverFrame:") == 0)   currentTheme.coverFrame   = value;
+        else if (strcmp(key, "iconFrame:") == 0)    currentTheme.iconFrame    = value;
+    }
 
     fclose(f);
     return 0;
