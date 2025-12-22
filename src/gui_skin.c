@@ -213,8 +213,8 @@ int uiSkinOptionsLoop() {
 
                 // Preview del color centrado horizontalmente
                 int previewWidth  = 200;   // ancho del cuadro
-                int previewHeight = 250;   // alto del cuadro
-                int previewY      = 200;   // posición vertical fija
+                int previewHeight = 70;   // alto del cuadro
+                int previewY      = 100;   // posición vertical fija
 
                 // cálculo centrado
                 int previewX = (gsGlobal->Width - previewWidth) / 2;
