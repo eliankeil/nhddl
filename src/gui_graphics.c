@@ -58,7 +58,7 @@ int initGraphics() {
 // Frees memory used by font pages, logo and icon textures
 void closeFont() {
   for (int i = 0; i < font.pageCount; i++) {
-    free(fontPages[0]->Mem);
+    free(fontPages[i]->Mem);
     free(fontPages[i]);
   }
   free(fontPages);
@@ -257,7 +257,7 @@ float getLineWidth(const char *text) {
 int drawTextWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, const char *text) {
   if (!x2 && !y2) {
     // If window limits are not set, use faster drawing function
-    return drawText(x1, x2, z, 0, 0, color, text);
+    return drawText(x1, y1, z, 0, 0, color, text);
   }
   float curX = x1;
   float curY = y1;
