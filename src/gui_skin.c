@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libpad.h>
 
 ThemeColors currentTheme;
 
@@ -74,3 +75,119 @@ int loadSkin(const char *path) {
     fclose(f);
     return 0;
 }
+
+// Editor de Skin con edición por canal ABGR
+int uiSkinOptionsLoop() {
+    int res = 0;
+    int input = 0;
+    int selectedIdx = 0;
+
+    // Campos del skin
+    const char *fields[] = {
+        "background", "headerText", "listText",
+        "selectedText", "warnText", "errorText",
+        "coverFrame", "iconFrame"
+    };
+    uint64_t *values[] = {
+        &currentTheme.background, &currentTheme.headerText, &currentTheme.listText,
+        &currentTheme.selectedText, &currentTheme.warnText, &currentTheme.errorText,
+        &currentTheme.coverFrame, &currentTheme.iconFrame
+    };
+    int totalFields = sizeof(fields) / sizeof(fields[0]);
+
+    while (1) {
+        gsKit_clear(gsGlobal, currentTheme.background);
+
+        // Header
+        drawTextWindow(0, headerHeight - getFontLineHeight(),
+                       gsGlobal->Width, 0, 0,
+                       currentTheme.headerText, ALIGN_HCENTER,
+                       "Skin Configuration");
+
+        // Lista de parámetros
+        int y = headerHeight + getFontLineHeight();
+        for (int i = 0; i < totalFields; i++) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%s: 0x%08X",
+                     fields[i], (unsigned int)(*values[i]));
+            y = drawText(keepoutArea + 10, y, 0, 0, 0,
+                         (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
+                         buf);
+        }
+
+        // Footer con acciones
+        drawTextWindow(0, gsGlobal->Height - footerHeight,
+                       gsGlobal->Width, gsGlobal->Height, 0,
+                       currentTheme.headerText, ALIGN_CENTER,
+                       "[CROSS] Editar   [START] Guardar   [TRIANGLE] Cancelar   [SQUARE] Reset");
+
+        gsKit_queue_exec(gsGlobal);
+        gsKit_finish();
+        gsKit_sync_flip(gsGlobal);
+
+        // Procesar entradas
+        input = waitForInput(-1);
+        if (input & PAD_UP) {
+            selectedIdx = (selectedIdx - 1 + totalFields) % totalFields;
+        } else if (input & PAD_DOWN) {
+            selectedIdx = (selectedIdx + 1) % totalFields;
+        } else if (input & (PAD_CROSS | PAD_CIRCLE)) {
+            // Entrar al submenú de edición por canal
+            uint64_t *colorPtr = values[selectedIdx];
+            int channel = 0; // 0=A, 1=B, 2=G, 3=R
+            while (1) {
+                gsKit_clear(gsGlobal, currentTheme.background);
+
+                char buf[64];
+                snprintf(buf, sizeof(buf), "Edit %s: 0x%08X", fields[selectedIdx], (unsigned int)(*colorPtr));
+                drawTextWindow(0, headerHeight, gsGlobal->Width, 0, 0,
+                               currentTheme.headerText, ALIGN_HCENTER, buf);
+
+                // Mostrar canal activo
+                const char *channels[] = {"Alpha", "Blue", "Green", "Red"};
+                snprintf(buf, sizeof(buf), "Canal: %s", channels[channel]);
+                drawTextWindow(0, headerHeight + 2*getFontLineHeight(),
+                               gsGlobal->Width, 0, 0,
+                               currentTheme.listText, ALIGN_HCENTER, buf);
+              
+                gsKit_prim_sprite(gsGlobal, 50, 200, 250, 250, 0, *colorPtr);
+
+                drawTextWindow(0, gsGlobal->Height - footerHeight,
+                               gsGlobal->Width, gsGlobal->Height, 0,
+                               currentTheme.headerText, ALIGN_CENTER,
+                               "[L1/R1] Cambiar canal   [LEFT/RIGHT] Ajustar valor   [START] OK   [TRIANGLE] Cancelar");
+
+                gsKit_queue_exec(gsGlobal);
+                gsKit_finish();
+                gsKit_sync_flip(gsGlobal);
+
+                int editInput = waitForInput(-1);
+                if (editInput & PAD_L1) {
+                    channel = (channel - 1 + 4) % 4;
+                } else if (editInput & PAD_R1) {
+                    channel = (channel + 1) % 4;
+                } else if (editInput & PAD_LEFT) {
+                    uint8_t *bytes = (uint8_t*)colorPtr;
+                    if (bytes[channel] > 0) bytes[channel] -= 1;
+                } else if (editInput & PAD_RIGHT) {
+                    uint8_t *bytes = (uint8_t*)colorPtr;
+                    if (bytes[channel] < 255) bytes[channel] += 1;
+                } else if (editInput & PAD_START) {
+                    break; // aplicar cambios
+                } else if (editInput & PAD_TRIANGLE) {
+                    break; // salir sin cambios adicionales
+                }
+            }
+        } else if (input & PAD_SQUARE) {
+            setDefaultSkin(); // Reset a valores por defecto
+        } else if (input & PAD_START) {
+            saveSkin("mc0:/APP_NHDDL/skin.yaml");
+            break; // salir guardando
+        } else if (input & PAD_TRIANGLE) {
+            break; // salir sin guardar
+        }
+    }
+
+    return res;
+}
+
