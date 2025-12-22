@@ -275,6 +275,7 @@ int uiSkinOptionsLoop() {
 
                 if (new_pad & PAD_L1) {
                     channel = (channel - 1 + 4) % 4;
+                }
                 else if (new_pad & PAD_R1) {
                     channel = (channel + 1) % 4;
                 } else if (editInput & (PAD_LEFT | PAD_RIGHT)) {
