@@ -22,7 +22,11 @@ typedef enum {
   ICON_R1,
   ICON_SELECT,
   ICON_START,
-  ICON_ENABLED
+  ICON_ENABLED,
+  ICON_UP,
+  ICON_DOWN,
+  ICON_LEFT,
+  ICON_RIGHT
 } IconType;
 
 const Icon ICONS[] = {
@@ -34,7 +38,11 @@ const Icon ICONS[] = {
     {25, 28, 25, 17}, // R1
     {0, 46, 22, 12},  // Select
     {22, 46, 22, 12}, // Start
-    {0, 60, 10, 10}   // Enabled
+    {0, 60, 10, 10},  // Enabled
+    {0, 75, 25, 25}, // Up
+    {25, 75, 25, 25}, // Down
+    {50, 75, 25, 25},// Left
+    {75, 75, 25, 25} // Right
 };
 
 #endif
