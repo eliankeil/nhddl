@@ -166,6 +166,10 @@ int uiSkinOptionsLoop() {
             // Entrar al submenú de edición por canal
             uint64_t *colorPtr = values[selectedIdx];
             int channel = 0; // 0=A, 1=B, 2=G, 3=R
+            static int repeatCounter = 0;
+            static const int repeatDelay = 8; // frames antes de empezar a repetir
+            static const int repeatSpeed = 2; // cada 2 frames repite
+
             while (1) {
                 gsKit_clear(gsGlobal, currentTheme.background);
 
