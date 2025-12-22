@@ -27,4 +27,7 @@ void uiSplashSetNeutrinoVersion(const char *str);
 // Stops UI splash thread
 void stopUISplashThread();
 
+// Abre la pantalla de configuración del skin
+int uiSkinOptionsLoop();
+
 #endif
