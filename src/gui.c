@@ -49,9 +49,9 @@ static int coverArtY2;
 static int coverArtX1;
 static int coverArtY1;
 
-static const int keepoutArea = 20;
-static const int headerHeight = 20 + keepoutArea;
-static const int footerHeight = 40 + keepoutArea;
+const int keepoutArea = 20;
+const int headerHeight = 20 + keepoutArea;
+const int footerHeight = 40 + keepoutArea;
 
 void initVMode(GSGLOBAL *gsGlobal) {
   switch (LAUNCHER_OPTIONS.vmode) {
