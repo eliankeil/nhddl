@@ -318,8 +318,17 @@ int uiSkinOptionsLoop() {
 
                 // actualizar estado anterior
                 prevInput = editInput;
-          }
-        }
-    return res;
+                        }
+                    } else if (input & PAD_SQUARE) {
+                        setDefaultSkin(); // Reset a valores por defecto
+                    } else if (input & PAD_START) {
+                        saveSkin("mc0:/APP_NHDDL/skin.yaml");
+                        break; // salir guardando
+                    } else if (input & PAD_TRIANGLE) {
+                        break; // salir sin guardar
+                    }
+                }
+return res;
 }
+
 
