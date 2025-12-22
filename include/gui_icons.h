@@ -21,8 +21,13 @@ const Icon ICONS[] = {
     {25, 28, 25, 17}, // R1
     {0, 46, 22, 12},  // Select
     {22, 46, 22, 12}, // Start
-    {0, 60, 10, 10}   // Enabled
+    {0, 60, 10, 10},  // Enabled
+    {0, 75, 25, 25},  // Up
+    {25, 75, 25, 25}, // Down
+    {50, 75, 25, 25}, // Left
+    {75, 75, 25, 25}  // Right
 };
+
 
 unsigned int SIZE_ICONS_PNG = 7016;
 unsigned char ICONS_PNG[] __attribute__((aligned(16))) = {
