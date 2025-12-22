@@ -6,16 +6,16 @@
 
 ThemeColors currentTheme;
 
-void setDefaultSkin(void) {
+void setDefaultSkin() {
     currentTheme.background   = BGColor;
     currentTheme.headerText   = HeaderTextColor;
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
-    currentTheme.optionText   = FontMainColor;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
-    currentTheme.coverFrame   = FontMainColor;
-    currentTheme.iconFrame    = FontMainColor;
+    currentTheme.coverFrame   = ColorGrey;
+    currentTheme.iconFrame    = ColorGrey;
 }
+
 
 // TODO: implementar loadSkin() y saveSkin() con parseo simple de skin.yaml
