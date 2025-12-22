@@ -64,7 +64,6 @@ int loadSkin(const char *path) {
             else if (strcmp(key, "headerText")   == 0) currentTheme.headerText   = value;
             else if (strcmp(key, "listText")     == 0) currentTheme.listText     = value;
             else if (strcmp(key, "selectedText") == 0) currentTheme.selectedText = value;
-            else if (strcmp(key, "optionText")   == 0) currentTheme.optionText   = value;
             else if (strcmp(key, "warnText")     == 0) currentTheme.warnText     = value;
             else if (strcmp(key, "errorText")    == 0) currentTheme.errorText    = value;
             else if (strcmp(key, "coverFrame")   == 0) currentTheme.coverFrame   = value;
