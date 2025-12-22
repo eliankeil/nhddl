@@ -6,6 +6,7 @@
 #include <libpad.h>
 #include "skin_layout.h"
 #include "pad.h"
+#include "icons.h"
 
 extern GSGLOBAL *gsGlobal;
 
