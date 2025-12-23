@@ -206,16 +206,28 @@ for (int i = 0; i < totalFields; i++) {
     uint8_t g = (color32 >> 8)  & 0xFF;
     uint8_t r = (color32)       & 0xFF;
 
-    // Armar cadena completa
+    // Preparar strings individuales para cada canal
+    char chanStr[4][8];
+    snprintf(chanStr[0], sizeof(chanStr[0]), "%02X", a);
+    snprintf(chanStr[1], sizeof(chanStr[1]), "%02X", b);
+    snprintf(chanStr[2], sizeof(chanStr[2]), "%02X", g);
+    snprintf(chanStr[3], sizeof(chanStr[3]), "%02X", r);
+
+    // Calcular ancho total y posición centrada
     char buf[32];
     snprintf(buf, sizeof(buf), "%02X   :   %02X   :   %02X   :   %02X", a, b, g, r);
-
-    // Calcular ancho y posición centrada
     int lineWidth = (int)getLineWidth(buf);
     int centerX   = (gsGlobal->Width - lineWidth) / 2;
 
+    // Determinar colores para el título
+    uint64_t nameColor;
+    if (editing) {
+        nameColor = (i == selectedIdx) ? currentTheme.selectedText : 0x80303030;
+    } else {
+        nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
+    }
+
     // Dibujar título alineado con valores
-    uint64_t nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
     drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
 
     // Dibujar iconEnabled alineado con el título
@@ -225,10 +237,31 @@ for (int i = 0; i < totalFields; i++) {
                        currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
     }
 
-    // Dibujar valores centrados en la misma línea Y
-    drawText(centerX, y, 0, 0, 0,
-             (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
-             buf);
+    // Dibujar valores canal por canal respetando espaciado
+    int curX = centerX;
+    for (int c = 0; c < 4; c++) {
+        uint64_t chanColor;
+
+        if (editing) {
+            if (i == selectedIdx && editChannel == c) {
+                chanColor = channelColors[c]; // canal activo del parámetro seleccionado
+            } else if (i == selectedIdx) {
+                chanColor = currentTheme.selectedText; // parámetro seleccionado pero canal no activo
+            } else {
+                chanColor = 0x80303030; // parámetros no seleccionados
+            }
+        } else {
+            chanColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
+        }
+
+        drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
+        curX += getLineWidth(chanStr[c]);
+
+        if (c < 3) {
+            drawText(curX, y, 0, 0, 0, currentTheme.listText, "   :   ");
+            curX += getLineWidth("   :   ");
+        }
+    }
 
     // Dibujar preview alineado con los valores
     int prevW = 140;
@@ -398,14 +431,17 @@ if (!editing) {
 } else {
     // EDITANDO: usar pollInput para permitir aceleración continua
     int editInput = pollInput();
+  
+// CROSS: confirmar edición, guardar y salir (flanco)
+if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
+    // Guardar inmediatamente después de confirmar
+    saveSkin("mc0:/APP_NHDDL/skin.yaml");
+    editing = 0;          // salir de modo edición
+    repeatCounter = 0;
+    prevInput = editInput;
+    continue;
+}
 
-    // CROSS: confirmar edición y salir (flanco)
-    if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
-        editing = 0;
-        repeatCounter = 0;
-        prevInput = editInput;
-        continue;
-    }
 
     // TRIANGLE: salir sin guardar (flanco)
     if ((editInput & PAD_TRIANGLE) && !(prevInput & PAD_TRIANGLE)) {
