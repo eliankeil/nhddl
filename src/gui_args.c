@@ -93,7 +93,7 @@ int gcDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int max
     if (arg->state & gcValueMap[idx].mode) {
       drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
     }
-    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.iconEnabled : currentTheme.listText),
+    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.selectedText : currentTheme.listText),
                  gcValueMap[idx].name);
   }
 
@@ -207,7 +207,7 @@ int gsmDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int ma
     if (arg->state & gsmValueMap[idx].mode) {
       drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
     }
-    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.iconEnabled : currentTheme.listText),
+    y = drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, (((arg->activeElementIdx == idx) && isActive) ? currentTheme.selectedText : currentTheme.listText),
                  gsmValueMap[idx].name);
   }
 
@@ -414,7 +414,7 @@ int toggleDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int
   // Draw argument
   if (arg->state)
     drawIconWindow(x, y, 20, y + getFontLineHeight(), 0, currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
-  return drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, ((isActive) ? currentTheme.selectedText : currentTheme.iconEnabled), arg->name);
+  return drawText(x + getIconWidth(ICON_ENABLED), y, 0, 0, 0, ((isActive) ? currentTheme.selectedText : currentTheme.listText), arg->name);
 }
 
 ActionType toggleInput(NeutrinoArgument *arg, int input) {
