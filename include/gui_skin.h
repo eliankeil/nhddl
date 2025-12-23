@@ -4,13 +4,13 @@
 
 typedef struct {
     uint64_t background;
-    uint64_t headerText;
     uint64_t listText;
     uint64_t selectedText;
+    uint64_t headerText;
+    uint64_t iconEnabled;
+    uint64_t coverFrame;
     uint64_t warnText;
     uint64_t errorText;
-    uint64_t coverFrame;
-    uint64_t iconFrame;
 } ThemeColors;
 
 extern ThemeColors currentTheme;
