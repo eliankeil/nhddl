@@ -257,7 +257,7 @@ if (!editing) {
         getIconWidth(ICON_START) + 5 + getLineWidth(msgStart) + 40 +
         getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
         getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
-        getIconWidth(ICON_UP) + 10 + getIconWidth(ICON_DOWN) + 5 + getLineWidth(msgNavigate) + 40;
+        getIconWidth(ICON_UPDOWN) + 5 + getLineWidth(msgNavigate) + 40;
 
     int curX = (gsGlobal->Width - totalWidth) / 2;
 
@@ -295,11 +295,8 @@ if (!editing) {
 
     // UP/DOWN → Navigate
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_UP);
-    curX += getIconWidth(ICON_UP) + 10;
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_DOWN);
-    curX += getIconWidth(ICON_DOWN) + 5;
+                   FontMainColor, ALIGN_CENTER, ICON_UPDOWN);
+    curX += getIconWidth(ICON_UPDOWN) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgNavigate);
     curX += getLineWidth(msgNavigate) + 40;
@@ -315,7 +312,7 @@ if (!editing) {
         getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
         getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
         getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
-        getIconWidth(ICON_LEFT) + 10 + getIconWidth(ICON_RIGHT) + 5 + getLineWidth(msgChange) + 40;
+        getIconWidth(ICON_LEFTRIGHT) + 5 + getLineWidth(msgChange) + 40;
 
     int curX = (gsGlobal->Width - totalWidth) / 2;
 
@@ -345,11 +342,8 @@ if (!editing) {
 
     // LEFT/RIGHT → Change
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_LEFT);
-    curX += getIconWidth(ICON_LEFT) + 10;
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_RIGHT);
-    curX += getIconWidth(ICON_RIGHT) + 5;
+                   FontMainColor, ALIGN_CENTER, ICON_LEFTRIGHT);
+    curX += getIconWidth(ICON_LEFTRIGHT) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgChange);
     curX += getLineWidth(msgChange) + 40;
