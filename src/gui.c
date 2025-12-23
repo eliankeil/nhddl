@@ -297,11 +297,14 @@ int uiLoop(TargetList *titles) {
 }
 else if (input & PAD_START) {
     break;
-}
-else if (input & PAD_SELECT) {
-    if ((res = uiSkinOptionsLoop()) < 0) {
-        return -1;
-    }
+} else if (input & PAD_SELECT) {
+    ExitCode skinExit = uiSkinOptionsLoop();
+    input = -1;
+    prevInput = 0;
+
+    // Si el editor devolvió SAVE o CANCEL, simplemente volvés al título principal
+    // No hagas return -1 ni break, porque eso cierra toda la UI
+    continue;
   }
 }
     
