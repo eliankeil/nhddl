@@ -135,31 +135,32 @@ int prevInput = 0;
 
 // Header dinámico según estado
 if (!editing) {
-    // Navegación normal → mostrar Skin Editor centrado
     drawTextWindow(0, headerHeight - getFontLineHeight(),
                    gsGlobal->Width, 0, 0,
                    currentTheme.headerText, ALIGN_HCENTER,
                    "Skin Editor");
 } else {
-    // Edición → mostrar L1 Select Color Channel R1
+    // Texto con íconos L1 y R1 centrados
+    const char *msg = "Select Color Channel";
+    int textWidth = getLineWidth(msg);
+    int totalWidth = getIconWidth(ICON_L1) + 10 + textWidth + 10 + getIconWidth(ICON_R1);
+    int startX = (gsGlobal->Width - totalWidth) / 2;
     int baseY = headerHeight - getFontLineHeight();
-    int curX  = keepoutArea + 10;
 
     // Ícono L1
-    drawIconWindow(curX, baseY, 0, headerHeight, 0,
+    drawIconWindow(startX, baseY, 0, headerHeight, 0,
                    FontMainColor, ALIGN_CENTER, ICON_L1);
-    curX += getIconWidth(ICON_L1) + 10;
+    startX += getIconWidth(ICON_L1) + 10;
 
-    // Texto Select Color Channel
-    drawTextWindow(curX, baseY, gsGlobal->Width, headerHeight, 0,
-                   currentTheme.headerText, ALIGN_VCENTER,
-                   "Select Color Channel");
-    curX += getLineWidth("Select Color Channel") + 10;
+    // Texto centrado
+    drawText(startX, baseY, 0, 0, 0, currentTheme.headerText, msg);
+    startX += textWidth + 10;
 
     // Ícono R1
-    drawIconWindow(curX, baseY, 0, headerHeight, 0,
+    drawIconWindow(startX, baseY, 0, headerHeight, 0,
                    FontMainColor, ALIGN_CENTER, ICON_R1);
 }
+
 
 // Lista de parámetros centrados con margen fijo
 int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
@@ -246,6 +247,19 @@ int baseY = gsGlobal->Height - footerHeight;
 int curX  = keepoutArea + 10;
 
 if (!editing) {
+const char *msgCross = "Save";
+const char *msgTriangle = "Cancel";
+const char *msgSquare = "Reset";
+const char *msgChange = "Change";
+
+int totalWidth = getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
+                 getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
+                 getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
+                 getIconWidth(ICON_LEFT) + 10 + getIconWidth(ICON_RIGHT) + 5 + getLineWidth(msgChange) + 40;
+
+int curX = (gsGlobal->Width - totalWidth) / 2;
+int baseY = gsGlobal->Height - footerHeight;
+
     // Estado navegación
     // CROSS → Editar
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
