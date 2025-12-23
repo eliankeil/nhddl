@@ -19,7 +19,7 @@ void setDefaultSkin() {
     currentTheme.selectedText = ColorSelected;
     currentTheme.headerText   = HeaderTextColor;
     currentTheme.iconEnabled  = ColorSelected;
-    currentTheme.coverFrame   = ColorGrey;
+    currentTheme.coverFrame   = FontMainColor;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
 }
@@ -39,8 +39,8 @@ int saveSkin(const char *path) {
     fprintf(f, "listText:     0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)FontMainColor);
     fprintf(f, "selectedText: 0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorSelected);
     fprintf(f, "headerText:   0x%08X # Original: 0x%08X\n", (unsigned int)HeaderTextColor, (unsigned int)HeaderTextColor);
-    fprintf(f, "iconEnabled:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
-    fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
+    fprintf(f, "iconEnabled:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorGrey);
+    fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)ColorGrey);
     fprintf(f, "warnText:     0x%08X # Original: 0x%08X\n", (unsigned int)WarnTextColor, (unsigned int)WarnTextColor);
     fprintf(f, "errorText:    0x%08X # Original: 0x%08X\n", (unsigned int)ErrorTextColor, (unsigned int)ErrorTextColor);
 
@@ -121,8 +121,8 @@ const uint64_t defaults[8] = {
     (uint64_t)FontMainColor,  // listText
     (uint64_t)ColorSelected,  // selectedText
     (uint64_t)HeaderTextColor,// headerText
-    (uint64_t)ColorGrey,      // iconEnabled
-    (uint64_t)ColorGrey,      // coverFrame
+    (uint64_t)ColorSelected,  // iconEnabled
+    (uint64_t)FontMainColor,  // coverFrame
     (uint64_t)WarnTextColor,  // warnText
     (uint64_t)ErrorTextColor  // errorText
 };
