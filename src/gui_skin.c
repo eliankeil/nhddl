@@ -105,15 +105,21 @@ uint64_t *values[] = {
 };
 
 int totalFields = sizeof(fields) / sizeof(fields[0]);
-int uiSkinOptionsLoop() {
-  int res = 0; 
-  int input = 0;
-  int selectedIdx = 0;
-  int editing = 0;       // 0 = navegando, 1 = editando parámetro
-  int editChannel = 0;   // 0=A, 1=B, 2=G, 3=R
-  int repeatCounter = 0;
-  const int repeatDelay = 20; // ~1s a 60fps
-  const int repeatSpeed = 2;  // cada 2 frames después del delay
+
+ExitCode uiSkinOptionsLoop(void) {
+    int input = 0;
+    int selectedIdx = 0;
+    int editing = 0;       // 0 = navegando, 1 = editando parámetro
+    int editChannel = 0;   // 0=A, 1=B, 2=G, 3=R
+    int repeatCounter = 0;
+    const int repeatDelay = 20; // ~1s a 60fps
+    const int repeatSpeed = 2;  // cada 2 frames después del delay
+
+    // Estado anterior del mando para detectar flancos
+    int prevInput = 0;
+
+    // … resto del cuerpo de la función …
+}
 
   // Defaults por índice de parámetro (en orden de fields[])
 const uint64_t defaults[8] = {
