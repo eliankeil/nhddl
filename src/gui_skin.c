@@ -139,8 +139,13 @@ int prevInput = 0;
                        currentTheme.headerText, ALIGN_HCENTER,
                        "Skin Configuration");
 
-// Lista de parámetros
-int y = headerHeight + getFontLineHeight();
+// Lista de parámetros centrados con margen fijo
+int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
+int blockHeight = totalFields * lineSpacing;
+int availableHeight = gsGlobal->Height - headerHeight - footerHeight;
+int startY = headerHeight + (availableHeight - blockHeight) / 2;
+
+int y = startY;
 for (int i = 0; i < totalFields; i++) {
     // Descomponer color en ABGR
     uint32_t color32 = (uint32_t)(*values[i]);
@@ -181,11 +186,10 @@ for (int i = 0; i < totalFields; i++) {
                       centerX + lineWidth + 20 + prevW, y + prevH,
                       0, (uint64_t)(*values[i]));
 
-    // Avanzar a la siguiente línea
-    y += getFontLineHeight();
+    // Avanzar a la siguiente línea con margen fijo
+    y += lineSpacing;
 }
-
-      
+     
         // Footer con acciones (pantalla principal del editor)
         int baseY = gsGlobal->Height - footerHeight;
         int curX  = keepoutArea + 10;
@@ -286,30 +290,30 @@ for (int i = 0; i < totalFields; i++) {
             // EDITANDO: usar pollInput para permitir aceleración continua
             int editInput = pollInput();
 
-            // CROSS: confirmar edición y salir
-            if (editInput & PAD_CROSS) {
+            // CROSS: confirmar edición y salir (flanco)
+            if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
                 editing = 0;
                 repeatCounter = 0;
                 prevInput = editInput;
                 continue;
             }
 
-            // START: guardar y salir
-            if (editInput & PAD_START) {
+            // START: guardar y salir (flanco)
+            if ((editInput & PAD_START) && !(prevInput & PAD_START)) {
                 saveSkin("mc0:/APP_NHDDL/skin.yaml");
                 break;
             }
 
-            // TRIANGLE: salir sin guardar
-            if (editInput & PAD_TRIANGLE) {
+            // TRIANGLE: salir sin guardar (flanco)
+            if ((editInput & PAD_TRIANGLE) && !(prevInput & PAD_TRIANGLE)) {
                 editing = 0;
                 repeatCounter = 0;
                 prevInput = editInput;
                 continue;
             }
 
-            // SQUARE: reset SOLO el parámetro seleccionado
-            if (editInput & PAD_SQUARE) {
+            // SQUARE: reset SOLO el parámetro seleccionado (flanco)
+            if ((editInput & PAD_SQUARE) && !(prevInput & PAD_SQUARE)) {
                 *values[selectedIdx] = defaults[selectedIdx];
                 repeatCounter = 0;
                 prevInput = editInput;
@@ -358,6 +362,3 @@ for (int i = 0; i < totalFields; i++) {
     }
     return res;
 }
-
-
-
