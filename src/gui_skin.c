@@ -145,6 +145,35 @@ int blockHeight = totalFields * lineSpacing;
 int availableHeight = gsGlobal->Height - headerHeight - footerHeight;
 int startY = headerHeight + (availableHeight - blockHeight) / 2;
 
+// Dibujar encabezado de canales ABGR
+const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
+uint64_t channelColors[4] = {
+    ColorGrey,   // Alpha resaltado en gris oscuro
+    0xFF0000FF,  // Blue resaltado en azul (ABGR)
+    0xFF00FF00,  // Green resaltado en verde
+    0xFFFF0000   // Red resaltado en rojo
+};
+
+// Calcular posición centrada para el encabezado
+char headerBuf[64];
+snprintf(headerBuf, sizeof(headerBuf), "%s   %s   %s   %s",
+         channelLabels[0], channelLabels[1], channelLabels[2], channelLabels[3]);
+
+int headerWidth = (int)getLineWidth(headerBuf);
+int headerX = (gsGlobal->Width - headerWidth) / 2;
+int headerY = startY - getFontLineHeight() - 5; // un poco arriba del primer valor
+
+// Dibujar cada palabra con su color correspondiente
+int curX = headerX;
+for (int c = 0; c < 4; c++) {
+    uint64_t color = currentTheme.headerText; // por defecto headerText
+    if (editing && editChannel == c) {
+        color = channelColors[c]; // resaltar canal activo
+    }
+    drawText(curX, headerY, 0, 0, 0, color, channelLabels[c]);
+    curX += getLineWidth(channelLabels[c]) + getLineWidth("   "); // espacio entre palabras
+}
+
 int y = startY;
 for (int i = 0; i < totalFields; i++) {
     // Descomponer color en ABGR
