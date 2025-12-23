@@ -23,10 +23,8 @@ typedef enum {
   ICON_SELECT,
   ICON_START,
   ICON_ENABLED,
-  ICON_UP,
-  ICON_DOWN,
-  ICON_LEFT,
-  ICON_RIGHT
+  ICON_UPDOWN,
+  ICON_LEFTRIGHT
 } IconType;
 
 const Icon ICONS[] = {
