@@ -725,7 +725,7 @@ void uiSplashThread() {
   gsKit_clear(gsGlobal, currentTheme.background);
   drawLogo((gsGlobal->Width - getLogoWidth()) / 2, gsGlobal->Height / 4, 2);
   drawTextWindow(0, (gsGlobal->Height / 4 + getLogoHeight() + 10), gsGlobal->Width, 0, 0, GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80), ALIGN_HCENTER,
-                 GIT_VERSION);
+                 SKIN_EDITION);
   gsKit_mode_switch(gsGlobal, GS_ONESHOT);
 
   drawGameID("NHDDL");
