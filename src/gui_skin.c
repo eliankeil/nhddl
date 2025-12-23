@@ -133,11 +133,33 @@ int prevInput = 0;
     while (1) {
         gsKit_clear(gsGlobal, currentTheme.background);
 
-        // Header
-        drawTextWindow(0, headerHeight - getFontLineHeight(),
-                       gsGlobal->Width, 0, 0,
-                       currentTheme.headerText, ALIGN_HCENTER,
-                       "Skin Editor");
+// Header dinámico según estado
+if (!editing) {
+    // Navegación normal → mostrar Skin Editor centrado
+    drawTextWindow(0, headerHeight - getFontLineHeight(),
+                   gsGlobal->Width, 0, 0,
+                   currentTheme.headerText, ALIGN_HCENTER,
+                   "Skin Editor");
+} else {
+    // Edición → mostrar L1 Select Color Channel R1
+    int baseY = headerHeight - getFontLineHeight();
+    int curX  = keepoutArea + 10;
+
+    // Ícono L1
+    drawIconWindow(curX, baseY, 0, headerHeight, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_L1);
+    curX += getIconWidth(ICON_L1) + 10;
+
+    // Texto Select Color Channel
+    drawTextWindow(curX, baseY, gsGlobal->Width, headerHeight, 0,
+                   currentTheme.headerText, ALIGN_VCENTER,
+                   "Select Color Channel");
+    curX += getLineWidth("Select Color Channel") + 10;
+
+    // Ícono R1
+    drawIconWindow(curX, baseY, 0, headerHeight, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_R1);
+}
 
 // Lista de parámetros centrados con margen fijo
 int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
@@ -161,7 +183,7 @@ snprintf(headerBuf, sizeof(headerBuf), "%s   %s   %s   %s",
 
 int headerWidth = (int)getLineWidth(headerBuf);
 int headerX = (gsGlobal->Width - headerWidth) / 2;
-int headerY = startY - getFontLineHeight() - 5; // un poco arriba del primer valor
+int headerY = startY - lineSpacing;
 
 // Dibujar cada palabra con su color correspondiente
 int curXHeader = headerX;
