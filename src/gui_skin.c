@@ -18,7 +18,7 @@ void setDefaultSkin() {
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
     currentTheme.headerText   = HeaderTextColor;
-    currentTheme.iconEnabled  = ColorSelected;
+    currentTheme.iconEnabled  = 0x80847200;
     currentTheme.coverFrame   = FontMainColor;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
