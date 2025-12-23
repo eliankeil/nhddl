@@ -105,7 +105,11 @@ uint64_t *values[] = {
 };
 
 int totalFields = sizeof(fields) / sizeof(fields[0]);
-
+int uiSkinOptionsLoop() {
+  int res = 0; 
+  int input = 0;
+  int selectedIdx = 0;
+  
     while (1) {
         gsKit_clear(gsGlobal, currentTheme.background);
 
