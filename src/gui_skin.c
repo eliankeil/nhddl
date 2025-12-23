@@ -244,56 +244,57 @@ for (int i = 0; i < totalFields; i++) {
      
 // Footer dinámico según estado
 int baseY = gsGlobal->Height - footerHeight;
-int curX  = keepoutArea + 10;
 
 if (!editing) {
-const char *msgCross = "Save";
-const char *msgTriangle = "Cancel";
-const char *msgSquare = "Reset";
-const char *msgChange = "Change";
-
-int totalWidth = getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
-                 getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
-                 getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
-                 getIconWidth(ICON_LEFT) + 10 + getIconWidth(ICON_RIGHT) + 5 + getLineWidth(msgChange) + 40;
-
-int curX = (gsGlobal->Width - totalWidth) / 2;
-int baseY = gsGlobal->Height - footerHeight;
-
     // Estado navegación
-    // CROSS → Editar
+    const char *msgCross    = "Edit";
+    const char *msgStart    = "Save";
+    const char *msgTriangle = "Cancel";
+    const char *msgSquare   = "Reset";
+    const char *msgNavigate = "Navigate";
+
+    int totalWidth =
+        getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
+        getIconWidth(ICON_START) + 5 + getLineWidth(msgStart) + 40 +
+        getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
+        getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
+        getIconWidth(ICON_UP) + 10 + getIconWidth(ICON_DOWN) + 5 + getLineWidth(msgNavigate) + 40;
+
+    int curX = (gsGlobal->Width - totalWidth) / 2;
+
+    // CROSS → Edit
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_CROSS);
     curX += getIconWidth(ICON_CROSS) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Edit");
-    curX += getLineWidth("Edit") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgCross);
+    curX += getLineWidth(msgCross) + 40;
 
-    // START → Guardar
+    // START → Save
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_START);
     curX += getIconWidth(ICON_START) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Save");
-    curX += getLineWidth("Save") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgStart);
+    curX += getLineWidth(msgStart) + 40;
 
-    // TRIANGLE → Cancelar
+    // TRIANGLE → Cancel
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
     curX += getIconWidth(ICON_TRIANGLE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Cancel");
-    curX += getLineWidth("Cancel") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgTriangle);
+    curX += getLineWidth(msgTriangle) + 40;
 
     // SQUARE → Reset
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_SQUARE);
     curX += getIconWidth(ICON_SQUARE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Reset");
-    curX += getLineWidth("Reset") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgSquare);
+    curX += getLineWidth(msgSquare) + 40;
 
-    // UP/DOWN → Navegar
+    // UP/DOWN → Navigate
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_UP);
     curX += getIconWidth(ICON_UP) + 10;
@@ -301,36 +302,49 @@ int baseY = gsGlobal->Height - footerHeight;
                    FontMainColor, ALIGN_CENTER, ICON_DOWN);
     curX += getIconWidth(ICON_DOWN) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
-    curX += getLineWidth("Navigate") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgNavigate);
+    curX += getLineWidth(msgNavigate) + 40;
 
 } else {
     // Estado edición
+    const char *msgCross    = "Save";
+    const char *msgTriangle = "Cancel";
+    const char *msgSquare   = "Reset";
+    const char *msgChange   = "Change";
+
+    int totalWidth =
+        getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
+        getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
+        getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
+        getIconWidth(ICON_LEFT) + 10 + getIconWidth(ICON_RIGHT) + 5 + getLineWidth(msgChange) + 40;
+
+    int curX = (gsGlobal->Width - totalWidth) / 2;
+
     // CROSS → Save
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_CROSS);
     curX += getIconWidth(ICON_CROSS) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Save");
-    curX += getLineWidth("Save") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgCross);
+    curX += getLineWidth(msgCross) + 40;
 
-    // TRIANGLE → Cancelar
+    // TRIANGLE → Cancel
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
     curX += getIconWidth(ICON_TRIANGLE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Cancel");
-    curX += getLineWidth("Cancel") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgTriangle);
+    curX += getLineWidth(msgTriangle) + 40;
 
     // SQUARE → Reset
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_SQUARE);
     curX += getIconWidth(ICON_SQUARE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Reset");
-    curX += getLineWidth("Reset") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgSquare);
+    curX += getLineWidth(msgSquare) + 40;
 
-    // LEFT/RIGHT → Cambiar valor
+    // LEFT/RIGHT → Change
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    FontMainColor, ALIGN_CENTER, ICON_LEFT);
     curX += getIconWidth(ICON_LEFT) + 10;
@@ -338,8 +352,8 @@ int baseY = gsGlobal->Height - footerHeight;
                    FontMainColor, ALIGN_CENTER, ICON_RIGHT);
     curX += getIconWidth(ICON_RIGHT) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Change");
-    curX += getLineWidth("Change") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, msgChange);
+    curX += getLineWidth(msgChange) + 40;
 }
 
         gsKit_queue_exec(gsGlobal);
