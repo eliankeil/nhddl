@@ -15,13 +15,13 @@ ThemeColors currentTheme;
 // Inicializa los colores por defecto en currentTheme
 void setDefaultSkin() {
     currentTheme.background   = BGColor;
-    currentTheme.headerText   = HeaderTextColor;
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
+    currentTheme.headerText   = HeaderTextColor;
+    currentTheme.iconEnable    = ColorGrey;
+    currentTheme.coverFrame   = ColorGrey;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
-    currentTheme.coverFrame   = ColorGrey;
-    currentTheme.iconFrame    = ColorGrey;
 }
 
 // Genera skin.yaml con los valores por defecto y comentarios
@@ -36,13 +36,13 @@ int saveSkin(const char *path) {
     fprintf(f, "# Colores en formato ABGR (0xAABBGGRR)\n\n");
 
     fprintf(f, "background:   0x%08X # Original: 0x%08X\n", (unsigned int)BGColor, (unsigned int)BGColor);
-    fprintf(f, "headerText:   0x%08X # Original: 0x%08X\n", (unsigned int)HeaderTextColor, (unsigned int)HeaderTextColor);
     fprintf(f, "listText:     0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)FontMainColor);
     fprintf(f, "selectedText: 0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorSelected);
+    fprintf(f, "headerText:   0x%08X # Original: 0x%08X\n", (unsigned int)HeaderTextColor, (unsigned int)HeaderTextColor);
+    fprintf(f, "iconEnable:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
+    fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
     fprintf(f, "warnText:     0x%08X # Original: 0x%08X\n", (unsigned int)WarnTextColor, (unsigned int)WarnTextColor);
     fprintf(f, "errorText:    0x%08X # Original: 0x%08X\n", (unsigned int)ErrorTextColor, (unsigned int)ErrorTextColor);
-    fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
-    fprintf(f, "iconFrame:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
 
     fclose(f);
     return 0;
@@ -67,13 +67,13 @@ int loadSkin(const char *path) {
         // Parsear "clave:" y "0xHEX" ignorando todo lo posterior
         if (sscanf(line, "%63[^:]: 0x%08X", key, &value) == 2) {
             if      (strcmp(key, "background")   == 0) currentTheme.background   = value;
-            else if (strcmp(key, "headerText")   == 0) currentTheme.headerText   = value;
             else if (strcmp(key, "listText")     == 0) currentTheme.listText     = value;
             else if (strcmp(key, "selectedText") == 0) currentTheme.selectedText = value;
+            else if (strcmp(key, "headerText")   == 0) currentTheme.headerText   = value;
+            else if (strcmp(key, "iconEnable")    == 0) currentTheme.iconEnable    = value;
+            else if (strcmp(key, "coverFrame")   == 0) currentTheme.coverFrame   = value;
             else if (strcmp(key, "warnText")     == 0) currentTheme.warnText     = value;
             else if (strcmp(key, "errorText")    == 0) currentTheme.errorText    = value;
-            else if (strcmp(key, "coverFrame")   == 0) currentTheme.coverFrame   = value;
-            else if (strcmp(key, "iconFrame")    == 0) currentTheme.iconFrame    = value;
         }
     }
 
@@ -81,24 +81,30 @@ int loadSkin(const char *path) {
     return 0;
 }
 
-// Editor de Skin con edición por canal ABGR
-int uiSkinOptionsLoop() {
-    int res = 0;
-    int input = 0;
-    int selectedIdx = 0;
+// Campos del skin (labels visibles en pantalla)
+const char *fields[] = {
+    "Background",
+    "Titles|Options Text",
+    "Selected Text",
+    "Secondary Text",
+    "Enable Icon",
+    "Cover Art Border",
+    "Warning Text",
+    "Error Text"
+};
 
-    // Campos del skin
-    const char *fields[] = {
-        "background", "headerText", "listText",
-        "selectedText", "warnText", "errorText",
-        "coverFrame", "iconFrame"
-    };
-    uint64_t *values[] = {
-        &currentTheme.background, &currentTheme.headerText, &currentTheme.listText,
-        &currentTheme.selectedText, &currentTheme.warnText, &currentTheme.errorText,
-        &currentTheme.coverFrame, &currentTheme.iconFrame
-    };
-    int totalFields = sizeof(fields) / sizeof(fields[0]);
+uint64_t *values[] = {
+    &currentTheme.background,
+    &currentTheme.listText,
+    &currentTheme.selectedText,
+    &currentTheme.headerText,
+    &currentTheme.iconEnable,
+    &currentTheme.coverFrame,
+    &currentTheme.warnText,
+    &currentTheme.errorText
+};
+
+int totalFields = sizeof(fields) / sizeof(fields[0]);
 
     while (1) {
         gsKit_clear(gsGlobal, currentTheme.background);
@@ -126,7 +132,7 @@ int uiSkinOptionsLoop() {
 
         // CROSS → Editar
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
+                       FontMainColor, ALIGN_CENTER, ICON_CROSS);
         curX += getIconWidth(ICON_CROSS) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Editar");
@@ -134,7 +140,7 @@ int uiSkinOptionsLoop() {
 
         // START → Guardar
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+                       FontMainColor, ALIGN_CENTER, ICON_START);
         curX += getIconWidth(ICON_START) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Guardar");
@@ -142,7 +148,7 @@ int uiSkinOptionsLoop() {
 
         // TRIANGLE → Cancelar
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_TRIANGLE);
+                       FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
         curX += getIconWidth(ICON_TRIANGLE) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
@@ -150,7 +156,7 @@ int uiSkinOptionsLoop() {
 
         // SQUARE → Reset
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_SQUARE);
+                       FontMainColor, ALIGN_CENTER, ICON_SQUARE);
         curX += getIconWidth(ICON_SQUARE) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Reset");
@@ -158,10 +164,10 @@ int uiSkinOptionsLoop() {
 
         // UP/DOWN → Navegar
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_UP);
+                       FontMainColor, ALIGN_CENTER, ICON_UP);
         curX += getIconWidth(ICON_UP) + 10;
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_DOWN);
+                       FontMainColor, ALIGN_CENTER, ICON_DOWN);
         curX += getIconWidth(ICON_DOWN) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                currentTheme.headerText, ALIGN_VCENTER, "Navegar");
@@ -169,10 +175,10 @@ int uiSkinOptionsLoop() {
 
         // LEFT/RIGHT → Cambiar opción
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_LEFT);
+                       FontMainColor, ALIGN_CENTER, ICON_LEFT);
         curX += getIconWidth(ICON_LEFT) + 10;
         drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       currentTheme.iconFrame, ALIGN_CENTER, ICON_RIGHT);
+                       FontMainColor, ALIGN_CENTER, ICON_RIGHT);
         curX += getIconWidth(ICON_RIGHT) + 5;
         drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                        currentTheme.headerText, ALIGN_VCENTER, "Cambiar opción");
@@ -232,32 +238,32 @@ int uiSkinOptionsLoop() {
 
                 // L1/R1 → Cambiar canal
                 drawIconWindow(subBaseX, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_L1);
+                               FontMainColor, ALIGN_CENTER, ICON_L1);
                 drawIconWindow(subBaseX + getIconWidth(ICON_L1) + 10, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_R1);
+                               FontMainColor, ALIGN_CENTER, ICON_R1);
                 drawTextWindow(subBaseX + getIconWidth(ICON_L1) + getIconWidth(ICON_R1) + 20, subBaseY,
                                0, gsGlobal->Height - 1, 0,
                                currentTheme.headerText, ALIGN_VCENTER, "Cambiar canal");
 
                 // LEFT/RIGHT → Ajustar valor
                 drawIconWindow(subBaseX + 250, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_LEFT);
+                               FontMainColor, ALIGN_CENTER, ICON_LEFT);
                 drawIconWindow(subBaseX + 250 + getIconWidth(ICON_LEFT) + 10, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_RIGHT);
+                               FontMainColor, ALIGN_CENTER, ICON_RIGHT);
                 drawTextWindow(subBaseX + 250 + getIconWidth(ICON_LEFT) + getIconWidth(ICON_RIGHT) + 20, subBaseY,
                                0, gsGlobal->Height - 1, 0,
                                currentTheme.headerText, ALIGN_VCENTER, "Ajustar valor");
 
                 // START → OK
                 drawIconWindow(subBaseX + 500, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+                               FontMainColor, ALIGN_CENTER, ICON_START);
                 drawTextWindow(subBaseX + 500 + getIconWidth(ICON_START) + 5, subBaseY,
                                0, gsGlobal->Height - 1, 0,
                                currentTheme.headerText, ALIGN_VCENTER, "OK");
 
                 // TRIANGLE → Cancelar
                 drawIconWindow(subBaseX + 700, subBaseY, 0, gsGlobal->Height, 0,
-                               currentTheme.iconFrame, ALIGN_CENTER, ICON_TRIANGLE);
+                               FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
                 drawTextWindow(subBaseX + 700 + getIconWidth(ICON_TRIANGLE) + 5, subBaseY,
                                0, gsGlobal->Height - 1, 0,
                                currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
