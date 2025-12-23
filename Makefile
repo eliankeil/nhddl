@@ -21,7 +21,7 @@ IRX_FILES += ps2hdd.irx ps2fs.irx
 ELF_FILES += loader.elf
 
 EE_LIBS = -ldebug -lfileXio -lpatches -lgskit_toolkit -lgskit -ldmakit -lpng -lz -ltiff -lpad
-EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\""
+EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\"" -DSKIN_EDITION="\"Skin Experimental Edition\""
 
 EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
@@ -59,7 +59,7 @@ loader/loader.elf: loader
 # smap_udpbd.irx
 iop/smap_udpbd/smap_udpbd.irx: iop/smap_udpbd
 	$(MAKE) -C $<
-
+	
 %smap_udpbd_irx.c: iop/smap_udpbd/smap_udpbd.irx
 	$(BIN2C) iop/smap_udpbd/$(*:$(EE_SRC_DIR)%=%)smap_udpbd.irx $@ $(*:$(EE_SRC_DIR)%=%)smap_udpbd_irx
 
