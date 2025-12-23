@@ -289,13 +289,9 @@ int uiLoop(TargetList *titles) {
                 selectedTitleIdx = 0;
         }
     } else if (input & PAD_TRIANGLE) {
-        input = -1;    // Force UI loop to wait once uiTitleOptionsLoop returns
-        prevInput = 0; // Reset previous input
-        // Enter title options screen
-        if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
-            // Something went wrong, main loop must exit immediately
-            return -1;
-        }
+    // Cancelar y volver al menú principal
+    res = 0;   // o EXIT_CANCEL si definís un enum
+    break;
     } else if (input & PAD_START) {
         // Quit
         break;
