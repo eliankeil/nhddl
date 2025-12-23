@@ -127,60 +127,56 @@ int uiSkinOptionsLoop() {
         // Lista de parámetros
         int y = headerHeight + getFontLineHeight();
         for (int i = 0; i < totalFields; i++) {
-// Label del parámetro
-uint64_t nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
-y = drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
+            // Label del parámetro
+            uint64_t nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
+            y = drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
 
-// Descomponer color en ABGR
-uint32_t color32 = (uint32_t)(*values[i]);
-uint8_t a = (color32 >> 24) & 0xFF;
-uint8_t b = (color32 >> 16) & 0xFF;
-uint8_t g = (color32 >> 8)  & 0xFF;
-uint8_t r = (color32)       & 0xFF;
+            // Descomponer color en ABGR
+            uint32_t color32 = (uint32_t)(*values[i]);
+            uint8_t a = (color32 >> 24) & 0xFF;
+            uint8_t b = (color32 >> 16) & 0xFF;
+            uint8_t g = (color32 >> 8)  & 0xFF;
+            uint8_t r = (color32)       & 0xFF;
 
-char bufAA[4], bufBB[4], bufGG[4], bufRR[4];
-snprintf(bufAA, sizeof(bufAA), "%02X", a);
-snprintf(bufBB, sizeof(bufBB), "%02X", b);
-snprintf(bufGG, sizeof(bufGG), "%02X", g);
-snprintf(bufRR, sizeof(bufRR), "%02X", r);
+            // Armar cadena completa
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%02X : %02X : %02X : %02X", a, b, g, r);
 
-// Colores de cada canal
-uint64_t chColorAA = currentTheme.listText;
-uint64_t chColorBB = currentTheme.listText;
-uint64_t chColorGG = currentTheme.listText;
-uint64_t chColorRR = currentTheme.listText;
+            // Calcular ancho y posición centrada
+            int lineWidth = (int)getLineWidth(buf);
+            int centerX   = (gsGlobal->Width - lineWidth) / 2;
 
-if (editing && i == selectedIdx) {
-    // Mostrar iconEnabled a la izquierda
-    drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 5,
-                   y - getFontLineHeight(), 0, y, 0,
-                   currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
+            // Colores de cada canal
+            uint64_t chColorAA = currentTheme.listText;
+            uint64_t chColorBB = currentTheme.listText;
+            uint64_t chColorGG = currentTheme.listText;
+            uint64_t chColorRR = currentTheme.listText;
 
-    // Resaltar canal activo
-    if (editChannel == 0) chColorAA = currentTheme.selectedText;
-    if (editChannel == 1) chColorBB = currentTheme.selectedText;
-    if (editChannel == 2) chColorGG = currentTheme.selectedText;
-    if (editChannel == 3) chColorRR = currentTheme.selectedText;
-}
+            if (editing && i == selectedIdx) {
+                // Mostrar iconEnabled a la izquierda
+                drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 5,
+                               y - getFontLineHeight(), 0, y, 0,
+                               currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
 
-// Dibujar AA : BB : GG : RR
-int vx = keepoutArea + 200; // desplazamiento a la derecha del nombre
-const char *sep = " : ";
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, chColorAA, bufAA);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, currentTheme.listText, sep);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, chColorBB, bufBB);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, currentTheme.listText, sep);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, chColorGG, bufGG);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, currentTheme.listText, sep);
-vx = drawText(vx, y - getFontLineHeight(), 0, 0, 0, chColorRR, bufRR);
+                // Resaltar canal activo
+                if (editChannel == 0) chColorAA = currentTheme.selectedText;
+                if (editChannel == 1) chColorBB = currentTheme.selectedText;
+                if (editChannel == 2) chColorGG = currentTheme.selectedText;
+                if (editChannel == 3) chColorRR = currentTheme.selectedText;
+            }
 
-// Preview a la derecha
-int prevW = 140;
-int prevH = getFontLineHeight();
-gsKit_prim_sprite(gsGlobal,
-                  vx + 30, y - getFontLineHeight(),
-                  vx + 30 + prevW, y - getFontLineHeight() + prevH,
-                  0, (uint64_t)(*values[i]));
+            // Dibujar valores centrados
+            y = drawText(centerX, y, 0, 0, 0,
+                         (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
+                         buf);
+
+            // Preview a la derecha de la cadena
+            int prevW = 140;
+            int prevH = getFontLineHeight();
+            gsKit_prim_sprite(gsGlobal,
+                              centerX + lineWidth + 20, y - getFontLineHeight(),
+                              centerX + lineWidth + 20 + prevW, y - getFontLineHeight() + prevH,
+                              0, (uint64_t)(*values[i]));
         }
       
         // Footer con acciones (pantalla principal del editor)
