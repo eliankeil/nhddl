@@ -14,6 +14,12 @@ typedef enum {
   LEVEL_WARN,         // Prints in warning color and waits for two seconds
   LEVEL_ERROR,        // Prints in error color and waits for two seconds
 } UILogLevelType;
+// Códigos de salida de la UI principal
+typedef enum {
+    EXIT_NONE   = 0,
+    EXIT_SAVE   = 1,
+    EXIT_CANCEL = 2
+} ExitCode;
 
 // Initializes and starts UI splash thread
 int startSplashScreen();
