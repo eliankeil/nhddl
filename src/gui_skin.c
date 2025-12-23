@@ -115,6 +115,21 @@ int uiSkinOptionsLoop() {
   const int repeatDelay = 20; // ~1s a 60fps
   const int repeatSpeed = 2;  // cada 2 frames después del delay
 
+  // Defaults por índice de parámetro (en orden de fields[])
+const uint64_t defaults[8] = {
+    (uint64_t)BGColor,        // background
+    (uint64_t)FontMainColor,  // listText
+    (uint64_t)ColorSelected,  // selectedText
+    (uint64_t)HeaderTextColor,// headerText
+    (uint64_t)ColorGrey,      // iconEnabled
+    (uint64_t)ColorGrey,      // coverFrame
+    (uint64_t)WarnTextColor,  // warnText
+    (uint64_t)ErrorTextColor  // errorText
+};
+
+// Estado anterior del mando para detectar flancos (solo en edición)
+int prevInput = 0;
+
     while (1) {
         gsKit_clear(gsGlobal, currentTheme.background);
 
@@ -124,60 +139,52 @@ int uiSkinOptionsLoop() {
                        currentTheme.headerText, ALIGN_HCENTER,
                        "Skin Configuration");
 
-        // Lista de parámetros
-        int y = headerHeight + getFontLineHeight();
-        for (int i = 0; i < totalFields; i++) {
-            // Label del parámetro
-            uint64_t nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
-            y = drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
+// Lista de parámetros
+int y = headerHeight + getFontLineHeight();
+for (int i = 0; i < totalFields; i++) {
+    // Descomponer color en ABGR
+    uint32_t color32 = (uint32_t)(*values[i]);
+    uint8_t a = (color32 >> 24) & 0xFF;
+    uint8_t b = (color32 >> 16) & 0xFF;
+    uint8_t g = (color32 >> 8)  & 0xFF;
+    uint8_t r = (color32)       & 0xFF;
 
-            // Descomponer color en ABGR
-            uint32_t color32 = (uint32_t)(*values[i]);
-            uint8_t a = (color32 >> 24) & 0xFF;
-            uint8_t b = (color32 >> 16) & 0xFF;
-            uint8_t g = (color32 >> 8)  & 0xFF;
-            uint8_t r = (color32)       & 0xFF;
+    // Armar cadena completa
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%02X : %02X : %02X : %02X", a, b, g, r);
 
-            // Armar cadena completa
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%02X : %02X : %02X : %02X", a, b, g, r);
+    // Calcular ancho y posición centrada
+    int lineWidth = (int)getLineWidth(buf);
+    int centerX   = (gsGlobal->Width - lineWidth) / 2;
 
-            // Calcular ancho y posición centrada
-            int lineWidth = (int)getLineWidth(buf);
-            int centerX   = (gsGlobal->Width - lineWidth) / 2;
+    // Dibujar título alineado con valores
+    uint64_t nameColor = (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText;
+    drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
 
-            // Colores de cada canal
-            uint64_t chColorAA = currentTheme.listText;
-            uint64_t chColorBB = currentTheme.listText;
-            uint64_t chColorGG = currentTheme.listText;
-            uint64_t chColorRR = currentTheme.listText;
+    // Dibujar iconEnabled alineado con el título
+    if (editing && i == selectedIdx) {
+        drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 5,
+                       y, 0, y + getFontLineHeight(), 0,
+                       currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
+    }
 
-            if (editing && i == selectedIdx) {
-                // Mostrar iconEnabled a la izquierda
-                drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 5,
-                               y - getFontLineHeight(), 0, y, 0,
-                               currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
+    // Dibujar valores centrados en la misma línea Y
+    drawText(centerX, y, 0, 0, 0,
+             (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
+             buf);
 
-                // Resaltar canal activo
-                if (editChannel == 0) chColorAA = currentTheme.selectedText;
-                if (editChannel == 1) chColorBB = currentTheme.selectedText;
-                if (editChannel == 2) chColorGG = currentTheme.selectedText;
-                if (editChannel == 3) chColorRR = currentTheme.selectedText;
-            }
+    // Dibujar preview alineado con los valores
+    int prevW = 140;
+    int prevH = getFontLineHeight();
+    gsKit_prim_sprite(gsGlobal,
+                      centerX + lineWidth + 20, y,
+                      centerX + lineWidth + 20 + prevW, y + prevH,
+                      0, (uint64_t)(*values[i]));
 
-            // Dibujar valores centrados
-            y = drawText(centerX, y, 0, 0, 0,
-                         (i == selectedIdx) ? currentTheme.selectedText : currentTheme.listText,
-                         buf);
+    // Avanzar a la siguiente línea
+    y += getFontLineHeight();
+}
 
-            // Preview a la derecha de la cadena
-            int prevW = 140;
-            int prevH = getFontLineHeight();
-            gsKit_prim_sprite(gsGlobal,
-                              centerX + lineWidth + 20, y - getFontLineHeight(),
-                              centerX + lineWidth + 20 + prevW, y - getFontLineHeight() + prevH,
-                              0, (uint64_t)(*values[i]));
-        }
       
         // Footer con acciones (pantalla principal del editor)
         int baseY = gsGlobal->Height - footerHeight;
@@ -242,68 +249,111 @@ int uiSkinOptionsLoop() {
         gsKit_sync_flip(gsGlobal);
 
         // Procesar entradas
-        input = waitForInput(-1);
+        if (!editing) {
+            input = waitForInput(-1);
 
-        // CROSS: alterna edición/confirmación del parámetro seleccionado
-        if (input & PAD_CROSS) {
-            if (!editing) {
+            // CROSS: alterna edición/confirmación del parámetro seleccionado
+            if (input & PAD_CROSS) {
                 editing = 1;
                 editChannel = 0;   // empieza en Alpha
                 repeatCounter = 0;
-            } else {
-                editing = 0;       // confirma y sale de edición
-                repeatCounter = 0;
+                prevInput = 0;     // limpiar estado anterior
             }
-        }
-        // START: guardar y salir
-        else if (input & PAD_START) {
-            saveSkin("mc0:/APP_NHDDL/skin.yaml");
-            break;
-        }
-        // TRIANGLE: salir sin guardar
-        else if (input & PAD_TRIANGLE) {
-            break;
-        }
-        // SQUARE: reset a valores por defecto
-        else if (input & PAD_SQUARE) {
-            setDefaultSkin();
-        }
-        // Navegación / edición
-        else if (!editing) {
-            // Mover entre parámetros
-            if (input & PAD_UP) {
+            // START: guardar y salir
+            else if (input & PAD_START) {
+                saveSkin("mc0:/APP_NHDDL/skin.yaml");
+                break;
+            }
+            // TRIANGLE: salir sin guardar
+            else if (input & PAD_TRIANGLE) {
+                break;
+            }
+            // SQUARE: reset a todos los valores por defecto
+            else if (input & PAD_SQUARE) {
+                setDefaultSkin();
+            }
+            // Navegación entre parámetros
+            else if (input & PAD_UP) {
                 selectedIdx = (selectedIdx - 1 + totalFields) % totalFields;
+                repeatCounter = 0;
             } else if (input & PAD_DOWN) {
                 selectedIdx = (selectedIdx + 1) % totalFields;
+                repeatCounter = 0;
+            } else {
+                repeatCounter = 0;
             }
-            repeatCounter = 0;
         } else {
-            // Cambiar canal con L1/R1
-            if (input & PAD_L1) {
+            // EDITANDO: usar pollInput para permitir aceleración continua
+            int editInput = pollInput();
+
+            // CROSS: confirmar edición y salir
+            if (editInput & PAD_CROSS) {
+                editing = 0;
+                repeatCounter = 0;
+                prevInput = editInput;
+                continue;
+            }
+
+            // START: guardar y salir
+            if (editInput & PAD_START) {
+                saveSkin("mc0:/APP_NHDDL/skin.yaml");
+                break;
+            }
+
+            // TRIANGLE: salir sin guardar
+            if (editInput & PAD_TRIANGLE) {
+                editing = 0;
+                repeatCounter = 0;
+                prevInput = editInput;
+                continue;
+            }
+
+            // SQUARE: reset SOLO el parámetro seleccionado
+            if (editInput & PAD_SQUARE) {
+                *values[selectedIdx] = defaults[selectedIdx];
+                repeatCounter = 0;
+                prevInput = editInput;
+                continue;
+            }
+
+            // L1/R1: cambiar canal activo (flanco único)
+            if ((editInput & PAD_L1) && !(prevInput & PAD_L1)) {
                 editChannel = (editChannel - 1 + 4) % 4;
                 repeatCounter = 0;
-            } else if (input & PAD_R1) {
+            } else if ((editInput & PAD_R1) && !(prevInput & PAD_R1)) {
                 editChannel = (editChannel + 1) % 4;
                 repeatCounter = 0;
             }
-            // Ajustar valor con Left/Right y aceleración
-            else if (input & (PAD_LEFT | PAD_RIGHT)) {
+
+            // LEFT/RIGHT: ajustar valor con flanco + aceleración
+            if (editInput & (PAD_LEFT | PAD_RIGHT)) {
+                int leftEdge  = (editInput & PAD_LEFT)  && !(prevInput & PAD_LEFT);
+                int rightEdge = (editInput & PAD_RIGHT) && !(prevInput & PAD_RIGHT);
+
                 uint8_t *bytes = (uint8_t*)values[selectedIdx];
                 const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
                 int idx = channelMap[editChannel];
 
-                if (repeatCounter == 0) {
-                    if ((input & PAD_LEFT)  && bytes[idx] > 0)   bytes[idx] -= 1;
-                    if ((input & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
-                }
-                repeatCounter++;
-                if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
-                    if ((input & PAD_LEFT)  && bytes[idx] > 0)   bytes[idx] -= 1;
-                    if ((input & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
+                // paso inmediato por flanco
+                if (leftEdge  && bytes[idx] > 0)   bytes[idx] -= 1;
+                if (rightEdge && bytes[idx] < 255) bytes[idx] += 1;
+
+                // acelerar al mantener presionado
+                if (editInput & PAD_LEFT || editInput & PAD_RIGHT) {
+                    if (leftEdge || rightEdge) repeatCounter = 0;
+                    else repeatCounter++;
+
+                    if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+                        if ((editInput & PAD_LEFT)  && bytes[idx] > 0)   bytes[idx] -= 1;
+                        if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
+                    }
                 }
             } else {
                 repeatCounter = 0;
             }
+
+            // actualizar estado anterior
+            prevInput = editInput;
         }
     }
     return res;
