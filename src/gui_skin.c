@@ -87,7 +87,7 @@ const char *fields[] = {
     "Titles|Options Text",
     "Selected Text",
     "Secondary Text",
-    "Enabled Icon",
+    "Enable Icon",
     "Cover Art Border",
     "Warning Text",
     "Error Text"
