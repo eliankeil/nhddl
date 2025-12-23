@@ -171,7 +171,7 @@ int startY = headerHeight + (availableHeight - blockHeight) / 2;
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
 uint64_t channelColors[4] = {
-    0xFF606060,   // Alpha resaltado en gris oscuro
+    0xFF001F2D,   // Alpha resaltado en gris oscuro
     0xFFFF0000,  // Blue resaltado en azul (ABGR)
     0xFF00FF00,  // Green resaltado en verde
     0xFF0000FF   // Red resaltado en rojo
@@ -189,12 +189,18 @@ int headerY = startY - lineSpacing;
 // Dibujar cada palabra con su color correspondiente
 int curXHeader = headerX;
 for (int c = 0; c < 4; c++) {
-    uint64_t color = currentTheme.headerText; // por defecto headerText
-    if (editing && editChannel == c) {
-        color = channelColors[c]; // resaltar canal activo
+    uint64_t color = currentTheme.headerText; // por defecto
+
+    if (editing) {
+        if (editChannel == c) {
+            color = channelColors[c]; // canal activo resaltado
+        } else {
+            color = 0x80303030; // canales no seleccionados en edición
+        }
     }
+
     drawText(curXHeader, headerY, 0, 0, 0, color, channelLabels[c]);
-    curXHeader += getLineWidth(channelLabels[c]) + getLineWidth("   "); // espacio entre palabras
+    curXHeader += getLineWidth(channelLabels[c]) + getLineWidth("   ");
 }
 
 int y = startY;
