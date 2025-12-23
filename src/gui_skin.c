@@ -119,7 +119,6 @@ ExitCode uiSkinOptionsLoop(void) {
     int prevInput = 0;
 
     // … resto del cuerpo de la función …
-}
 
   // Defaults por índice de parámetro (en orden de fields[])
 const uint64_t defaults[8] = {
@@ -469,5 +468,5 @@ if (!editing) {
     prevInput = editInput;
 }
     }
-    return res;
+    return EXIT_NONE;
 }
