@@ -21,6 +21,8 @@ typedef enum {
     EXIT_CANCEL = 2
 } ExitCode;
 
+ExitCode uiSkinOptionsLoop(void);
+
 // Initializes and starts UI splash thread
 int startSplashScreen();
 
