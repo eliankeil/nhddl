@@ -18,7 +18,7 @@ void setDefaultSkin() {
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
     currentTheme.headerText   = HeaderTextColor;
-    currentTheme.iconEnabled    = ColorGrey;
+    currentTheme.iconEnabled  = ColorSelected;
     currentTheme.coverFrame   = ColorGrey;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
@@ -137,7 +137,7 @@ int prevInput = 0;
         drawTextWindow(0, headerHeight - getFontLineHeight(),
                        gsGlobal->Width, 0, 0,
                        currentTheme.headerText, ALIGN_HCENTER,
-                       "Skin Configuration");
+                       "Skin Editor");
 
 // Lista de parámetros centrados con margen fijo
 int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
@@ -148,7 +148,7 @@ int startY = headerHeight + (availableHeight - blockHeight) / 2;
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
 uint64_t channelColors[4] = {
-    0xFF202020,   // Alpha resaltado en gris oscuro
+    0xFF404040,   // Alpha resaltado en gris oscuro
     0xFFFF0000,  // Blue resaltado en azul (ABGR)
     0xFF00FF00,  // Green resaltado en verde
     0xFF0000FF   // Red resaltado en rojo
@@ -185,7 +185,7 @@ for (int i = 0; i < totalFields; i++) {
 
     // Armar cadena completa
     char buf[32];
-    snprintf(buf, sizeof(buf), "%02X : %02X : %02X : %02X", a, b, g, r);
+    snprintf(buf, sizeof(buf), "%02X   :   %02X   :   %02X   :   %02X", a, b, g, r);
 
     // Calcular ancho y posición centrada
     int lineWidth = (int)getLineWidth(buf);
@@ -219,63 +219,92 @@ for (int i = 0; i < totalFields; i++) {
     y += lineSpacing;
 }
      
-        // Footer con acciones (pantalla principal del editor)
-        int baseY = gsGlobal->Height - footerHeight;
-        int curX  = keepoutArea + 10;
+// Footer dinámico según estado
+int baseY = gsGlobal->Height - footerHeight;
+int curX  = keepoutArea + 10;
 
-        // CROSS → Editar
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_CROSS);
-        curX += getIconWidth(ICON_CROSS) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Editar");
-        curX += getLineWidth("Editar") + 40; // espacio extra
+if (!editing) {
+    // Estado navegación
+    // CROSS → Editar
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_CROSS);
+    curX += getIconWidth(ICON_CROSS) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Edit");
+    curX += getLineWidth("Edit") + 40;
 
-        // START → Guardar
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_START);
-        curX += getIconWidth(ICON_START) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Guardar");
-        curX += getLineWidth("Guardar") + 40;
+    // START → Guardar
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_START);
+    curX += getIconWidth(ICON_START) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Save");
+    curX += getLineWidth("Save") + 40;
 
-        // TRIANGLE → Cancelar
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
-        curX += getIconWidth(ICON_TRIANGLE) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Cancelar");
-        curX += getLineWidth("Cancelar") + 40;
+    // TRIANGLE → Cancelar
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
+    curX += getIconWidth(ICON_TRIANGLE) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Cancel");
+    curX += getLineWidth("Cancel") + 40;
 
-        // SQUARE → Reset
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_SQUARE);
-        curX += getIconWidth(ICON_SQUARE) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Reset");
-        curX += getLineWidth("Reset") + 40;
+    // SQUARE → Reset
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_SQUARE);
+    curX += getIconWidth(ICON_SQUARE) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Reset");
+    curX += getLineWidth("Reset") + 40;
 
-        // UP/DOWN → Navegar
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_UP);
-        curX += getIconWidth(ICON_UP) + 10;
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_DOWN);
-        curX += getIconWidth(ICON_DOWN) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-               currentTheme.headerText, ALIGN_VCENTER, "Navegar");
-        curX += getLineWidth("Navegar") + 40;
+    // UP/DOWN → Navegar
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_UP);
+    curX += getIconWidth(ICON_UP) + 10;
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_DOWN);
+    curX += getIconWidth(ICON_DOWN) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
+    curX += getLineWidth("Navigate") + 40;
 
-        // LEFT/RIGHT → Cambiar opción
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_LEFT);
-        curX += getIconWidth(ICON_LEFT) + 10;
-        drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                       FontMainColor, ALIGN_CENTER, ICON_RIGHT);
-        curX += getIconWidth(ICON_RIGHT) + 5;
-        drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                       currentTheme.headerText, ALIGN_VCENTER, "Cambiar opción");
+} else {
+    // Estado edición
+    // CROSS → Save
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_CROSS);
+    curX += getIconWidth(ICON_CROSS) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Save");
+    curX += getLineWidth("Save") + 40;
 
+    // TRIANGLE → Cancelar
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
+    curX += getIconWidth(ICON_TRIANGLE) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Cancel");
+    curX += getLineWidth("Cancel") + 40;
+
+    // SQUARE → Reset
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_SQUARE);
+    curX += getIconWidth(ICON_SQUARE) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Reset");
+    curX += getLineWidth("Reset") + 40;
+
+    // LEFT/RIGHT → Cambiar valor
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_LEFT);
+    curX += getIconWidth(ICON_LEFT) + 10;
+    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_RIGHT);
+    curX += getIconWidth(ICON_RIGHT) + 5;
+    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Change");
+    curX += getLineWidth("Change") + 40;
+}
 
         gsKit_queue_exec(gsGlobal);
         gsKit_finish();
