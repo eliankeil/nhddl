@@ -21,7 +21,7 @@ IRX_FILES += ps2hdd.irx ps2fs.irx
 ELF_FILES += loader.elf
 
 EE_LIBS = -ldebug -lfileXio -lpatches -lgskit_toolkit -lgskit -ldmakit -lpng -lz -ltiff -lpad
-EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\"" -DSKIN_EDITION="\"Skin Experimental Edition\""
+EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\"" -DSKIN_EDITION="\"Experimental Skin Editor Build\""
 
 EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
