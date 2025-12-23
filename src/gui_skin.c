@@ -261,7 +261,7 @@ for (int i = 0; i < totalFields; i++) {
                 editing = 1;
                 editChannel = 0;   // empieza en Alpha
                 repeatCounter = 0;
-                prevInput = 0;     // limpiar estado anterior
+                prevInput = PAD_CROSS; // marcar que CROSS está presionado al entrar
             }
             // START: guardar y salir
             else if (input & PAD_START) {
