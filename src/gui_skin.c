@@ -353,42 +353,68 @@ if (!editing) {
         gsKit_finish();
         gsKit_sync_flip(gsGlobal);
 
-        // Procesar entradas
-        if (!editing) {
-            input = waitForInput(-1);
+// Variables globales/estáticas
+static int prevInput = 0;
+static int inputLockUntilRelease = 0;
 
-            // CROSS: alterna edición/confirmación del parámetro seleccionado
-            if (input & PAD_CROSS) {
-                editing = 1;
-                editChannel = 0;   // empieza en Alpha
-                repeatCounter = 0;
-                prevInput = PAD_CROSS; // marcar que CROSS está presionado al entrar
-            }
-            // START: guardar y salir
-            else if (input & PAD_START) {
-                saveSkin("mc0:/APP_NHDDL/skin.yaml");
-                break;
-            }
-            // TRIANGLE: salir sin guardar
-            else if (input & PAD_TRIANGLE) {
-                break;
-            }
-            // SQUARE: reset a todos los valores por defecto
-            else if (input & PAD_SQUARE) {
-                setDefaultSkin();
-            }
-            // Navegación entre parámetros
-            else if (input & PAD_UP) {
-                selectedIdx = (selectedIdx - 1 + totalFields) % totalFields;
-                repeatCounter = 0;
-            } else if (input & PAD_DOWN) {
-                selectedIdx = (selectedIdx + 1) % totalFields;
-                repeatCounter = 0;
-            } else {
-                repeatCounter = 0;
-            }
-        } else {
-            // EDITANDO: usar pollInput para permitir aceleración continua
+// Función auxiliar: libera el lock cuando se suelta el botón
+static inline void handleInputLock(int input) {
+    if (!inputLockUntilRelease) return;
+    if (input == 0 || !(input & (PAD_TRIANGLE | PAD_START))) {
+        inputLockUntilRelease = 0;
+    }
+}
+
+// Procesar entradas
+if (!editing) {
+    int input = waitForInput(-1);
+
+    // aplicar lock: si está activo, ignorar entrada
+    handleInputLock(input);
+    if (inputLockUntilRelease) {
+        prevInput = input;
+        continue;
+    }
+
+    // calcular flancos
+    int pressed = (input & ~prevInput);
+
+    // CROSS: alterna edición
+    if (pressed & PAD_CROSS) {
+        editing = 1;
+        editChannel = 0;
+        repeatCounter = 0;
+        prevInput = input;
+        continue;
+    }
+    // START: guardar y salir (flanco)
+    else if (pressed & PAD_START) {
+        saveSkin("mc0:/APP_NHDDL/skin.yaml");
+        inputLockUntilRelease = 1; // lock para no repetir
+        break;
+    }
+    // TRIANGLE: salir sin guardar (flanco)
+    else if (pressed & PAD_TRIANGLE) {
+        inputLockUntilRelease = 1; // lock para no repetir
+        break;
+    }
+    // SQUARE: reset todos (flanco)
+    else if (pressed & PAD_SQUARE) {
+        setDefaultSkin();
+    }
+    // Navegación entre parámetros (flanco)
+    else if (pressed & PAD_UP) {
+        selectedIdx = (selectedIdx - 1 + totalFields) % totalFields;
+        repeatCounter = 0;
+    } else if (pressed & PAD_DOWN) {
+        selectedIdx = (selectedIdx + 1) % totalFields;
+        repeatCounter = 0;
+    } else {
+        repeatCounter = 0;
+    }
+
+    prevInput = input;
+} else {  // EDITANDO: usar pollInput para permitir aceleración continua
             int editInput = pollInput();
 
             // CROSS: confirmar edición y salir (flanco)
