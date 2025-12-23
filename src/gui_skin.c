@@ -7,6 +7,7 @@
 #include "skin_layout.h"
 #include "pad.h"
 #include "gui_icons.h"
+#include "gui_h"
 
 extern GSGLOBAL *gsGlobal;
 
@@ -371,11 +372,11 @@ if (!editing) {
     // START: guardar y salir (flanco)
     else if (pressed & PAD_START) {
         saveSkin("mc0:/APP_NHDDL/skin.yaml");
-        break;
+        return EXIT_SAVE;
     }
     // TRIANGLE: salir sin guardar (flanco)
     else if (pressed & PAD_TRIANGLE) {
-        break;
+        return EXIT_CANCEL;
     }
     // SQUARE: reset a todos los valores por defecto (flanco)
     else if (pressed & PAD_SQUARE) {
@@ -404,12 +405,6 @@ if (!editing) {
         repeatCounter = 0;
         prevInput = editInput;
         continue;
-    }
-
-    // START: guardar y salir (flanco)
-    if ((editInput & PAD_START) && !(prevInput & PAD_START)) {
-        saveSkin("mc0:/APP_NHDDL/skin.yaml");
-        break;
     }
 
     // TRIANGLE: salir sin guardar (flanco)
