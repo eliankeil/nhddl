@@ -164,7 +164,7 @@ int headerX = (gsGlobal->Width - headerWidth) / 2;
 int headerY = startY - getFontLineHeight() - 5; // un poco arriba del primer valor
 
 // Dibujar cada palabra con su color correspondiente
-int curX = headerX;
+int curXHeader = headerX;
 for (int c = 0; c < 4; c++) {
     uint64_t color = currentTheme.headerText; // por defecto headerText
     if (editing && editChannel == c) {
