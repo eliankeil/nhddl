@@ -112,11 +112,9 @@ ExitCode uiSkinOptionsLoop(void) {
     int editing = 0;       // 0 = navegando, 1 = editando parámetro
     int editChannel = 0;   // 0=A, 1=B, 2=G, 3=R
     int repeatCounter = 0;
+    int prevInput = 0;
     const int repeatDelay = 20; // ~1s a 60fps
     const int repeatSpeed = 2;  // cada 2 frames después del delay
-
-    // Estado anterior del mando para detectar flancos
-    int prevInput = 0;
 
     // … resto del cuerpo de la función …
 
@@ -131,9 +129,6 @@ const uint64_t defaults[8] = {
     (uint64_t)WarnTextColor,  // warnText
     (uint64_t)ErrorTextColor  // errorText
 };
-
-// Estado anterior del mando para detectar flancos (solo en edición)
-int prevInput = 0;
 
     while (1) {
         gsKit_clear(gsGlobal, currentTheme.background);
