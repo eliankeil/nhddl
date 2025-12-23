@@ -170,8 +170,8 @@ for (int c = 0; c < 4; c++) {
     if (editing && editChannel == c) {
         color = channelColors[c]; // resaltar canal activo
     }
-    drawText(curX, headerY, 0, 0, 0, color, channelLabels[c]);
-    curX += getLineWidth(channelLabels[c]) + getLineWidth("   "); // espacio entre palabras
+    drawText(curXHeader, headerY, 0, 0, 0, color, channelLabels[c]);
+    curXHeader += getLineWidth(channelLabels[c]) + getLineWidth("   "); // espacio entre palabras
 }
 
 int y = startY;
