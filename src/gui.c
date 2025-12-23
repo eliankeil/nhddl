@@ -289,19 +289,21 @@ int uiLoop(TargetList *titles) {
                 selectedTitleIdx = 0;
         }
     } else if (input & PAD_TRIANGLE) {
-    // Cancelar y volver al menú principal
-    res = 0;   // o EXIT_CANCEL si definís un enum
-    break;
-    } else if (input & PAD_START) {
-        // Quit
-        break;
-    } else if (input & PAD_SELECT) {
-        // Entrar al editor de skin
-        if ((res = uiSkinOptionsLoop()) < 0) {
-            return -1;
-        }
-      }
+    input = -1;
+    prevInput = 0;
+    if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+        return -1;
     }
+}
+else if (input & PAD_START) {
+    break;
+}
+else if (input & PAD_SELECT) {
+    if ((res = uiSkinOptionsLoop()) < 0) {
+        return -1;
+    }
+}
+
     
 exit:
   closePad();
