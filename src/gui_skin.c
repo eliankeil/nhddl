@@ -171,7 +171,7 @@ int startY = headerHeight + (availableHeight - blockHeight) / 2;
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
 uint64_t channelColors[4] = {
-    0xFF001F2D,   // Alpha resaltado en gris oscuro
+    0xFF00357D,   // Alpha resaltado en gris oscuro
     0xFFFF0000,  // Blue resaltado en azul (ABGR)
     0xFF00FF00,  // Green resaltado en verde
     0xFF0000FF   // Red resaltado en rojo
@@ -252,7 +252,7 @@ for (int i = 0; i < totalFields; i++) {
             if (i == selectedIdx && editChannel == c) {
                 chanColor = channelColors[c]; // canal activo del parámetro seleccionado
             } else if (i == selectedIdx) {
-                chanColor = currentTheme.selectedText; // parámetro seleccionado pero canal no activo
+                chanColor = currentTheme.headerText; // parámetro seleccionado pero canal no activo
             } else {
                 chanColor = 0x80303030; // parámetros no seleccionados
             }
@@ -440,8 +440,6 @@ if (!editing) {
   
 // CROSS: confirmar edición, guardar y salir (flanco)
 if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
-    // Guardar inmediatamente después de confirmar
-    saveSkin("mc0:/APP_NHDDL/skin.yaml");
     editing = 0;          // salir de modo edición
     repeatCounter = 0;
     prevInput = editInput;
