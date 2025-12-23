@@ -18,7 +18,7 @@ void setDefaultSkin() {
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
     currentTheme.headerText   = HeaderTextColor;
-    currentTheme.iconEnabled  = 0x80847200;
+    currentTheme.iconEnabled  = 0x80ADA000;
     currentTheme.coverFrame   = FontMainColor;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
@@ -120,7 +120,7 @@ const uint64_t defaults[8] = {
     (uint64_t)FontMainColor,  // listText
     (uint64_t)ColorSelected,  // selectedText
     (uint64_t)HeaderTextColor,// headerText
-    (uint64_t)ColorSelected,  // iconEnabled
+    (uint64_t)0x80ADA000,     // iconEnabled
     (uint64_t)FontMainColor,  // coverFrame
     (uint64_t)WarnTextColor,  // warnText
     (uint64_t)ErrorTextColor  // errorText
@@ -170,7 +170,7 @@ int startY = headerHeight + (availableHeight - blockHeight) / 2;
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
 uint64_t channelColors[4] = {
-    0xFF404040,   // Alpha resaltado en gris oscuro
+    0xFF606060,   // Alpha resaltado en gris oscuro
     0xFFFF0000,  // Blue resaltado en azul (ABGR)
     0xFF00FF00,  // Green resaltado en verde
     0xFF0000FF   // Red resaltado en rojo
