@@ -315,20 +315,20 @@ exit:
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
-  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
+  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Launch title");
 
-  drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_SELECT);
+  drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_SELECT);
   drawTextWindow(baseX + 200 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER, "Skin");
   
   
-  drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_START);
+  drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_START);
   drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"), baseY, gsGlobal->Width - baseX,
-                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+                 gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
   drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
 }
 
@@ -394,32 +394,32 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
 }
 
 void drawTitleOptionsFooter(int baseX) {
-  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_CENTER, ICON_CROSS);
+  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), gsGlobal->Height - 1 - footerHeight, 0, gsGlobal->Height, 0,
                  currentTheme.headerText, ALIGN_VCENTER, "Toggle");
 
   drawIconWindow((gsGlobal->Width * 3 / 8) - getIconWidth(ICON_SQUARE), gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
-                 currentTheme.iconFrame, ALIGN_VCENTER, ICON_SQUARE);
+                 FontMainColor, ALIGN_VCENTER, ICON_SQUARE);
   drawTextWindow((gsGlobal->Width * 3 / 8) + 5, gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Test");
 
   drawIconWindow((gsGlobal->Width * 5 / 8), gsGlobal->Height - footerHeight, gsGlobal->Width - getLineWidth("Save") - 5, gsGlobal->Height, 0,
-                 currentTheme.iconFrame, ALIGN_VCENTER, ICON_START);
+                 FontMainColor, ALIGN_VCENTER, ICON_START);
   drawTextWindow((gsGlobal->Width * 5 / 8) + 5 + getIconWidth(ICON_START), gsGlobal->Height - 1 - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
                  currentTheme.headerText, ALIGN_VCENTER, "Save");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Cancel"), gsGlobal->Height - footerHeight,
-                 gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
   drawTextWindow(0, gsGlobal->Height - 1 - footerHeight, gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
                  "Cancel");
 
   drawTextWindow(0, gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText,
                  ALIGN_TOP | ALIGN_HCENTER, "Switch views");
   drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2, (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
+                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
   drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5, gsGlobal->Height - footerHeight - getFontLineHeight() / 2, gsGlobal->Width,
-                 gsGlobal->Height, 0, currentTheme.iconFrame, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
+                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
 }
 
 // Draws well-known Neutrino arguments
