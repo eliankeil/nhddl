@@ -302,8 +302,8 @@ else if (input & PAD_SELECT) {
     if ((res = uiSkinOptionsLoop()) < 0) {
         return -1;
     }
+  }
 }
-
     
 exit:
   closePad();
