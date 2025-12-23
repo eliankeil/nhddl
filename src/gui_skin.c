@@ -18,7 +18,7 @@ void setDefaultSkin() {
     currentTheme.listText     = FontMainColor;
     currentTheme.selectedText = ColorSelected;
     currentTheme.headerText   = HeaderTextColor;
-    currentTheme.iconEnable    = ColorGrey;
+    currentTheme.iconEnabled    = ColorGrey;
     currentTheme.coverFrame   = ColorGrey;
     currentTheme.warnText     = WarnTextColor;
     currentTheme.errorText    = ErrorTextColor;
@@ -39,7 +39,7 @@ int saveSkin(const char *path) {
     fprintf(f, "listText:     0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)FontMainColor);
     fprintf(f, "selectedText: 0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorSelected);
     fprintf(f, "headerText:   0x%08X # Original: 0x%08X\n", (unsigned int)HeaderTextColor, (unsigned int)HeaderTextColor);
-    fprintf(f, "iconEnable:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
+    fprintf(f, "iconEnabled:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
     fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)ColorGrey, (unsigned int)ColorGrey);
     fprintf(f, "warnText:     0x%08X # Original: 0x%08X\n", (unsigned int)WarnTextColor, (unsigned int)WarnTextColor);
     fprintf(f, "errorText:    0x%08X # Original: 0x%08X\n", (unsigned int)ErrorTextColor, (unsigned int)ErrorTextColor);
@@ -70,7 +70,7 @@ int loadSkin(const char *path) {
             else if (strcmp(key, "listText")     == 0) currentTheme.listText     = value;
             else if (strcmp(key, "selectedText") == 0) currentTheme.selectedText = value;
             else if (strcmp(key, "headerText")   == 0) currentTheme.headerText   = value;
-            else if (strcmp(key, "iconEnable")    == 0) currentTheme.iconEnable    = value;
+            else if (strcmp(key, "iconEnabled")    == 0) currentTheme.iconEnabled    = value;
             else if (strcmp(key, "coverFrame")   == 0) currentTheme.coverFrame   = value;
             else if (strcmp(key, "warnText")     == 0) currentTheme.warnText     = value;
             else if (strcmp(key, "errorText")    == 0) currentTheme.errorText    = value;
@@ -87,7 +87,7 @@ const char *fields[] = {
     "Titles|Options Text",
     "Selected Text",
     "Secondary Text",
-    "Enable Icon",
+    "Enabled Icon",
     "Cover Art Border",
     "Warning Text",
     "Error Text"
@@ -98,7 +98,7 @@ uint64_t *values[] = {
     &currentTheme.listText,
     &currentTheme.selectedText,
     &currentTheme.headerText,
-    &currentTheme.iconEnable,
+    &currentTheme.iconEnabled,
     &currentTheme.coverFrame,
     &currentTheme.warnText,
     &currentTheme.errorText
