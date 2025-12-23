@@ -358,8 +358,9 @@ static int prevInput = 0;
 static int inputLockUntilRelease = 0;
 
 // Función auxiliar: libera el lock cuando se suelta el botón
-static inline void handleInputLock(int input) {
+static void handleInputLock(int input) {
     if (!inputLockUntilRelease) return;
+    // libera cuando no esté sostenido START/TRIANGLE o no haya input
     if (input == 0 || !(input & (PAD_TRIANGLE | PAD_START))) {
         inputLockUntilRelease = 0;
     }
@@ -415,77 +416,86 @@ if (!editing) {
 
     prevInput = input;
 } else {  // EDITANDO: usar pollInput para permitir aceleración continua
-            int editInput = pollInput();
+    int editInput = pollInput();
 
-            // CROSS: confirmar edición y salir (flanco)
-            if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
-                editing = 0;
-                repeatCounter = 0;
-                prevInput = editInput;
-                continue;
+    // aplicar lock: si está activo, ignorar entrada
+    handleInputLock(editInput);
+    if (inputLockUntilRelease) {
+        prevInput = editInput;
+        continue;
+    }
+
+    // CROSS: confirmar edición y salir (flanco)
+    if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
+        editing = 0;
+        repeatCounter = 0;
+        prevInput = editInput;
+        continue;
+    }
+
+    // START: guardar y salir (flanco)
+    if ((editInput & PAD_START) && !(prevInput & PAD_START)) {
+        saveSkin("mc0:/APP_NHDDL/skin.yaml");
+        inputLockUntilRelease = 1; // lock para no repetir al cambiar de pantalla
+        break;
+    }
+
+    // TRIANGLE: salir sin guardar (flanco) — solo sale de edición
+    if ((editInput & PAD_TRIANGLE) && !(prevInput & PAD_TRIANGLE)) {
+        editing = 0;
+        repeatCounter = 0;
+        prevInput = editInput;
+        continue;
+    }
+
+    // SQUARE: reset SOLO el parámetro seleccionado (flanco)
+    if ((editInput & PAD_SQUARE) && !(prevInput & PAD_SQUARE)) {
+        *values[selectedIdx] = defaults[selectedIdx];
+        repeatCounter = 0;
+        prevInput = editInput;
+        continue;
+    }
+
+    // L1/R1: cambiar canal activo (flanco único)
+    if ((editInput & PAD_L1) && !(prevInput & PAD_L1)) {
+        editChannel = (editChannel - 1 + 4) % 4;
+        repeatCounter = 0;
+    } else if ((editInput & PAD_R1) && !(prevInput & PAD_R1)) {
+        editChannel = (editChannel + 1) % 4;
+        repeatCounter = 0;
+    }
+
+    // LEFT/RIGHT: ajustar valor con flanco + aceleración
+    if (editInput & (PAD_LEFT | PAD_RIGHT)) {
+        int leftEdge  = (editInput & PAD_LEFT)  && !(prevInput & PAD_LEFT);
+        int rightEdge = (editInput & PAD_RIGHT) && !(prevInput & PAD_RIGHT);
+
+        uint8_t *bytes = (uint8_t*)values[selectedIdx];
+        const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
+        int idx = channelMap[editChannel];
+
+        // paso inmediato por flanco
+        if (leftEdge  && bytes[idx] > 0)   bytes[idx] -= 1;
+        if (rightEdge && bytes[idx] < 255) bytes[idx] += 1;
+
+        // acelerar al mantener presionado
+        if ((editInput & PAD_LEFT) || (editInput & PAD_RIGHT)) {
+            if (leftEdge || rightEdge) repeatCounter = 0;
+            else repeatCounter++;
+
+            if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+                if ((editInput & PAD_LEFT)  && bytes[idx] > 0)   bytes[idx] -= 1;
+                if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
             }
-
-            // START: guardar y salir (flanco)
-            if ((editInput & PAD_START) && !(prevInput & PAD_START)) {
-                saveSkin("mc0:/APP_NHDDL/skin.yaml");
-                break;
-            }
-
-            // TRIANGLE: salir sin guardar (flanco)
-            if ((editInput & PAD_TRIANGLE) && !(prevInput & PAD_TRIANGLE)) {
-                editing = 0;
-                repeatCounter = 0;
-                prevInput = editInput;
-                continue;
-            }
-
-            // SQUARE: reset SOLO el parámetro seleccionado (flanco)
-            if ((editInput & PAD_SQUARE) && !(prevInput & PAD_SQUARE)) {
-                *values[selectedIdx] = defaults[selectedIdx];
-                repeatCounter = 0;
-                prevInput = editInput;
-                continue;
-            }
-
-            // L1/R1: cambiar canal activo (flanco único)
-            if ((editInput & PAD_L1) && !(prevInput & PAD_L1)) {
-                editChannel = (editChannel - 1 + 4) % 4;
-                repeatCounter = 0;
-            } else if ((editInput & PAD_R1) && !(prevInput & PAD_R1)) {
-                editChannel = (editChannel + 1) % 4;
-                repeatCounter = 0;
-            }
-
-            // LEFT/RIGHT: ajustar valor con flanco + aceleración
-            if (editInput & (PAD_LEFT | PAD_RIGHT)) {
-                int leftEdge  = (editInput & PAD_LEFT)  && !(prevInput & PAD_LEFT);
-                int rightEdge = (editInput & PAD_RIGHT) && !(prevInput & PAD_RIGHT);
-
-                uint8_t *bytes = (uint8_t*)values[selectedIdx];
-                const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
-                int idx = channelMap[editChannel];
-
-                // paso inmediato por flanco
-                if (leftEdge  && bytes[idx] > 0)   bytes[idx] -= 1;
-                if (rightEdge && bytes[idx] < 255) bytes[idx] += 1;
-
-                // acelerar al mantener presionado
-                if (editInput & PAD_LEFT || editInput & PAD_RIGHT) {
-                    if (leftEdge || rightEdge) repeatCounter = 0;
-                    else repeatCounter++;
-
-                    if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
-                        if ((editInput & PAD_LEFT)  && bytes[idx] > 0)   bytes[idx] -= 1;
-                        if ((editInput & PAD_RIGHT) && bytes[idx] < 255) bytes[idx] += 1;
-                    }
-                }
-            } else {
-                repeatCounter = 0;
-            }
-
-            // actualizar estado anterior
-            prevInput = editInput;
         }
+    } else {
+        repeatCounter = 0;
+    }
+
+    // actualizar estado anterior
+    prevInput = editInput;
+}
+
     }
     return res;
 }
