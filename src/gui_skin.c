@@ -353,37 +353,17 @@ if (!editing) {
         gsKit_finish();
         gsKit_sync_flip(gsGlobal);
 
-// Variables globales/estáticas
-static int prevInput = 0;
-static int inputLockUntilRelease = 0;
-
-// Función auxiliar: libera el lock cuando se suelta el botón
-static void handleInputLock(int input) {
-    if (!inputLockUntilRelease) return;
-    // libera cuando no esté sostenido START/TRIANGLE o no haya input
-    if (input == 0 || !(input & (PAD_TRIANGLE | PAD_START))) {
-        inputLockUntilRelease = 0;
-    }
-}
-
 // Procesar entradas
 if (!editing) {
-    int input = waitForInput(-1);
-
-    // aplicar lock: si está activo, ignorar entrada
-    handleInputLock(input);
-    if (inputLockUntilRelease) {
-        prevInput = input;
-        continue;
-    }
+    int input = pollInput();   // usar pollInput en lugar de waitForInput
 
     // calcular flancos
     int pressed = (input & ~prevInput);
 
-    // CROSS: alterna edición
+    // CROSS: alterna edición/confirmación del parámetro seleccionado
     if (pressed & PAD_CROSS) {
         editing = 1;
-        editChannel = 0;
+        editChannel = 0;   // empieza en Alpha
         repeatCounter = 0;
         prevInput = input;
         continue;
@@ -391,15 +371,13 @@ if (!editing) {
     // START: guardar y salir (flanco)
     else if (pressed & PAD_START) {
         saveSkin("mc0:/APP_NHDDL/skin.yaml");
-        inputLockUntilRelease = 1; // lock para no repetir
         break;
     }
     // TRIANGLE: salir sin guardar (flanco)
     else if (pressed & PAD_TRIANGLE) {
-        inputLockUntilRelease = 1; // lock para no repetir
         break;
     }
-    // SQUARE: reset todos (flanco)
+    // SQUARE: reset a todos los valores por defecto (flanco)
     else if (pressed & PAD_SQUARE) {
         setDefaultSkin();
     }
@@ -414,16 +392,11 @@ if (!editing) {
         repeatCounter = 0;
     }
 
+    // actualizar estado anterior
     prevInput = input;
-} else {  // EDITANDO: usar pollInput para permitir aceleración continua
+} else {
+    // EDITANDO: usar pollInput para permitir aceleración continua
     int editInput = pollInput();
-
-    // aplicar lock: si está activo, ignorar entrada
-    handleInputLock(editInput);
-    if (inputLockUntilRelease) {
-        prevInput = editInput;
-        continue;
-    }
 
     // CROSS: confirmar edición y salir (flanco)
     if ((editInput & PAD_CROSS) && !(prevInput & PAD_CROSS)) {
@@ -436,11 +409,10 @@ if (!editing) {
     // START: guardar y salir (flanco)
     if ((editInput & PAD_START) && !(prevInput & PAD_START)) {
         saveSkin("mc0:/APP_NHDDL/skin.yaml");
-        inputLockUntilRelease = 1; // lock para no repetir al cambiar de pantalla
         break;
     }
 
-    // TRIANGLE: salir sin guardar (flanco) — solo sale de edición
+    // TRIANGLE: salir sin guardar (flanco)
     if ((editInput & PAD_TRIANGLE) && !(prevInput & PAD_TRIANGLE)) {
         editing = 0;
         repeatCounter = 0;
@@ -495,7 +467,6 @@ if (!editing) {
     // actualizar estado anterior
     prevInput = editInput;
 }
-
     }
     return res;
 }
