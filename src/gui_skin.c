@@ -7,7 +7,7 @@
 #include "skin_layout.h"
 #include "pad.h"
 #include "gui_icons.h"
-#include "gui_h"
+#include "gui.h"
 
 extern GSGLOBAL *gsGlobal;
 
