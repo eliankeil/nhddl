@@ -238,7 +238,7 @@ for (int i = 0; i < totalFields; i++) {
 
     // Dibujar iconEnabled alineado con el título
     if (editing && i == selectedIdx) {
-        drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 5,
+        drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 2,
                        y, 0, y + getFontLineHeight(), 0,
                        currentTheme.iconEnabled, ALIGN_VCENTER, ICON_ENABLED);
     }
