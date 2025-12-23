@@ -545,11 +545,11 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
       // Draw argument
       if (!argument->isDisabled)
-        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.selectedText, ALIGN_CENTER, ICON_ENABLED);
+        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
 
       snprintf(lineBuffer, 255, "%s%s%s %s", ((argument->isGlobal) ? "[G] " : ""), argument->arg, (!strlen(argument->value)) ? "" : ":",
                argument->value);
-      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0, ((selectedArgIdx == idx) ? currentTheme.selectedText : currentTheme.listText), lineBuffer);
+      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0, ((selectedArgIdx == idx) ? currentTheme.iconEnabled : currentTheme.listText), lineBuffer);
 
       idx++;
     next:
