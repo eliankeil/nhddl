@@ -32,17 +32,16 @@ int saveSkin(const char *path) {
         return -1;
     }
 
-    fprintf(f, "# Neutrino Skin Configuration\n");
     fprintf(f, "# Colores en formato ABGR (0xAABBGGRR)\n\n");
 
-    fprintf(f, "background:   0x%08X # Original: 0x%08X\n", (unsigned int)BGColor, (unsigned int)BGColor);
-    fprintf(f, "listText:     0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)FontMainColor);
-    fprintf(f, "selectedText: 0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorSelected);
-    fprintf(f, "headerText:   0x%08X # Original: 0x%08X\n", (unsigned int)HeaderTextColor, (unsigned int)HeaderTextColor);
-    fprintf(f, "iconEnabled:    0x%08X # Original: 0x%08X\n", (unsigned int)ColorSelected, (unsigned int)ColorGrey);
-    fprintf(f, "coverFrame:   0x%08X # Original: 0x%08X\n", (unsigned int)FontMainColor, (unsigned int)ColorGrey);
-    fprintf(f, "warnText:     0x%08X # Original: 0x%08X\n", (unsigned int)WarnTextColor, (unsigned int)WarnTextColor);
-    fprintf(f, "errorText:    0x%08X # Original: 0x%08X\n", (unsigned int)ErrorTextColor, (unsigned int)ErrorTextColor);
+    fprintf(f, "background:   0x%08X\n", (unsigned int)currentTheme.background);
+    fprintf(f, "listText:     0x%08X\n", (unsigned int)currentTheme.listText);
+    fprintf(f, "selectedText: 0x%08X\n", (unsigned int)currentTheme.selectedText);
+    fprintf(f, "headerText:   0x%08X\n", (unsigned int)currentTheme.headerText);
+    fprintf(f, "iconEnabled:  0x%08X\n", (unsigned int)currentTheme.iconEnabled);
+    fprintf(f, "coverFrame:   0x%08X\n", (unsigned int)currentTheme.coverFrame);
+    fprintf(f, "warnText:     0x%08X\n", (unsigned int)currentTheme.warnText);
+    fprintf(f, "errorText:    0x%08X\n", (unsigned int)currentTheme.errorText);
 
     fclose(f);
     return 0;
