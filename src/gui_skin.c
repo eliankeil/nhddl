@@ -349,7 +349,6 @@ if (!editing) {
 
     int totalWidth =
         getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
-        getIconWidth(ICON_TRIANGLE) + 5 + getLineWidth(msgTriangle) + 40 +
         getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
         getIconWidth(ICON_LEFTRIGHT) + 5 + getLineWidth(msgChange) + 40;
 
