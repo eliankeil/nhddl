@@ -321,7 +321,7 @@ if (!editing) {
 
     // CROSS → Edit
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_CROSS);
+                   currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
     curX += getIconWidth(ICON_CROSS) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgCross);
@@ -337,7 +337,7 @@ if (!editing) {
 
     // TRIANGLE → Cancel
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
+                   currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
     curX += getIconWidth(ICON_TRIANGLE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgTriangle);
@@ -345,7 +345,7 @@ if (!editing) {
 
     // SQUARE → Reset
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_SQUARE);
+                   currentTheme.iconSquare, ALIGN_CENTER, ICON_SQUARE);
     curX += getIconWidth(ICON_SQUARE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgSquare);
@@ -353,7 +353,7 @@ if (!editing) {
 
     // UP/DOWN → Navigate
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_UPDOWN);
+                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
     curX += getIconWidth(ICON_UPDOWN) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgNavigate);
@@ -374,7 +374,7 @@ if (!editing) {
 
     // CROSS → Save
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_CROSS);
+                   currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
     curX += getIconWidth(ICON_CROSS) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgCross);
@@ -382,7 +382,7 @@ if (!editing) {
 
     // SQUARE → Reset
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_SQUARE);
+                   currentTheme.iconSquare, ALIGN_CENTER, ICON_SQUARE);
     curX += getIconWidth(ICON_SQUARE) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgSquare);
@@ -390,7 +390,7 @@ if (!editing) {
 
     // LEFT/RIGHT → Change
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_LEFTRIGHT);
+                   currentTheme.iconPad, ALIGN_CENTER, ICON_LEFTRIGHT);
     curX += getIconWidth(ICON_LEFTRIGHT) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgChange);
