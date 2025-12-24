@@ -1,77 +1,80 @@
-name: Build
+name: Build & Release
 
 on:
   push:
-  pull_request:
+    tags:
+      - 'experimental-*'   # cualquier tag que empiece con experimental-
+      - 'v*'               # tags de versión formales
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Fetch full clone
-      run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        git fetch --prune --unshallow
+      - name: Fetch full clone
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --prune --unshallow
 
-    - name: Compile project
-      id: make
-      run: |
-        make
+      - name: Compile project
+        id: make
+        run: make
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      if: steps.make.outcome == 'success'
-      with:
-        name: artifacts
-        path: |
-          nhddl-*.elf
-          !nhddl-*_unc.elf
-          README.md
-          examples/*.yaml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: steps.make.outcome == 'success'
+        with:
+          name: artifacts
+          path: |
+            nhddl-*.elf
+            !nhddl-*_unc.elf
+            README.md
+            examples/*.yaml
 
   release:
-    needs: [build]
+    needs: build
     runs-on: ubuntu-latest
     permissions: write-all
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Fetch full clone
-      run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        git fetch --prune --unshallow
+      - name: Fetch full clone
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --prune --unshallow
 
-    - name: Get git describe
-      run: |
-        echo "GIT_VERSION=$(git describe --always --dirty --tags --exclude nightly)" >> $GITHUB_ENV
+      - name: Get git describe
+        run: |
+          echo "GIT_VERSION=$(git describe --always --dirty --tags --exclude nightly)" >> $GITHUB_ENV
 
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
 
-    - name: Prepare release archive
-      run: |
-        cd artifacts
-        mv nhddl-${{ env.GIT_VERSION }}.elf nhddl.elf
-        zip -r ../nhddl-${{ env.GIT_VERSION }}.zip ./*
+      - name: Prepare release archive
+        run: |
+          cd artifacts
+          mv nhddl-${{ env.GIT_VERSION }}.elf nhddl.elf
+          zip -r ../nhddl-${{ env.GIT_VERSION }}.zip ./*
 
-    - uses: "marvinpinto/action-automatic-releases@latest"
-      if: github.ref == 'refs/heads/main'
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "nightly"
-        prerelease: true
-        title: "Nightly build"
-        files: |
-          nhddl-${{ env.GIT_VERSION }}.zip
+      - name: Publish Experimental Release
+        if: startsWith(github.ref, 'refs/tags/experimental-')
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ github.ref_name }}
+          prerelease: true
+          title: "Experimental build"
+          files: |
+            nhddl-${{ env.GIT_VERSION }}.zip
 
-    - uses: "marvinpinto/action-automatic-releases@latest"
-      if: startsWith(github.ref, 'refs/tags/v')
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        draft: true
-        files: |
-          nhddl-${{ env.GIT_VERSION }}.zip
+      - name: Publish Versioned Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ github.ref_name }}
+          draft: true
+          files: |
+            nhddl-${{ env.GIT_VERSION }}.zip
