@@ -134,7 +134,7 @@ ExitCode uiSkinOptionsLoop(void) {
     // … resto del cuerpo de la función …
 
   // Defaults por índice de parámetro (en orden de fields[])
-const uint64_t defaults[8] = {
+const uint64_t defaults[11] = {
     (uint64_t)BGColor,        // background
     (uint64_t)FontMainColor,  // listText
     (uint64_t)ColorSelected,  // selectedText
@@ -182,9 +182,16 @@ if (!editing) {
 
 // Lista de parámetros centrados con margen fijo
 int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
-int blockHeight = totalFields * lineSpacing;
+int blockHeight = (totalFields + 1) * lineSpacing; // +1 por el encabezado ABGR
 int availableHeight = gsGlobal->Height - headerHeight - footerHeight;
+
+// Centrar todo el bloque (encabezado + parámetros) en el área disponible
 int startY = headerHeight + (availableHeight - blockHeight) / 2;
+
+// Ahora el encabezado queda en startY
+int headerY = startY;
+int y = startY + lineSpacing; // parámetros empiezan una línea más abajo
+
 
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
