@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include "gui_skin.h"
 #include "skin_layout.h"
-#include "target.h"
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
@@ -192,27 +191,27 @@ int uiLoop(TargetList *titles) {
   Target *curTarget = titles->first;
 
   // Get last launched title and find it in the target list
-  //char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
-//  if (!getLastLaunchedTitle(lastTitle)) {
-//    int mountpointLen;
-//    while (curTarget != NULL) {
-//      // Compare paths without the mountpoint
-//      mountpointLen = getRelativePathIdx(curTarget->fullPath);
-//      if (mountpointLen == -1)
-//        mountpointLen = 0;
-//
-//      if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
-//        selectedTitleIdx = curTarget->idx;
-//        break;
-//      }
-//      curTarget = curTarget->next;
-//    }
-//    // Reinitialize target if last launched title couldn't be loaded
-//    if (curTarget == NULL) {
-//      curTarget = titles->first;
-//    }
-//  }
-//  free(lastTitle);
+  char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
+  if (!getLastLaunchedTitle(lastTitle)) {
+    int mountpointLen;
+    while (curTarget != NULL) {
+      // Compare paths without the mountpoint
+      mountpointLen = getRelativePathIdx(curTarget->fullPath);
+      if (mountpointLen == -1)
+        mountpointLen = 0;
+
+      if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
+        selectedTitleIdx = curTarget->idx;
+        break;
+      }
+      curTarget = curTarget->next;
+    }
+    // Reinitialize target if last launched title couldn't be loaded
+    if (curTarget == NULL) {
+      curTarget = titles->first;
+    }
+  }
+  free(lastTitle);
 
   // Load cover art
   isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
@@ -241,170 +240,157 @@ int uiLoop(TargetList *titles) {
     gsKit_finish();
     gsKit_sync_flip(gsGlobal);
 
-// Process user inputs:
-if (input == -1) {            // If input is -1, block until input changes
-    input = waitForInput(-1); // Used to ignore held inputs after returning from title options
-} else {
-    input = pollInput();
-}
+    // Process user inputs:
+    if (input == -1)            // If input is -1, block until input changes
+      input = waitForInput(-1); // Used to ignore held inputs after returning from title options
+    else
+      input = pollInput();
 
-if (gsGlobal->Mode == GS_MODE_PAL)
-    frameCount = (frameCount + 1) % 8;  // Handle input only every 8th frame unless it changes
-else
-    frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
+    if (gsGlobal->Mode == GS_MODE_PAL)
+      frameCount = (frameCount + 1) % 8; // Handle input only every 8th frame unless it changes
+    else
+      frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
 
-if (frameCount && (input == prevInput))
-    continue;
+    if (frameCount && (input == prevInput))
+      continue;
 
-frameCount = 0;
-prevInput = input;
+    frameCount = 0;
+    prevInput = input;
 
-if (input & PAD_CROSS) {
-    // Lanzar título
-    Target *target = copyTarget(curTarget);
-    freeTargetList(titles);
-    uiLaunchTitle(target, NULL);
-    return -1;
-
-} else if (input & PAD_CIRCLE) {
-    // Toggle favorito
-    if (curTarget->isFavorite) {
-        curTarget->isFavorite = 0;
-        moveTargetToNormalPosition(titles, curTarget);
-    } else {
-        curTarget->isFavorite = 1;
-        moveTargetToTop(titles, curTarget);
-    }
-
-    // Reindexar después de mover
-    int idx = 0;
-    Target *t = titles->first;
-    while (t) {
-        t->idx = idx++;
-        t = t->next;
-    }
-
-    // Refrescar puntero al título seleccionado
-    curTarget = getTargetByIdx(titles, selectedTitleIdx);
-
-    // Guardar cambios en cache
-    storeTitleIDCache(titles, curTarget->device);
-
-    // Forzar recarga de cover si cambió curTarget
-    isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
-
-    // No sigas procesando más inputs en este frame
-    continue;
-
-} else if (input & PAD_UP) {
-    // Point to the previous title
-    selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-
-} else if (input & PAD_DOWN) {
-    // Advance to the next title
-    selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-
-} else if (input & PAD_R1) {
-    // Switch to the next page
-    if (selectedTitleIdx == titles->total - 1) {
-        selectedTitleIdx = 0; // Wrap around if the last title is selected
-    } else {
-        selectedTitleIdx += maxTitlesPerPage;
-        if (selectedTitleIdx >= titles->total)
-            selectedTitleIdx = titles->total - 1;
-    }
-
-} else if (input & PAD_L1) {
-    // Switch to the previous page
-    if (selectedTitleIdx == 0) {
-        selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
-    } else {
-        selectedTitleIdx -= maxTitlesPerPage;
-        if (selectedTitleIdx < 0)
-            selectedTitleIdx = 0;
-    }
-
-} else if (input & PAD_TRIANGLE) {
+    if (input & (PAD_CROSS | PAD_CIRCLE)) {
+        // Copy target, free title list and launch
+        Target *target = copyTarget(curTarget);
+        freeTargetList(titles);
+        uiLaunchTitle(target, NULL);
+        // Something went wrong, main loop must exit immediately
+        return -1;
+    } else if (input & PAD_UP) {
+        // Point to the previous title
+        selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
+    } else if (input & PAD_DOWN) {
+        // Advance to the next title
+        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+    } else if (input & PAD_R1) {
+        // Switch to the next page
+        if (selectedTitleIdx == titles->total - 1) {
+            selectedTitleIdx = 0; // Wrap around if the last title is selected
+        } else {
+            selectedTitleIdx += maxTitlesPerPage;
+            if (selectedTitleIdx >= titles->total)
+                selectedTitleIdx = titles->total - 1;
+        }
+    } else if (input & PAD_L1) {
+        // Switch to the previous page
+        if (selectedTitleIdx == 0) {
+            selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
+        } else {
+            selectedTitleIdx -= maxTitlesPerPage;
+            if (selectedTitleIdx < 0)
+                selectedTitleIdx = 0;
+        }
+    } else if (input & PAD_TRIANGLE) {
     input = -1;
     prevInput = 0;
     if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
         return -1;
     }
-    // Al volver del options loop, no proceses inputs retenidos
-    continue;
-
-} else if (input & PAD_START) {
+}
+else if (input & PAD_START) {
     break;
-
 } else if (input & PAD_SELECT) {
-    uiSkinOptionsLoop();  // No declares 'skinExit' si no lo vas a usar
+    ExitCode skinExit = uiSkinOptionsLoop();
     input = -1;
     prevInput = 0;
 
     // Si el editor devolvió SAVE o CANCEL, simplemente volvés al título principal
     // No hagas return -1 ni break, porque eso cierra toda la UI
     continue;
+  }
 }
-// ... while (1) { ... }  // tu bucle principal termina aquí
-
+    
 exit:
-closePad();
-closeUI();
-return res;
-
+  closePad();
+  closeUI();
+  return res;
+}
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
-
-  // Circle: Favorite
   drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
-  drawTextWindow(baseX + getIconWidth(ICON_CIRCLE) + 5, baseY, 0, gsGlobal->Height - 1, 0,
-                 currentTheme.headerText, ALIGN_VCENTER, "Favorite");
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
+  drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
+                 "Launch title");
 
-  // Cross: Launch
-  int crossX = baseX + 120;
-  drawIconWindow(crossX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
-  drawTextWindow(crossX + getIconWidth(ICON_CROSS) + 5, baseY, 0, gsGlobal->Height - 1, 0,
-                 currentTheme.headerText, ALIGN_VCENTER, "Launch");
-
-  // Select: Skin
-  drawIconWindow(baseX + 240, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_SELECT);
-  drawTextWindow(baseX + 240 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0,
-                 currentTheme.headerText, ALIGN_VCENTER, "Skin");
-
-  // Start: Exit
+  drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_SELECT);
+  drawTextWindow(baseX + 200 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER, "Skin");
+  
+  
   drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_START);
-  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0,
-                 currentTheme.headerText, ALIGN_CENTER, "Exit");
+  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
 
-  // Triangle: Title options (right side)
-  drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"),
-                 baseY, gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                 currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0,
-                 currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
+  drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"), baseY, gsGlobal->Width - baseX,
+                 gsGlobal->Height, 0, currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
 }
 
+// Draws title list
+void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
+  int curPage = selectedTitleIdx / maxTitlesPerPage;
 
+  // Draw header and footer
+  int titleY = headerHeight;
+  int baseX = keepoutArea + 10;
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, "Title List");
+  snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1, DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1, titles->total);
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
 
-  // Cover art frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2,
-                    coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
+  drawTitleListFooter(baseX);
 
-  // Cover art (if present)
+  // Draw title list
+  Target *curTitle = titles->first;
+
+  titleY += getFontLineHeight() / 2;
+  while (curTitle != NULL) {
+    // Do not display titles before the current page
+    if (curTitle->idx < maxTitlesPerPage * curPage) {
+      goto next;
+    }
+    // Do not display titles beyond the current page
+    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) {
+      break;
+    }
+
+    // Draw title ID for selected title
+    if (selectedTitleIdx == curTitle->idx) {
+      // Draw title ID and device type under the cover art
+      drawTextWindow(coverArtX1,
+                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+                                    curTitle->id), // Use y coordinate return by title ID drawing function as an argument
+                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER, modeToString(curTitle->device->mode));
+    }
+
+    // Draw title name
+    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0, ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText), curTitle->name);
+
+  next:
+    curTitle = curTitle->next;
+  }
+
+  // Draw cover art placeholder/frame
+  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
+
+  // Draw cover art if it exists
   if (selectedTitleCover != NULL) {
+    // Temporaily disable alpha blending
+    // Some PNGs require inverted alpha channel value to display properly
+    // Since cover art has nothing to blend, we can bypass the issue altogether
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover,
-                              coverArtX1, coverArtY1, 0.0f, 0.0f,
-                              coverArtX2, coverArtY2,
-                              selectedTitleCover->Width, selectedTitleCover->Height,
-                              2, FontMainColor);
+    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2, selectedTitleCover->Width,
+                              selectedTitleCover->Height, 2, FontMainColor);
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1,
-                      coverArtX2, coverArtY2, 1, currentTheme.background);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
-                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.background);
+    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
 }
 
