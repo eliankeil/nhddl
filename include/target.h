@@ -15,8 +15,10 @@ typedef struct Target {
   char *id;               // Title ID
   struct DeviceMapEntry *device; // Device entry
 
-  struct Target *prev; // Previous target in the list
-  struct Target *next; // Next target in the list
+  int isFavorite;         // <-- NUEVO: 0 = normal, 1 = favorito
+
+  struct Target *prev;    // Previous target in the list
+  struct Target *next;    // Next target in the list
 } Target;
 
 // A linked list of launch candidates
