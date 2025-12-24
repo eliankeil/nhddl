@@ -21,8 +21,11 @@ void setDefaultSkin() {
     currentTheme.headerText   = HeaderTextColor;
     currentTheme.iconEnabled  = IconEnabled;
     currentTheme.coverFrame   = FontMainColor;
-    currentTheme.warnText     = WarnTextColor;
-    currentTheme.errorText    = ErrorTextColor;
+    currentTheme.iconCircle   = IconCircle;
+    currentTheme.iconCross    = IconCross;
+    currentTheme.iconSquare   = IconSquare;
+    currentTheme.iconTriangle = IconTriangle;
+    currentTheme.iconPad      = IconPad;
 }
 
 // Genera skin.yaml con los valores por defecto y comentarios
@@ -41,8 +44,11 @@ int saveSkin(const char *path) {
     fprintf(f, "headerText:   0x%08X\n", (unsigned int)currentTheme.headerText);
     fprintf(f, "iconEnabled:  0x%08X\n", (unsigned int)currentTheme.iconEnabled);
     fprintf(f, "coverFrame:   0x%08X\n", (unsigned int)currentTheme.coverFrame);
-    fprintf(f, "warnText:     0x%08X\n", (unsigned int)currentTheme.warnText);
-    fprintf(f, "errorText:    0x%08X\n", (unsigned int)currentTheme.errorText);
+    fprintf(f, "iconCircle:     0x%08X\n", (unsigned int)currentTheme.iconCircle);
+    fprintf(f, "iconCross:    0x%08X\n", (unsigned int)currentTheme.iconCross);
+    fprintf(f, "iconSquare:    0x%08X\n", (unsigned int)currentTheme.iconSquare);
+    fprintf(f, "iconTriangle:    0x%08X\n", (unsigned int)currentTheme.iconTriangle);
+    fprintf(f, "iconPad:    0x%08X\n", (unsigned int)currentTheme.iconPad);
 
     fclose(f);
     return 0;
@@ -72,8 +78,11 @@ int loadSkin(const char *path) {
             else if (strcmp(key, "headerText")   == 0) currentTheme.headerText   = value;
             else if (strcmp(key, "iconEnabled")    == 0) currentTheme.iconEnabled    = value;
             else if (strcmp(key, "coverFrame")   == 0) currentTheme.coverFrame   = value;
-            else if (strcmp(key, "warnText")     == 0) currentTheme.warnText     = value;
-            else if (strcmp(key, "errorText")    == 0) currentTheme.errorText    = value;
+            else if (strcmp(key, "iconCircle")     == 0) currentTheme.iconCircle     = value;
+            else if (strcmp(key, "iconCross")    == 0) currentTheme.iconCross    = value;
+            else if (strcmp(key, "iconSquare")    == 0) currentTheme.iconSquare    = value;
+            else if (strcmp(key, "iconTriangle")    == 0) currentTheme.iconTriangle    = value;
+            else if (strcmp(key, "iconPad")    == 0) currentTheme.iconPad    = value;
         }
     }
 
@@ -89,8 +98,11 @@ const char *fields[] = {
     "Secondary Text",
     "Enable Icon",
     "Cover Art Border",
-    "Warning Text",
-    "Error Text"
+    "Circle Icon",
+    "Cross Icon",
+    "Square Icon",
+    "Triangle Icon",
+    "Pad Icon"
 };
 
 uint64_t *values[] = {
@@ -100,8 +112,11 @@ uint64_t *values[] = {
     &currentTheme.headerText,
     &currentTheme.iconEnabled,
     &currentTheme.coverFrame,
-    &currentTheme.warnText,
-    &currentTheme.errorText
+    &currentTheme.iconCircle,
+    &currentTheme.iconCross,
+    &currentTheme.iconSquare,
+    &currentTheme.iconTriangle,
+    &currentTheme.iconPad
 };
 
 int totalFields = sizeof(fields) / sizeof(fields[0]);
@@ -126,8 +141,11 @@ const uint64_t defaults[8] = {
     (uint64_t)HeaderTextColor,// headerText
     (uint64_t)IconEnabled,    // iconEnabled
     (uint64_t)FontMainColor,  // coverFrame
-    (uint64_t)WarnTextColor,  // warnText
-    (uint64_t)ErrorTextColor  // errorText
+    (uint64_t)IconCircle,
+    (uint64_t)IconCross,
+    (uint64_t)IconSquare,
+    (uint64_t)IconTriangle,
+    (uint64_t)IconPad
 };
 
     while (1) {
