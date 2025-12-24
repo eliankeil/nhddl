@@ -343,8 +343,7 @@ if (!editing) {
 
 } else {
     // Estado edición
-    const char *msgCross    = "Save";
-    const char *msgTriangle = "Cancel";
+    const char *msgCross    = "Back";
     const char *msgSquare   = "Reset";
     const char *msgChange   = "Change";
 
@@ -363,14 +362,6 @@ if (!editing) {
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, msgCross);
     curX += getLineWidth(msgCross) + 40;
-
-    // TRIANGLE → Cancel
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_TRIANGLE);
-    curX += getIconWidth(ICON_TRIANGLE) + 5;
-    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, msgTriangle);
-    curX += getLineWidth(msgTriangle) + 40;
 
     // SQUARE → Reset
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
