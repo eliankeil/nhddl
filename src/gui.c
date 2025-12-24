@@ -213,8 +213,6 @@ int uiLoop(TargetList *titles) {
 //    }
 //  }
 //  free(lastTitle);
-int selectedTitleIdx = 0;
-Target *curTarget = titles->first;
 
   // Load cover art
   isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
@@ -243,22 +241,23 @@ Target *curTarget = titles->first;
     gsKit_finish();
     gsKit_sync_flip(gsGlobal);
 
-    // Process user inputs:
-    if (input == -1)            // If input is -1, block until input changes
-      input = waitForInput(-1); // Used to ignore held inputs after returning from title options
-    else
-      input = pollInput();
+// Process user inputs:
+if (input == -1) {            // If input is -1, block until input changes
+    input = waitForInput(-1); // Used to ignore held inputs after returning from title options
+} else {
+    input = pollInput();
+}
 
-    if (gsGlobal->Mode == GS_MODE_PAL)
-      frameCount = (frameCount + 1) % 8; // Handle input only every 8th frame unless it changes
-    else
-      frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
+if (gsGlobal->Mode == GS_MODE_PAL)
+    frameCount = (frameCount + 1) % 8;  // Handle input only every 8th frame unless it changes
+else
+    frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
 
-    if (frameCount && (input == prevInput))
-      continue;
+if (frameCount && (input == prevInput))
+    continue;
 
-    frameCount = 0;
-    prevInput = input;
+frameCount = 0;
+prevInput = input;
 
 if (input & PAD_CROSS) {
     // Lanzar título
@@ -266,6 +265,7 @@ if (input & PAD_CROSS) {
     freeTargetList(titles);
     uiLaunchTitle(target, NULL);
     return -1;
+
 } else if (input & PAD_CIRCLE) {
     // Toggle favorito
     if (curTarget->isFavorite) {
@@ -289,60 +289,69 @@ if (input & PAD_CROSS) {
 
     // Guardar cambios en cache
     storeTitleIDCache(titles, curTarget->device);
-}
 
     // Forzar recarga de cover si cambió curTarget
-    curTarget = getTargetByIdx(titles, selectedTitleIdx);
     isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
+
+    // No sigas procesando más inputs en este frame
+    continue;
+
 } else if (input & PAD_UP) {
-        // Point to the previous title
-        selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-    } else if (input & PAD_DOWN) {
-        // Advance to the next title
-        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-    } else if (input & PAD_R1) {
-        // Switch to the next page
-        if (selectedTitleIdx == titles->total - 1) {
-            selectedTitleIdx = 0; // Wrap around if the last title is selected
-        } else {
-            selectedTitleIdx += maxTitlesPerPage;
-            if (selectedTitleIdx >= titles->total)
-                selectedTitleIdx = titles->total - 1;
-        }
-    } else if (input & PAD_L1) {
-        // Switch to the previous page
-        if (selectedTitleIdx == 0) {
-            selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
-        } else {
-            selectedTitleIdx -= maxTitlesPerPage;
-            if (selectedTitleIdx < 0)
-                selectedTitleIdx = 0;
-        }
-    } else if (input & PAD_TRIANGLE) {
+    // Point to the previous title
+    selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
+
+} else if (input & PAD_DOWN) {
+    // Advance to the next title
+    selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+
+} else if (input & PAD_R1) {
+    // Switch to the next page
+    if (selectedTitleIdx == titles->total - 1) {
+        selectedTitleIdx = 0; // Wrap around if the last title is selected
+    } else {
+        selectedTitleIdx += maxTitlesPerPage;
+        if (selectedTitleIdx >= titles->total)
+            selectedTitleIdx = titles->total - 1;
+    }
+
+} else if (input & PAD_L1) {
+    // Switch to the previous page
+    if (selectedTitleIdx == 0) {
+        selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
+    } else {
+        selectedTitleIdx -= maxTitlesPerPage;
+        if (selectedTitleIdx < 0)
+            selectedTitleIdx = 0;
+    }
+
+} else if (input & PAD_TRIANGLE) {
     input = -1;
     prevInput = 0;
     if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
         return -1;
     }
-}
-else if (input & PAD_START) {
+    // Al volver del options loop, no proceses inputs retenidos
+    continue;
+
+} else if (input & PAD_START) {
     break;
+
 } else if (input & PAD_SELECT) {
-    ExitCode skinExit = uiSkinOptionsLoop();
+    uiSkinOptionsLoop();  // No declares 'skinExit' si no lo vas a usar
     input = -1;
     prevInput = 0;
 
     // Si el editor devolvió SAVE o CANCEL, simplemente volvés al título principal
     // No hagas return -1 ni break, porque eso cierra toda la UI
     continue;
-  }
 }
-    
+// ... while (1) { ... }  // tu bucle principal termina aquí
+
 exit:
-  closePad();
-  closeUI();
-  return res;
-}
+closePad();
+closeUI();
+return res;
+
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
