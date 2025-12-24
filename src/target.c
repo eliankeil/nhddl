@@ -46,6 +46,7 @@ Target *copyTarget(Target *src) {
   copy->name = strdup(src->name);
   copy->id = strdup(src->id);
   copy->device = src->device;
+  copy->isFavorite = src->isFavorite;
 
   return copy;
 }
