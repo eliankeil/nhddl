@@ -299,16 +299,48 @@ for (int i = 0; i < totalFields; i++) {
         }
     }
 
-    // Dibujar preview alineado con los valores
-    int prevW = 140;
-    int prevH = getFontLineHeight();
-    gsKit_prim_sprite(gsGlobal,
-                      centerX + lineWidth + 20, y,
-                      centerX + lineWidth + 20 + prevW, y + prevH,
-                      0, (uint64_t)(*values[i]));
+// Dibujar preview o ícono alineado con los valores
+int prevW = 140;
+int prevH = getFontLineHeight();
+int prevX = centerX + lineWidth + 20;
+int prevY = y;
 
-    // Avanzar a la siguiente línea con margen fijo
-    y += lineSpacing;
+if (editing && i == selectedIdx) {
+    // Estamos editando este parámetro → mostrar ícono en lugar del preview
+    if (i == 6) { // Circle Icon
+        drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconCircle, ALIGN_VCENTER, ICON_CIRCLE);
+    } else if (i == 7) { // Cross Icon
+        drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconCross, ALIGN_VCENTER, ICON_CROSS);
+    } else if (i == 8) { // Square Icon
+        drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconSquare, ALIGN_VCENTER, ICON_SQUARE);
+    } else if (i == 9) { // Triangle Icon
+        drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconTriangle, ALIGN_VCENTER, ICON_TRIANGLE);
+    } else if (i == 10) { // Pad Icon → dibujar dos íconos
+        drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconPad, ALIGN_VCENTER, ICON_UPDOWN);
+        drawIconWindow(prevX + getIconWidth(ICON_UPDOWN) + 10, prevY, 0, prevY + prevH, 0,
+                       currentTheme.iconPad, ALIGN_VCENTER, ICON_LEFTRIGHT);
+    } else {
+        // otros parámetros → preview normal
+        gsKit_prim_sprite(gsGlobal,
+                          prevX, prevY,
+                          prevX + prevW, prevY + prevH,
+                          0, (uint64_t)(*values[i]));
+    }
+} else {
+    // No estamos editando → siempre preview normal
+    gsKit_prim_sprite(gsGlobal,
+                      prevX, prevY,
+                      prevX + prevW, prevY + prevH,
+                      0, (uint64_t)(*values[i]));
+}
+
+// Avanzar a la siguiente línea con margen fijo
+y += lineSpacing;
 }
      
 // Footer dinámico según estado
