@@ -3,7 +3,7 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'experimental-*'   # cualquier tag que empiece con experimental-
+      - 'experimental*'   # cualquier tag que empiece con experimental-
       - 'v*'               # tags de versión formales
 
 jobs:
