@@ -374,13 +374,13 @@ void drawTitleListFooter(int baseX) {
                    currentTheme.headerText, ALIGN_VCENTER, "Skin");
     curX += getLineWidth("Skin") + 40;
 
-    // UPDOWN → Scroll
+    // START exit
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
-    curX += getIconWidth(ICON_UPDOWN) + 5;
+                   FontMainColor, ALIGN_CENTER, ICON_START);
+    curX += getIconWidth(ICON_START) + 5;
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Scroll");
-    curX += getLineWidth("Scroll") + 40;
+                   currentTheme.headerText, ALIGN_VCENTER, "Exit");
+    curX += getLineWidth("Exit") + 40;
 
     // --- Bloques anclados a la derecha ---
     int rightX = gsGlobal->Width - baseX;
@@ -393,13 +393,13 @@ void drawTitleListFooter(int baseX) {
                    gsGlobal->Height - 1, 0,
                    currentTheme.headerText, ALIGN_VCENTER, "Title options");
 
-    // START → Exit (a la izquierda de TRIANGLE)
-    rightX -= getLineWidth("Exit") + getIconWidth(ICON_START) + 40;
+    // PAD UPDOWN (a la izquierda de TRIANGLE)
+    rightX -= getLineWidth("Navigate") + getIconWidth(ICON_UPDOWN) + 40;
     drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_START);
-    drawTextWindow(rightX + getIconWidth(ICON_START) + 5, baseY, 0,
+                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
+    drawTextWindow(rightX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
                    gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Exit");
+                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
 }
 
 
@@ -485,21 +485,21 @@ void drawTitleOptionsFooter(int baseX) {
                    gsGlobal->Width, gsGlobal->Height, 0,
                    currentTheme.headerText, ALIGN_VCENTER, "Test");
 
-    // UPDOWN → Scroll (nuevo bloque centrado)
-    int scrollX = (gsGlobal->Width / 2) - (getIconWidth(ICON_UPDOWN) + getLineWidth("Scroll") + 5) / 2;
+    // START save
+    int scrollX = (gsGlobal->Width / 2) - (getIconWidth(ICON_START) + getLineWidth("Save") + 5) / 2;
     drawIconWindow(scrollX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
-    drawTextWindow(scrollX + getIconWidth(ICON_UPDOWN) + 5, baseY,
+                   FontMainColor, ALIGN_CENTER, ICON_START);
+    drawTextWindow(scrollX + getIconWidth(ICON_START) + 5, baseY,
                    0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Scroll");
+                   currentTheme.headerText, ALIGN_VCENTER, "Save");
 
-    // START → Save
+    // PAD Navigate
     drawIconWindow((gsGlobal->Width * 5 / 8), baseY,
                    gsGlobal->Width - getLineWidth("Save") - 5, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_VCENTER, ICON_START);
-    drawTextWindow((gsGlobal->Width * 5 / 8) + 5 + getIconWidth(ICON_START),
+                   currentTheme.iconPad, ALIGN_VCENTER, ICON_UPDOWN);
+    drawTextWindow((gsGlobal->Width * 5 / 8) + 5 + getIconWidth(ICON_UPDOWN),
                    gsGlobal->Height - 1 - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Save");
+                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
 
     // TRIANGLE → Cancel
     drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Cancel"),
