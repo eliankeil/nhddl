@@ -16,11 +16,11 @@ static const uint64_t HeaderTextColor = GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80);
 static const uint64_t WarnTextColor = GS_SETREG_RGBA(0x60, 0x60, 0x00, 0x80);
 static const uint64_t ErrorTextColor = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
 static const uint64_t IconEnabled = GS_SETREG_RGBA(0x00, 0xA0, 0xAD, 0x80);
-static const uint64_t IconCircle = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
-static const uint64_t IconCross = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
-static const uint64_t IconSquare = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
-static const uint64_t IconTriangle = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
-static const uint64_t IconPad = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
+static const uint64_t IconCircle = GS_SETREG_RGBA(0x7E, 0x00, 0x3C, 0x80);
+static const uint64_t IconCross = GS_SETREG_RGBA(0x67, 0x7A, 0xB8, 0x80);
+static const uint64_t IconSquare = GS_SETREG_RGBA(0x89, 0x54, 0x79, 0x80);
+static const uint64_t IconTriangle = GS_SETREG_RGBA(0x13, 0x7D, 0x4D, 0x80);
+static const uint64_t IconPad = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
 
 // Initialized in gui.c
 extern GSGLOBAL *gsGlobal;
