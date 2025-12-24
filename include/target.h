@@ -42,5 +42,8 @@ void insertIntoTargetList(TargetList *result, Target *title);
 
 // Completely frees Target and returns pointer to the next target in the list
 Target *freeTarget(TargetList *targetList, Target *target);
+void moveTargetToNormalPosition(TargetList *list, Target *target);
+void moveTargetToTop(TargetList *list, Target *target);
+
 
 #endif
