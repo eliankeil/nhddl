@@ -401,18 +401,6 @@ void drawTitleListFooter(int baseX) {
     drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
                    gsGlobal->Width - baseX, gsGlobal->Height, 0,
                    currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
-
-    // L1/R1 → Switch views (arriba)
-    drawTextWindow(0, gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2,
-                   gsGlobal->Width, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_TOP | ALIGN_HCENTER, "Switch views");
-    drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
-                   (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                   gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
-    drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5,
-                   gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
-                   gsGlobal->Width, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
 }
 
 
