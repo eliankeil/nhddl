@@ -124,7 +124,7 @@ const uint64_t defaults[8] = {
     (uint64_t)FontMainColor,  // listText
     (uint64_t)ColorSelected,  // selectedText
     (uint64_t)HeaderTextColor,// headerText
-    (uint64_t)0x80ADA000,     // iconEnabled
+    (uint64_t)IconEnabled,    // iconEnabled
     (uint64_t)FontMainColor,  // coverFrame
     (uint64_t)WarnTextColor,  // warnText
     (uint64_t)ErrorTextColor  // errorText
