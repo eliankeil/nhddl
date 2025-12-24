@@ -218,19 +218,22 @@ void processTitleID(TargetList *result, struct DeviceMapEntry *device) {
       titleID = getCachedTitleID(curTarget->fullPath, cache);
     }
 
-    if (titleID != NULL) {
-      curTarget->id = strdup(titleID);
-    } else { // Get title ID from ISO
-      cacheMisses++;
-      printf("Cache miss for %s\n", curTarget->fullPath);
-      curTarget->id = getTitleID(curTarget->fullPath);
-      if (curTarget->id == NULL) {
-        uiSplashLogString(LEVEL_WARN, "Failed to scan\n%s\n", curTarget->fullPath);
-        curTarget = freeTarget(result, curTarget);
-        result->total -= 1;
-        continue;
-      }
-    }
+if (titleID != NULL) {
+  curTarget->id = strdup(titleID);
+  // NUEVO: aplicar flag de favorito desde el cache
+  curTarget->isFavorite = cache->entries[cache->lastMatchedIdx].isFavorite;
+} else { // Get title ID from ISO
+  cacheMisses++;
+  printf("Cache miss for %s\n", curTarget->fullPath);
+  curTarget->id = getTitleID(curTarget->fullPath);
+  if (curTarget->id == NULL) {
+    uiSplashLogString(LEVEL_WARN, "Failed to scan\n%s\n", curTarget->fullPath);
+    curTarget = freeTarget(result, curTarget);
+    result->total -= 1;
+    continue;
+  }
+}
+
 
     curTarget = curTarget->next;
   }
@@ -257,7 +260,9 @@ const char titleIDCacheFile[] = "/cache.bin";
 typedef struct {
   char titleID[12];
   size_t pathLength; // Includes null-terminator
+  uint8_t isFavorite; // NUEVO: guarda si el título es favorito
 } CacheEntryHeader;
+
 
 typedef struct {
   char magic[4];   // Must be always equal to CACHE_MAGIC
@@ -347,6 +352,7 @@ int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device) {
     memcpy(header.titleID, curTitle->id, sizeof(header.titleID));
     header.titleID[11] = '\0';
     header.pathLength = strlen(curTitle->fullPath) - mountpointLen + 1;
+    header.isFavorite = curTitle->isFavorite ? 1 : 0;
     result = fwrite(&header, sizeof(CacheEntryHeader), 1, file);
     if (!result) {
       printf("ERROR: %s: Failed to write header: %d\n", curTitle->name, errno);
@@ -398,7 +404,7 @@ int loadTitleIDCache(TitleIDCache *cache, struct DeviceMapEntry *device) {
   }
 
   // Make sure header is valid
-  if (!strcmp(meta.magic, CACHE_MAGIC)) {
+  if (strcmp(meta.magic, CACHE_MAGIC)) {
     printf("ERROR: Cache magic doesn't match, refusing to load\n");
     fclose(file);
     return -EINVAL;
@@ -443,6 +449,7 @@ int loadTitleIDCache(TitleIDCache *cache, struct DeviceMapEntry *device) {
     memcpy(entry.titleID, header.titleID, sizeof(entry.titleID));
     header.titleID[11] = '\0';
     entry.fullPath = strdup(pathBuf);
+    entry.isFavorite = header.isFavorite;
     cache->entries[readIndex] = entry;
     readIndex++;
   }
