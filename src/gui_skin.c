@@ -209,7 +209,6 @@ snprintf(headerBuf, sizeof(headerBuf), "%s   %s   %s   %s",
 
 int headerWidth = (int)getLineWidth(headerBuf);
 int headerX = (gsGlobal->Width - headerWidth) / 2;
-int headerY = startY - lineSpacing;
 
 // Dibujar cada palabra con su color correspondiente
 int curXHeader = headerX;
@@ -228,7 +227,6 @@ for (int c = 0; c < 4; c++) {
     curXHeader += getLineWidth(channelLabels[c]) + getLineWidth("   ");
 }
 
-int y = startY;
 for (int i = 0; i < totalFields; i++) {
     // Descomponer color en ABGR
     uint32_t color32 = (uint32_t)(*values[i]);
