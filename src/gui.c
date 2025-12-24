@@ -191,27 +191,29 @@ int uiLoop(TargetList *titles) {
   Target *curTarget = titles->first;
 
   // Get last launched title and find it in the target list
-  char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
-  if (!getLastLaunchedTitle(lastTitle)) {
-    int mountpointLen;
-    while (curTarget != NULL) {
-      // Compare paths without the mountpoint
-      mountpointLen = getRelativePathIdx(curTarget->fullPath);
-      if (mountpointLen == -1)
-        mountpointLen = 0;
-
-      if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
-        selectedTitleIdx = curTarget->idx;
-        break;
-      }
-      curTarget = curTarget->next;
-    }
-    // Reinitialize target if last launched title couldn't be loaded
-    if (curTarget == NULL) {
-      curTarget = titles->first;
-    }
-  }
-  free(lastTitle);
+  //char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
+//  if (!getLastLaunchedTitle(lastTitle)) {
+//    int mountpointLen;
+//    while (curTarget != NULL) {
+//      // Compare paths without the mountpoint
+//      mountpointLen = getRelativePathIdx(curTarget->fullPath);
+//      if (mountpointLen == -1)
+//        mountpointLen = 0;
+//
+//      if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
+//        selectedTitleIdx = curTarget->idx;
+//        break;
+//      }
+//      curTarget = curTarget->next;
+//    }
+//    // Reinitialize target if last launched title couldn't be loaded
+//    if (curTarget == NULL) {
+//      curTarget = titles->first;
+//    }
+//  }
+//  free(lastTitle);
+int selectedTitleIdx = 0;
+Target *curTarget = titles->first;
 
   // Load cover art
   isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
@@ -258,7 +260,7 @@ int uiLoop(TargetList *titles) {
     prevInput = input;
 
 if (input & PAD_CROSS) {
-    // Lanzar título (igual que ahora)
+    // Lanzar título
     Target *target = copyTarget(curTarget);
     freeTargetList(titles);
     uiLaunchTitle(target, NULL);
@@ -281,8 +283,12 @@ if (input & PAD_CROSS) {
         t = t->next;
     }
 
+    // Refrescar puntero al título seleccionado
+    curTarget = getTargetByIdx(titles, selectedTitleIdx);
+
     // Guardar cambios en cache
     storeTitleIDCache(titles, curTarget->device);
+}
 
     // Forzar recarga de cover si cambió curTarget
     curTarget = getTargetByIdx(titles, selectedTitleIdx);
@@ -339,91 +345,56 @@ exit:
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
+
+  // Circle: Favorite
   drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
-  drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
-                 "Launch title");
+  drawTextWindow(baseX + getIconWidth(ICON_CIRCLE) + 5, baseY, 0, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Favorite");
 
-  drawIconWindow(baseX + 200, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_SELECT);
-  drawTextWindow(baseX + 200 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER, "Skin");
-  
-  
+  // Cross: Launch
+  int crossX = baseX + 120;
+  drawIconWindow(crossX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
+  drawTextWindow(crossX + getIconWidth(ICON_CROSS) + 5, baseY, 0, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Launch");
+
+  // Select: Skin
+  drawIconWindow(baseX + 240, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_SELECT);
+  drawTextWindow(baseX + 240 + getIconWidth(ICON_SELECT) + 5, baseY, 0, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Skin");
+
+  // Start: Exit
   drawIconWindow(0, baseY, gsGlobal->Width - getLineWidth("Exit") - 5, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_START);
-  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
+  drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_CENTER, "Exit");
 
-  drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"), baseY, gsGlobal->Width - baseX,
-                 gsGlobal->Height, 0, currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
+  // Triangle: Title options (right side)
+  drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"),
+                 baseY, gsGlobal->Width - baseX, gsGlobal->Height, 0,
+                 currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+  drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
 }
 
-// Draws title list
-void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
-  int curPage = selectedTitleIdx / maxTitlesPerPage;
 
-  // Draw header and footer
-  int titleY = headerHeight;
-  int baseX = keepoutArea + 10;
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, "Title List");
-  snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1, DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1, titles->total);
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
 
-  drawTitleListFooter(baseX);
+  // Cover art frame
+  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2,
+                    coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
 
-  // Draw title list
-  Target *curTitle = titles->first;
-
-  titleY += getFontLineHeight() / 2;
-  while (curTitle != NULL) {
-    // Do not display titles before the current page
-    if (curTitle->idx < maxTitlesPerPage * curPage) {
-      goto next;
-    }
-    // Do not display titles beyond the current page
-    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) {
-      break;
-    }
-
-    // Draw title ID for selected title
-    if (selectedTitleIdx == curTitle->idx) {
-      // Draw title ID and device type under the cover art
-      drawTextWindow(coverArtX1,
-                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-                                    curTitle->id), // Use y coordinate return by title ID drawing function as an argument
-                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER, modeToString(curTitle->device->mode));
-    }
-
-// Draw title name (con ícono si es favorito)
-int nameX = baseX;
-if (curTitle->isFavorite) {
-    // Dibujar ícono de favorito a la izquierda
-    drawIconWindow(baseX, titleY, 20, titleY + getFontLineHeight(), 0,
-                   currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
-    nameX += getIconWidth(ICON_ENABLED);
-}
-
-titleY = drawText(nameX, titleY, 0, coverArtX1 - 5, 0,
-                  ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText),
-                  curTitle->name);
-
-  next:
-    curTitle = curTitle->next;
-  }
-
-  // Draw cover art placeholder/frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
-
-  // Draw cover art if it exists
+  // Cover art (if present)
   if (selectedTitleCover != NULL) {
-    // Temporaily disable alpha blending
-    // Some PNGs require inverted alpha channel value to display properly
-    // Since cover art has nothing to blend, we can bypass the issue altogether
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2, selectedTitleCover->Width,
-                              selectedTitleCover->Height, 2, FontMainColor);
+    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover,
+                              coverArtX1, coverArtY1, 0.0f, 0.0f,
+                              coverArtX2, coverArtY2,
+                              selectedTitleCover->Width, selectedTitleCover->Height,
+                              2, FontMainColor);
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.background);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1,
+                      coverArtX2, coverArtY2, 1, currentTheme.background);
+    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
+                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
 }
 
