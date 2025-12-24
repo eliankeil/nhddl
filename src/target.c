@@ -24,10 +24,14 @@ void freeTargetList(TargetList *result) {
 // Finds target with given index in the list and returns a pointer to it
 Target *getTargetByIdx(TargetList *targets, int idx) {
   Target *current = targets->first;
-  while (current != NULL) {
+  while (1) {
     if (current->idx == idx) {
       return current;
     }
+
+    if (current->next == NULL)
+      break;
+
     current = current->next;
   }
   return NULL;
@@ -37,7 +41,6 @@ Target *getTargetByIdx(TargetList *targets, int idx) {
 Target *copyTarget(Target *src) {
   Target *copy = calloc(sizeof(Target), 1);
   copy->idx = src->idx;
-  copy->isFavorite = src->isFavorite; // copiar estado de favorito
 
   copy->fullPath = strdup(src->fullPath);
   copy->name = strdup(src->name);
@@ -67,7 +70,7 @@ void insertIntoTargetList(TargetList *result, Target *title) {
   // Overall, title name should not exceed PATH_MAX
   char lastUppercase[PATH_MAX];
 
-  while (curTitle != NULL) {
+  while (1) {
     // Reset string buffer
     lastUppercase[0] = '\0';
     // Convert name of the last title to uppercase
@@ -76,11 +79,14 @@ void insertIntoTargetList(TargetList *result, Target *title) {
 
     // Compare new title name and the current title name
     if (strcmp(curUppercase, lastUppercase) >= 0) {
-      // Insert after current
+      // First letter of the new title is after or the same as the current one
+      // New title must be inserted after the current list element
       if (curTitle->next != NULL) {
+        // Current title has a next title, update the next element
         curTitle->next->prev = title;
         title->next = curTitle->next;
       } else {
+        // Current title has no next title (it's the last list element)
         result->last = title;
       }
       title->prev = curTitle;
@@ -89,13 +95,15 @@ void insertIntoTargetList(TargetList *result, Target *title) {
     }
 
     if (curTitle->prev == NULL) {
-      // Insert at beginning
+      // Current title is the first in this list
+      // New title must be inserted at the beginning
       curTitle->prev = title;
       title->next = curTitle;
       result->first = title;
       break;
     }
 
+    // Keep traversing the list
     curTitle = curTitle->prev;
   }
   free(curUppercase);
@@ -103,6 +111,7 @@ void insertIntoTargetList(TargetList *result, Target *title) {
 
 // Completely frees Target and returns pointer to the next target in the list
 Target *freeTarget(TargetList *targetList, Target *target) {
+  // Update target list if target is the first or the last element
   if (targetList->first == target) {
     targetList->first = target->next;
   }
@@ -111,15 +120,21 @@ Target *freeTarget(TargetList *targetList, Target *target) {
   }
 
   Target *next = NULL;
+  // If target has a link to the next element
   if (target->next != NULL) {
+    // Set return pointer
     next = target->next;
     if (target->prev != NULL) {
+      // If target has a link to the previous element, link prev and next together
       next->prev = target->prev;
       target->prev->next = next;
     } else {
+      // Else, remove link to target
       next->prev = NULL;
     }
   } else if (target->prev != NULL) {
+    // If target doesn't have a link to the next element
+    // but has a link to the previous element, remove link to target
     target->prev->next = NULL;
   }
 
@@ -130,40 +145,4 @@ Target *freeTarget(TargetList *targetList, Target *target) {
 
   free(target);
   return next;
-}
-
-// Mueve un Target al inicio de la lista (favoritos)
-void moveTargetToTop(TargetList *list, Target *target) {
-    if (!list || !target) return;
-    if (list->first == target) return;
-
-    // Desenganchar
-    if (target->prev) target->prev->next = target->next;
-    if (target->next) target->next->prev = target->prev;
-    if (list->last == target) list->last = target->prev;
-
-    // Insertar al inicio
-    target->prev = NULL;
-    target->next = list->first;
-    if (list->first) list->first->prev = target;
-    list->first = target;
-
-    if (!list->last) list->last = target;
-}
-
-// Reubica un Target en su posición normal (orden alfabético)
-void moveTargetToNormalPosition(TargetList *list, Target *target) {
-    if (!list || !target) return;
-
-    // Desenganchar
-    if (target->prev) target->prev->next = target->next;
-    if (target->next) target->next->prev = target->prev;
-    if (list->first == target) list->first = target->next;
-    if (list->last == target) list->last = target->prev;
-
-    target->prev = NULL;
-    target->next = NULL;
-
-    // Reinsertar en orden alfabético
-    insertIntoTargetList(list, target);
 }
