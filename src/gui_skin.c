@@ -183,15 +183,22 @@ if (!editing) {
 // Lista de parámetros centrados con margen fijo
 int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
 int blockHeight = (totalFields + 1) * lineSpacing; // +1 por el encabezado ABGR
-int availableHeight = gsGlobal->Height - headerHeight - footerHeight;
 
-// Centrar todo el bloque (encabezado + parámetros) en el área disponible
-int startY = headerHeight + (availableHeight - blockHeight) / 2;
+// Y donde termina el título en el header
+int topInnerY = headerHeight;
 
-// Ahora el encabezado queda en startY
+// Y donde empiezan los íconos en el footer
+int bottomInnerY = gsGlobal->Height - footerHeight;
+
+// Altura disponible entre título y footer
+int availableHeight = bottomInnerY - topInnerY;
+
+// Centrar bloque completo en ese espacio
+int startY = topInnerY + (availableHeight - blockHeight) / 2;
+
+// Encabezado de canales en startY
 int headerY = startY;
-int y = startY + lineSpacing; // parámetros empiezan una línea más abajo
-
+int y = startY + lineSpacing; // parámetros debajo del encabezado
 
 // Dibujar encabezado de canales ABGR
 const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
