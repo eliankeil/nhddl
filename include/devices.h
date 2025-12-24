@@ -42,8 +42,6 @@ void mmceMountVMC(char *titleID);
 // Returns 0 if successful, non-zero if no targets were found or an error occurs
 // Implemented in devices_iso.c
 int findISO(TargetList *list, struct DeviceMapEntry *device);
-int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device);
-
 
 // Scans given APA HDD for HDL partitions and appends valid launch candidates to TargetList
 // Returns 0 if successful, non-zero if no targets were found or an error occurs
