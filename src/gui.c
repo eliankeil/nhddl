@@ -246,24 +246,23 @@ int uiLoop(TargetList *titles) {
 
     // Process user inputs:
     if (input == -1)            // If input is -1, block until input changes
-      input = waitForInput(-1); // Used to ignore held inputs after returning from title options
+      input = waitForInput(-1); // Usado al volver de opciones
     else
-      input = pollInput();
+      input = pollInput();      // Estado sostenido de botones
 
     if (gsGlobal->Mode == GS_MODE_PAL)
-      frameCount = (frameCount + 1) % 8; // Handle input only every 8th frame unless it changes
+      frameCount = (frameCount + 1) % 8;
     else
-      frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
+      frameCount = (frameCount + 1) % 10;
 
     // Permitir acumulación cuando UP/DOWN están sostenidos; filtrar el resto
     if (frameCount && (input == prevInput) && !(input & (PAD_UP | PAD_DOWN)))
       continue;
 
-    // Flancos para evitar repetición en botones sin aceleración
+    // Flancos para botones que no deben repetir
     int pressed = input & ~prevInput;
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
-        // Copy target, free title list and launch
         Target *target = copyTarget(curTarget);
         freeTargetList(titles);
         uiLaunchTitle(target, NULL);
@@ -273,7 +272,6 @@ int uiLoop(TargetList *titles) {
         int upEdge   = (input & PAD_UP)   && !(prevInput & PAD_UP);
         int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
 
-        // Paso inmediato por flanco
         if (upEdge) {
             selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
             repeatCounter = 0;
@@ -283,7 +281,6 @@ int uiLoop(TargetList *titles) {
             repeatCounter = 0;
         }
 
-        // Acelerar al mantener presionado
         if ((input & PAD_UP) || (input & PAD_DOWN)) {
             if (upEdge || downEdge) {
                 repeatCounter = 0;
@@ -303,7 +300,7 @@ int uiLoop(TargetList *titles) {
             repeatCounter = 0;
         }
     } else if (pressed & PAD_R1) {
-        // Switch to the next page (por flanco → no acelera)
+        // Switch to the next page (solo flanco)
         if (selectedTitleIdx == titles->total - 1) {
             selectedTitleIdx = 0;
         } else {
@@ -313,7 +310,7 @@ int uiLoop(TargetList *titles) {
         }
         repeatCounter = 0;
     } else if (pressed & PAD_L1) {
-        // Switch to the previous page (por flanco → no acelera)
+        // Switch to the previous page (solo flanco)
         if (selectedTitleIdx == 0) {
             selectedTitleIdx = titles->total - 1;
         } else {
