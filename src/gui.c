@@ -255,25 +255,23 @@ int uiLoop(TargetList *titles) {
     else
       frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
 
-    if (frameCount && (input == prevInput))
+    // Si el input es sostenido y NO es UP/DOWN, saltá esta iteración
+    if (frameCount && (input == prevInput) && !(input & (PAD_UP | PAD_DOWN)))
       continue;
 
-    frameCount = 0;
-    prevInput = input;
+    // --- NO actualices prevInput acá ---
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
-        // Copy target, free title list and launch
         Target *target = copyTarget(curTarget);
         freeTargetList(titles);
         uiLaunchTitle(target, NULL);
-        // Something went wrong, main loop must exit immediately
         return -1;
     } else if (input & (PAD_UP | PAD_DOWN)) {
         // --- Navegación con aceleración ---
         int upEdge   = (input & PAD_UP)   && !(prevInput & PAD_UP);
         int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
 
-        // paso inmediato por flanco
+        // Paso inmediato por flanco
         if (upEdge) {
             selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
             repeatCounter = 0;
@@ -283,7 +281,7 @@ int uiLoop(TargetList *titles) {
             repeatCounter = 0;
         }
 
-        // acelerar al mantener presionado
+        // Acelerar al mantener presionado
         if ((input & PAD_UP) || (input & PAD_DOWN)) {
             if (upEdge || downEdge) {
                 repeatCounter = 0;
@@ -299,44 +297,55 @@ int uiLoop(TargetList *titles) {
                     selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
                 }
             }
+        } else {
+            repeatCounter = 0;
         }
     } else if (input & PAD_R1) {
         // Switch to the next page
         if (selectedTitleIdx == titles->total - 1) {
-            selectedTitleIdx = 0; // Wrap around if the last title is selected
+            selectedTitleIdx = 0;
         } else {
             selectedTitleIdx += maxTitlesPerPage;
             if (selectedTitleIdx >= titles->total)
                 selectedTitleIdx = titles->total - 1;
         }
+        repeatCounter = 0;
     } else if (input & PAD_L1) {
         // Switch to the previous page
         if (selectedTitleIdx == 0) {
-            selectedTitleIdx = titles->total - 1; // Wrap around if the first title is selected
+            selectedTitleIdx = titles->total - 1;
         } else {
             selectedTitleIdx -= maxTitlesPerPage;
             if (selectedTitleIdx < 0)
                 selectedTitleIdx = 0;
         }
+        repeatCounter = 0;
     } else if (input & PAD_TRIANGLE) {
         input = -1;
+        // Al volver de opciones, evitá que el hold previo dispare
         prevInput = 0;
+        repeatCounter = 0;
         if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
             return -1;
         }
+    } else if (input & PAD_START) {
+        break;
+    } else if (input & PAD_SELECT) {
+        ExitCode skinExit = uiSkinOptionsLoop();
+        input = -1;
+        // Igual que TRIANGLE: limpiá estados de hold
+        prevInput = 0;
+        repeatCounter = 0;
+        continue;
+    } else {
+        // Nada presionado relevante: reset de aceleración
+        repeatCounter = 0;
+    }
 
-}
-else if (input & PAD_START) {
-    break;
-} else if (input & PAD_SELECT) {
-    ExitCode skinExit = uiSkinOptionsLoop();
-    input = -1;
-    prevInput = 0;
+    // Ahora sí: actualizar estado anterior al final de la iteración
+    frameCount = 0;
+    prevInput = input;
 
-    // Si el editor devolvió SAVE o CANCEL, simplemente volvés al título principal
-    // No hagas return -1 ni break, porque eso cierra toda la UI
-    continue;
-  }
 }
     
   exit:
