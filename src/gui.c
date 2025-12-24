@@ -255,13 +255,15 @@ int uiLoop(TargetList *titles) {
     else
       frameCount = (frameCount + 1) % 10; // Handle input only every 10th frame unless it changes
 
-    // Si el input es sostenido y NO es UP/DOWN, saltá esta iteración
+    // Permitir acumulación cuando UP/DOWN están sostenidos; filtrar el resto
     if (frameCount && (input == prevInput) && !(input & (PAD_UP | PAD_DOWN)))
       continue;
 
-    // --- NO actualices prevInput acá ---
+    // Flancos para evitar repetición en botones sin aceleración
+    int pressed = input & ~prevInput;
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
+        // Copy target, free title list and launch
         Target *target = copyTarget(curTarget);
         freeTargetList(titles);
         uiLaunchTitle(target, NULL);
@@ -300,8 +302,8 @@ int uiLoop(TargetList *titles) {
         } else {
             repeatCounter = 0;
         }
-    } else if (input & PAD_R1) {
-        // Switch to the next page
+    } else if (pressed & PAD_R1) {
+        // Switch to the next page (por flanco → no acelera)
         if (selectedTitleIdx == titles->total - 1) {
             selectedTitleIdx = 0;
         } else {
@@ -310,8 +312,8 @@ int uiLoop(TargetList *titles) {
                 selectedTitleIdx = titles->total - 1;
         }
         repeatCounter = 0;
-    } else if (input & PAD_L1) {
-        // Switch to the previous page
+    } else if (pressed & PAD_L1) {
+        // Switch to the previous page (por flanco → no acelera)
         if (selectedTitleIdx == 0) {
             selectedTitleIdx = titles->total - 1;
         } else {
@@ -322,27 +324,25 @@ int uiLoop(TargetList *titles) {
         repeatCounter = 0;
     } else if (input & PAD_TRIANGLE) {
         input = -1;
-        // Al volver de opciones, evitá que el hold previo dispare
         prevInput = 0;
         repeatCounter = 0;
         if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
             return -1;
         }
     } else if (input & PAD_START) {
+        repeatCounter = 0;
         break;
     } else if (input & PAD_SELECT) {
         ExitCode skinExit = uiSkinOptionsLoop();
         input = -1;
-        // Igual que TRIANGLE: limpiá estados de hold
         prevInput = 0;
         repeatCounter = 0;
         continue;
     } else {
-        // Nada presionado relevante: reset de aceleración
         repeatCounter = 0;
     }
 
-    // Ahora sí: actualizar estado anterior al final de la iteración
+    // Actualizar estado anterior al final de la iteración
     frameCount = 0;
     prevInput = input;
 
