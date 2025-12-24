@@ -257,14 +257,37 @@ int uiLoop(TargetList *titles) {
     frameCount = 0;
     prevInput = input;
 
-    if (input & (PAD_CROSS | PAD_CIRCLE)) {
-        // Copy target, free title list and launch
-        Target *target = copyTarget(curTarget);
-        freeTargetList(titles);
-        uiLaunchTitle(target, NULL);
-        // Something went wrong, main loop must exit immediately
-        return -1;
-    } else if (input & PAD_UP) {
+if (input & PAD_CROSS) {
+    // Lanzar título (igual que ahora)
+    Target *target = copyTarget(curTarget);
+    freeTargetList(titles);
+    uiLaunchTitle(target, NULL);
+    return -1;
+} else if (input & PAD_CIRCLE) {
+    // Toggle favorito
+    if (curTarget->isFavorite) {
+        curTarget->isFavorite = 0;
+        moveTargetToNormalPosition(titles, curTarget);
+    } else {
+        curTarget->isFavorite = 1;
+        moveTargetToTop(titles, curTarget);
+    }
+
+    // Reindexar después de mover
+    int idx = 0;
+    Target *t = titles->first;
+    while (t) {
+        t->idx = idx++;
+        t = t->next;
+    }
+
+    // Guardar cambios en cache
+    storeTitleIDCache(titles, curTarget->device);
+
+    // Forzar recarga de cover si cambió curTarget
+    curTarget = getTargetByIdx(titles, selectedTitleIdx);
+    isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
+} else if (input & PAD_UP) {
         // Point to the previous title
         selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
     } else if (input & PAD_DOWN) {
@@ -369,8 +392,18 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
                      coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER, modeToString(curTitle->device->mode));
     }
 
-    // Draw title name
-    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0, ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText), curTitle->name);
+// Draw title name (con ícono si es favorito)
+int nameX = baseX;
+if (curTitle->isFavorite) {
+    // Dibujar ícono de favorito a la izquierda
+    drawIconWindow(baseX, titleY, 20, titleY + getFontLineHeight(), 0,
+                   currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
+    nameX += getIconWidth(ICON_ENABLED);
+}
+
+titleY = drawText(nameX, titleY, 0, coverArtX1 - 5, 0,
+                  ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText),
+                  curTitle->name);
 
   next:
     curTitle = curTitle->next;
