@@ -15,10 +15,10 @@ static const uint64_t BGColor = ColorBlack;
 static const uint64_t HeaderTextColor = GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80);
 static const uint64_t WarnTextColor = GS_SETREG_RGBA(0x60, 0x60, 0x00, 0x80);
 static const uint64_t ErrorTextColor = GS_SETREG_RGBA(0x60, 0x00, 0x00, 0x80);
+static const uint64_t IconEnabled = GS_SETREG_RGBA(0x00, 0xA0, 0xAD, 0x80);
 
 // Initialized in gui.c
 extern GSGLOBAL *gsGlobal;
-
 #define ALIGN_LEFT 0 << 0
 #define ALIGN_RIGHT 1 << 0
 #define ALIGN_TOP 0 << 1
