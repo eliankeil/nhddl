@@ -220,6 +220,10 @@ int uiLoop(TargetList *titles) {
   int frameCount = 0;
   int prevInput = 0;
   int input = 0;
+  int repeatCounter = 0;
+  const int repeatDelay = 20; // ~1s a 60fps
+  const int repeatSpeed = 2;  // cada 2 frames después del delay
+
   while (1) {
     gsKit_clear(gsGlobal, currentTheme.background);
     gsKit_TexManager_nextFrame(gsGlobal);
@@ -264,12 +268,38 @@ int uiLoop(TargetList *titles) {
         uiLaunchTitle(target, NULL);
         // Something went wrong, main loop must exit immediately
         return -1;
-    } else if (input & PAD_UP) {
-        // Point to the previous title
-        selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-    } else if (input & PAD_DOWN) {
-        // Advance to the next title
-        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+    } else if (input & (PAD_UP | PAD_DOWN)) {
+        // --- Navegación con aceleración ---
+        int upEdge   = (input & PAD_UP)   && !(prevInput & PAD_UP);
+        int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
+
+        // paso inmediato por flanco
+        if (upEdge) {
+            selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
+            repeatCounter = 0;
+        }
+        if (downEdge) {
+            selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+            repeatCounter = 0;
+        }
+
+        // acelerar al mantener presionado
+        if ((input & PAD_UP) || (input & PAD_DOWN)) {
+            if (upEdge || downEdge) {
+                repeatCounter = 0;
+            } else {
+                repeatCounter++;
+            }
+
+            if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+                if (input & PAD_UP) {
+                    selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
+                }
+                if (input & PAD_DOWN) {
+                    selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+                }
+            }
+        }
     } else if (input & PAD_R1) {
         // Switch to the next page
         if (selectedTitleIdx == titles->total - 1) {
@@ -289,11 +319,12 @@ int uiLoop(TargetList *titles) {
                 selectedTitleIdx = 0;
         }
     } else if (input & PAD_TRIANGLE) {
-    input = -1;
-    prevInput = 0;
-    if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
-        return -1;
-    }
+        input = -1;
+        prevInput = 0;
+        if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+            return -1;
+        }
+
 }
 else if (input & PAD_START) {
     break;
@@ -337,7 +368,7 @@ void drawTitleListFooter(int baseX) {
                    currentTheme.headerText, ALIGN_VCENTER, "Skin");
     curX += getLineWidth("Skin") + 40;
 
-    // UPDOWN → Scroll (nuevo)
+    // UPDOWN → Scroll
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                    currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
     curX += getIconWidth(ICON_UPDOWN) + 5;
@@ -345,20 +376,26 @@ void drawTitleListFooter(int baseX) {
                    currentTheme.headerText, ALIGN_VCENTER, "Scroll");
     curX += getLineWidth("Scroll") + 40;
 
-    // START → Exit (anclado a la derecha)
-    drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_START) - getLineWidth("Exit"),
-                   baseY, gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_START);
-    drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Exit");
+    // --- Bloques anclados a la derecha ---
+    int rightX = gsGlobal->Width - baseX;
 
-    // TRIANGLE → Title options (también anclado a la derecha)
-    drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"),
-                   baseY, gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                   currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-    drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
+    // TRIANGLE → Title options
+    rightX -= getLineWidth("Title options") + getIconWidth(ICON_TRIANGLE) + 5;
+    drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
+                   currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
+    drawTextWindow(rightX + getIconWidth(ICON_TRIANGLE) + 5, baseY, 0,
+                   gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Title options");
+
+    // START → Exit (a la izquierda de TRIANGLE)
+    rightX -= getLineWidth("Exit") + getIconWidth(ICON_START) + 40;
+    drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
+                   FontMainColor, ALIGN_CENTER, ICON_START);
+    drawTextWindow(rightX + getIconWidth(ICON_START) + 5, baseY, 0,
+                   gsGlobal->Height - 1, 0,
+                   currentTheme.headerText, ALIGN_VCENTER, "Exit");
 }
+
 
 
 // Draws title list
