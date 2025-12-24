@@ -747,10 +747,10 @@ void uiSplashThread() {
       color = currentTheme.headerText;
       break;
     case LEVEL_WARN:
-      color = currentTheme.warnText;
+      color = WarnTextColor;
       break;
     case LEVEL_ERROR:
-      color = currentTheme.errorText;
+      color = ErrorTextColor;
       break;
     }
     drawTextWindow(0, logStartY, gsGlobal->Width, gsGlobal->Height - footerHeight, 0, color, ALIGN_CENTER, logBuffer.buf);
