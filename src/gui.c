@@ -316,8 +316,8 @@ exit:
 
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
-  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
+  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), baseY, 0, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Launch title");
 
@@ -329,7 +329,7 @@ void drawTitleListFooter(int baseX) {
   drawTextWindow(5 + getIconWidth(ICON_START), baseY, gsGlobal->Width, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_CENTER, "Exit");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options"), baseY, gsGlobal->Width - baseX,
-                 gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+                 gsGlobal->Height, 0, currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
   drawTextWindow(0, baseY, gsGlobal->Width - baseX, gsGlobal->Height - 1, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
 }
 
@@ -395,13 +395,13 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
 }
 
 void drawTitleOptionsFooter(int baseX) {
-  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CIRCLE);
-  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, FontMainColor, ALIGN_CENTER, ICON_CROSS);
+  drawIconWindow(baseX, gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), gsGlobal->Height - footerHeight, 0, gsGlobal->Height, 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
   drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS), gsGlobal->Height - 1 - footerHeight, 0, gsGlobal->Height, 0,
                  currentTheme.headerText, ALIGN_VCENTER, "Toggle");
 
   drawIconWindow((gsGlobal->Width * 3 / 8) - getIconWidth(ICON_SQUARE), gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0,
-                 FontMainColor, ALIGN_VCENTER, ICON_SQUARE);
+                 currentTheme.iconSquare, ALIGN_VCENTER, ICON_SQUARE);
   drawTextWindow((gsGlobal->Width * 3 / 8) + 5, gsGlobal->Height - footerHeight, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER,
                  "Test");
 
@@ -411,7 +411,7 @@ void drawTitleOptionsFooter(int baseX) {
                  currentTheme.headerText, ALIGN_VCENTER, "Save");
 
   drawIconWindow(gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Cancel"), gsGlobal->Height - footerHeight,
-                 gsGlobal->Width - baseX, gsGlobal->Height, 0, FontMainColor, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
   drawTextWindow(0, gsGlobal->Height - 1 - footerHeight, gsGlobal->Width - baseX, gsGlobal->Height, 0, currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
                  "Cancel");
 
