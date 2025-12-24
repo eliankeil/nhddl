@@ -9,8 +9,11 @@ typedef struct {
     uint64_t headerText;
     uint64_t iconEnabled;
     uint64_t coverFrame;
-    uint64_t warnText;
-    uint64_t errorText;
+    uint64_t iconCircle;
+    uint64_t iconCross;
+    uint64_t iconSquare;
+    uint64_t iconTriangle;
+    uint64_t iconPad;
 } ThemeColors;
 
 extern ThemeColors currentTheme;
