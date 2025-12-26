@@ -194,6 +194,11 @@ ExitCode uiSkinOptionsLoop(void) {
       if (editing) {
         if (editChannel == c) {
           color = channelColors[c]; // canal activo resaltado
+          // limpiar área antes de redibujar el activo
+          int textW = getLineWidth(channelLabels[c]);
+          gsKit_prim_sprite(gsGlobal, curXHeader, headerY, curXHeader + textW,
+                            headerY + getFontLineHeight(), 0,
+                            currentTheme.background);
         } else {
           color = 0x80303030; // canales no seleccionados en edición
         }
@@ -253,6 +258,11 @@ ExitCode uiSkinOptionsLoop(void) {
           if (i == selectedIdx && editChannel == c) {
             chanColor =
                 channelColors[c]; // canal activo del parámetro seleccionado
+            // limpiar área antes de redibujar el valor activo
+            int textW = getLineWidth(chanStr[c]);
+            gsKit_prim_sprite(gsGlobal, curX, y, curX + textW,
+                              y + getFontLineHeight(), 0,
+                              currentTheme.background);
           } else if (i == selectedIdx) {
             chanColor =
                 currentTheme
@@ -380,7 +390,7 @@ ExitCode uiSkinOptionsLoop(void) {
       // Estado edición
       const char *msgCross = "Back";
       const char *msgColor = "Channel"; // LEFT/RIGHT → canal
-      const char *msgValue = "Value"; // UP/DOWN   → valor
+      const char *msgValue = "Value";   // UP/DOWN   → valor
       const char *msgSquare = "Reset";
 
       int totalWidth =
