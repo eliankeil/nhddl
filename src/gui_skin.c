@@ -184,7 +184,10 @@ ExitCode uiSkinOptionsLoop(void) {
              channelLabels[3]);
 
     int headerWidth = (int)getLineWidth(headerBuf);
-    int headerX = (gsGlobal->Width - headerWidth) / 2;
+    int headerX = (gsGlobal->Width - headerWidth) / 2; // Limpiar franja del encabezado de canales
+    gsKit_prim_sprite(gsGlobal, headerX, headerY, headerX + headerWidth,
+                      headerY + getFontLineHeight(), 0,
+                      currentTheme.background);
 
     // Dibujar cada palabra con su color
     int curXHeader = headerX;
@@ -211,7 +214,7 @@ ExitCode uiSkinOptionsLoop(void) {
       uint8_t g = (color32 >> 8) & 0xFF;
       uint8_t r = (color32) & 0xFF;
 
-      // Preparar strings individuales para cada canal
+            // Preparar strings individuales para cada canal
       char chanStr[4][8];
       snprintf(chanStr[0], sizeof(chanStr[0]), "%02X", a);
       snprintf(chanStr[1], sizeof(chanStr[1]), "%02X", b);
@@ -224,6 +227,13 @@ ExitCode uiSkinOptionsLoop(void) {
                g, r);
       int lineWidth = (int)getLineWidth(buf);
       int centerX = (gsGlobal->Width - lineWidth) / 2;
+
+      // *** limpiar área de la fila antes de dibujar ***
+      gsKit_prim_sprite(gsGlobal,
+                        0, y,
+                        gsGlobal->Width, y + lineSpacing,
+                        0,
+                        currentTheme.background);
 
       // Determinar colores para el título
       uint64_t nameColor;
@@ -251,12 +261,9 @@ ExitCode uiSkinOptionsLoop(void) {
 
         if (editing) {
           if (i == selectedIdx && editChannel == c) {
-            chanColor =
-                channelColors[c]; // canal activo del parámetro seleccionado
+            chanColor = channelColors[c]; // canal activo del parámetro seleccionado
           } else if (i == selectedIdx) {
-            chanColor =
-                currentTheme
-                    .headerText; // parámetro seleccionado pero canal no activo
+            chanColor = currentTheme.headerText; // parámetro seleccionado pero canal no activo
           } else {
             chanColor = 0x80303030; // parámetros no seleccionados
           }
@@ -380,7 +387,7 @@ ExitCode uiSkinOptionsLoop(void) {
       // Estado edición
       const char *msgCross = "Back";
       const char *msgColor = "Channel"; // LEFT/RIGHT → canal
-      const char *msgValue = "Value"; // UP/DOWN   → valor
+      const char *msgValue = "Value";   // UP/DOWN   → valor
       const char *msgSquare = "Reset";
 
       int totalWidth =
