@@ -186,7 +186,7 @@ ExitCode uiSkinOptionsLoop(void) {
     int headerWidth = (int)getLineWidth(headerBuf);
     int headerX = (gsGlobal->Width - headerWidth) / 2;
 
-    // Dibujar cada palabra con su color correspondiente
+    // Dibujar cada palabra con su color
     int curXHeader = headerX;
     for (int c = 0; c < 4; c++) {
       uint64_t color = currentTheme.headerText; // por defecto
