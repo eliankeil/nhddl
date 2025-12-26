@@ -171,10 +171,10 @@ ExitCode uiSkinOptionsLoop(void) {
     // Dibujar encabezado de canales ABGR
     const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
     uint64_t channelColors[4] = {
-        0xFF00357D, // Alpha resaltado en gris oscuro
-        0xFFFF0000, // Blue resaltado en azul (ABGR)
-        0xFF00FF00, // Green resaltado en verde
-        0xFF0000FF  // Red resaltado en rojo
+        0x8000357D, // Alpha resaltado en gris oscuro
+        0x80FF0000, // Blue resaltado en azul (ABGR)
+        0x8000FF00, // Green resaltado en verde
+        0x800000FF  // Red resaltado en rojo
     };
 
     // Calcular posición centrada para el encabezado
