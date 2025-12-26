@@ -278,12 +278,49 @@ ExitCode uiSkinOptionsLoop(void) {
                                          : currentTheme.listText;
         }
 
-        drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
-        curX += getLineWidth(chanStr[c]);
+        int textW = getLineWidth(chanStr[c]);
+        int textH = getFontLineHeight();
 
+        if (editing && i == selectedIdx && editChannel == c) {
+          // 1) Fondo opaco exacto detrás del valor activo
+          gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+          gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+          gsKit_prim_sprite(gsGlobal, curX, y, curX + textW, y + textH, 0,
+                            currentTheme.background);
+          // 2) Texto sin blending ni alpha test (sólido, sin “sucio”)
+          drawText(curX, y, 0, 0, 0, (chanColor & 0x00FFFFFF) | 0xFF000000,
+                   chanStr[c]);
+          // 3) Restaurar estado para el resto
+          gsKit_set_test(gsGlobal, GS_ATEST_ON);
+          gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+        } else {
+          // Texto normal
+          drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
+        }
+
+        curX += textW;
+
+        // Separador " : " — limpiar y dibujar sólido si estamos en la fila
+        // seleccionada
         if (c < 3) {
-          drawText(curX, y, 0, 0, 0, currentTheme.listText, "   :   ");
-          curX += getLineWidth("   :   ");
+          int sepW = getLineWidth("   :  ");
+          if (editing && i == selectedIdx) {
+            gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+            gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+            gsKit_prim_sprite(gsGlobal, curX, y, curX + sepW, y + textH, 0,
+                              currentTheme.background);
+            drawText(curX, y, 0, 0, 0,
+                     ((c == editChannel) ? currentTheme.headerText
+                                         : currentTheme.listText) &
+                             0x00FFFFFF |
+                         0xFF000000,
+                     "   :  ");
+            gsKit_set_test(gsGlobal, GS_ATEST_ON);
+            gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+          } else {
+            drawText(curX, y, 0, 0, 0, currentTheme.listText, "   :  ");
+          }
+          curX += sepW;
         }
       }
 
