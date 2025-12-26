@@ -186,143 +186,174 @@ ExitCode uiSkinOptionsLoop(void) {
     int headerWidth = (int)getLineWidth(headerBuf);
     int headerX = (gsGlobal->Width - headerWidth) / 2;
 
-    // Dibujar cada palabra con su color, limpiando detrás
-    int curXHeader = headerX;
-    for (int c = 0; c < 4; c++) {
-      uint64_t color = currentTheme.headerText; // por defecto
-      if (editing) {
+   // Dibujar encabezado de canales ABGR
+const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
+uint64_t channelColors[4] = {
+    0xFF00357D, // Alpha resaltado en gris oscuro
+    0xFFFF0000, // Blue resaltado en azul (ABGR)
+    0xFF00FF00, // Green resaltado en verde
+    0xFF0000FF  // Red resaltado en rojo
+};
+
+// Calcular posición centrada para el encabezado
+char headerBuf[64];
+snprintf(headerBuf, sizeof(headerBuf), "%s   %s   %s   %s",
+         channelLabels[0], channelLabels[1], channelLabels[2],
+         channelLabels[3]);
+
+int headerWidth = (int)getLineWidth(headerBuf);
+int headerX = (gsGlobal->Width - headerWidth) / 2;
+
+// Dibujar cada palabra con su color, limpiando detrás
+int curXHeader = headerX;
+for (int c = 0; c < 4; c++) {
+    uint64_t color = currentTheme.headerText; // por defecto
+    if (editing) {
         if (editChannel == c) {
-          color = channelColors[c]; // canal activo resaltado
+            color = channelColors[c]; // canal activo resaltado
         } else {
-          color = 0x80303030; // canales no seleccionados en edición
+            color = 0x80303030; // canales no seleccionados en edición
         }
-      }
-
-      int textW = getLineWidth(channelLabels[c]);
-      // limpiar área exacta detrás de la palabra
-      gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-      gsKit_prim_sprite(gsGlobal, curXHeader, headerY, curXHeader + textW,
-                        headerY + getFontLineHeight(), 0,
-                        currentTheme.background);
-      gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-
-      drawText(curXHeader, headerY, 0, 0, 0, color, channelLabels[c]);
-      curXHeader += textW + getLineWidth("   ");
     }
 
-    for (int i = 0; i < totalFields; i++) {
-      // Descomponer color en ABGR
-      uint32_t color32 = (uint32_t)(*values[i]);
-      uint8_t a = (color32 >> 24) & 0xFF;
-      uint8_t b = (color32 >> 16) & 0xFF;
-      uint8_t g = (color32 >> 8) & 0xFF;
-      uint8_t r = (color32) & 0xFF;
+    int textW = getLineWidth(channelLabels[c]);
+    // limpiar área exacta detrás de la palabra (rectángulo opaco)
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsKit_prim_sprite(gsGlobal,
+                      curXHeader, headerY,
+                      curXHeader + textW, headerY + getFontLineHeight(),
+                      0,
+                      currentTheme.background);
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
 
-      // Preparar strings individuales para cada canal
-      char chanStr[4][8];
-      snprintf(chanStr[0], sizeof(chanStr[0]), "%02X", a);
-      snprintf(chanStr[1], sizeof(chanStr[1]), "%02X", b);
-      snprintf(chanStr[2], sizeof(chanStr[2]), "%02X", g);
-      snprintf(chanStr[3], sizeof(chanStr[3]), "%02X", r);
+    // forzar alpha sólido en el texto activo para evitar "sucio"
+    uint64_t drawColor = color;
+    if (editing && editChannel == c) {
+        drawColor = (color & 0x00FFFFFF) | 0xFF000000;
+    }
 
-      // Calcular ancho total y posición centrada
-      char buf[32];
-      snprintf(buf, sizeof(buf), "%02X   :   %02X   :   %02X   :   %02X", a, b,
-               g, r);
-      int lineWidth = (int)getLineWidth(buf);
-      int centerX = (gsGlobal->Width - lineWidth) / 2;
+    drawText(curXHeader, headerY, 0, 0, 0, drawColor, channelLabels[c]);
+    curXHeader += textW + getLineWidth("   ");
+}
 
-      // limpiar área de la fila antes de dibujar
-      gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-      gsKit_prim_sprite(gsGlobal, 0, y, gsGlobal->Width, y + lineSpacing, 0,
-                        currentTheme.background);
-      gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+for (int i = 0; i < totalFields; i++) {
+    // Descomponer color en ABGR
+    uint32_t color32 = (uint32_t)(*values[i]);
+    uint8_t a = (color32 >> 24) & 0xFF;
+    uint8_t b = (color32 >> 16) & 0xFF;
+    uint8_t g = (color32 >> 8) & 0xFF;
+    uint8_t r = (color32) & 0xFF;
 
-      // Determinar colores para el título
-      uint64_t nameColor;
-      if (editing) {
+    // Preparar strings individuales para cada canal
+    char chanStr[4][8];
+    snprintf(chanStr[0], sizeof(chanStr[0]), "%02X", a);
+    snprintf(chanStr[1], sizeof(chanStr[1]), "%02X", b);
+    snprintf(chanStr[2], sizeof(chanStr[2]), "%02X", g);
+    snprintf(chanStr[3], sizeof(chanStr[3]), "%02X", r);
+
+    // Calcular ancho total y posición centrada
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%02X   :   %02X   :   %02X   :   %02X", a, b, g, r);
+    int lineWidth = (int)getLineWidth(buf);
+    int centerX = (gsGlobal->Width - lineWidth) / 2;
+
+    // limpiar área de la fila antes de dibujar (rectángulo opaco)
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsKit_prim_sprite(gsGlobal,
+                      0, y,
+                      gsGlobal->Width, y + lineSpacing,
+                      0,
+                      currentTheme.background);
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+
+    // Determinar colores para el título
+    uint64_t nameColor;
+    if (editing) {
         nameColor = (i == selectedIdx) ? currentTheme.selectedText : 0x80303030;
-      } else {
+    } else {
         nameColor = (i == selectedIdx) ? currentTheme.selectedText
                                        : currentTheme.listText;
-      }
+    }
 
-      // Dibujar título alineado con valores
-      drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
+    // Dibujar título alineado con valores
+    drawText(keepoutArea + 10, y, 0, 0, 0, nameColor, fields[i]);
 
-      // Dibujar iconEnabled alineado con el título
-      if (editing && i == selectedIdx) {
+    // Dibujar iconEnabled alineado con el título
+    if (editing && i == selectedIdx) {
         drawIconWindow(keepoutArea - getIconWidth(ICON_ENABLED) - 2, y, 0,
                        y + getFontLineHeight(), 0, currentTheme.iconEnabled,
                        ALIGN_VCENTER, ICON_ENABLED);
-      }
+    }
 
-      // Dibujar valores canal por canal respetando espaciado
-      int curX = centerX;
-      for (int c = 0; c < 4; c++) {
+    // Dibujar valores canal por canal respetando espaciado
+    int curX = centerX;
+    for (int c = 0; c < 4; c++) {
         uint64_t chanColor;
 
         if (editing) {
-          if (i == selectedIdx && editChannel == c) {
-            chanColor =
-                channelColors[c]; // canal activo del parámetro seleccionado
-          } else if (i == selectedIdx) {
-            chanColor =
-                currentTheme
-                    .headerText; // parámetro seleccionado pero canal no activo
-          } else {
-            chanColor = 0x80303030; // parámetros no seleccionados
-          }
+            if (i == selectedIdx && editChannel == c) {
+                chanColor = channelColors[c]; // canal activo del parámetro seleccionado
+            } else if (i == selectedIdx) {
+                chanColor = currentTheme.headerText; // parámetro seleccionado pero canal no activo
+            } else {
+                chanColor = 0x80303030; // parámetros no seleccionados
+            }
         } else {
-          chanColor = (i == selectedIdx) ? currentTheme.selectedText
-                                         : currentTheme.listText;
+            chanColor = (i == selectedIdx) ? currentTheme.selectedText
+                                           : currentTheme.listText;
         }
 
         int textW = getLineWidth(chanStr[c]);
         int textH = getFontLineHeight();
 
         if (editing && i == selectedIdx && editChannel == c) {
-          // 1) Fondo opaco exacto detrás del valor activo
-          gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-          gsKit_set_test(gsGlobal, GS_ATEST_OFF);
-          gsKit_prim_sprite(gsGlobal, curX, y, curX + textW, y + textH, 0,
-                            currentTheme.background);
-          // 2) Texto sin blending ni alpha test (sólido, sin “sucio”)
-          drawText(curX, y, 0, 0, 0, (chanColor & 0x00FFFFFF) | 0xFF000000,
-                   chanStr[c]);
-          // 3) Restaurar estado para el resto
-          gsKit_set_test(gsGlobal, GS_ATEST_ON);
-          gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+            // limpiar área exacta detrás del valor activo (rectángulo opaco)
+            gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+            gsKit_prim_sprite(gsGlobal,
+                              curX, y,
+                              curX + textW, y + textH,
+                              0,
+                              currentTheme.background);
+            gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+
+            // forzar alpha sólido para el valor activo
+            uint64_t solidColor = (chanColor & 0x00FFFFFF) | 0xFF000000;
+            drawText(curX, y, 0, 0, 0, solidColor, chanStr[c]);
         } else {
-          // Texto normal
-          drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
+            // Texto normal (usa el alpha del color definido)
+            drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
         }
 
         curX += textW;
 
-        // Separador " : " — limpiar y dibujar sólido si estamos en la fila
-        // seleccionada
+        // Separador "   :   "
         if (c < 3) {
-          int sepW = getLineWidth("   :  ");
-          if (editing && i == selectedIdx) {
-            gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-            gsKit_set_test(gsGlobal, GS_ATEST_OFF);
-            gsKit_prim_sprite(gsGlobal, curX, y, curX + sepW, y + textH, 0,
-                              currentTheme.background);
-            drawText(curX, y, 0, 0, 0,
-                     ((c == editChannel) ? currentTheme.headerText
-                                         : currentTheme.listText) &
-                             0x00FFFFFF |
-                         0xFF000000,
-                     "   :  ");
-            gsKit_set_test(gsGlobal, GS_ATEST_ON);
-            gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-          } else {
-            drawText(curX, y, 0, 0, 0, currentTheme.listText, "   :  ");
-          }
-          curX += sepW;
+            const char *sep = "   :   ";
+            int sepW = getLineWidth(sep);
+
+            if (editing && i == selectedIdx) {
+                // limpiar área detrás del separador en la fila seleccionada
+                gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+                gsKit_prim_sprite(gsGlobal,
+                                  curX, y,
+                                  curX + sepW, y + textH,
+                                  0,
+                                  currentTheme.background);
+                gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+
+                // separador con alpha sólido para evitar suciedad
+                uint64_t sepColor = ((c == editChannel) ? currentTheme.headerText
+                                                        : currentTheme.listText);
+                sepColor = (sepColor & 0x00FFFFFF) | 0xFF000000;
+                drawText(curX, y, 0, 0, 0, sepColor, sep);
+            } else {
+                drawText(curX, y, 0, 0, 0, currentTheme.listText, sep);
+            }
+
+            curX += sepW;
         }
-      }
+    }
+
 
       // Dibujar preview o ícono alineado con los valores
       int prevW = 140;
