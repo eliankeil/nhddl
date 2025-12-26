@@ -353,6 +353,7 @@ for (int i = 0; i < totalFields; i++) {
             curX += sepW;
         }
     }
+  }
 
 
       // Dibujar preview o ícono alineado con los valores
