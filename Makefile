@@ -31,9 +31,14 @@ EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 EE_OBJS += $(ELF_FILES:.elf=_elf.o)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
-EE_INCS := -Iinclude -I$(PS2DEV)/gsKit/include -I$(PS2SDK)/ports/include
+EE_INCS := -Iinclude \
+			-I$(PS2DEV)/gsKit/include \
+			-I$(PS2DEV)/gskit/include \
+			-I$(PS2SDK)/ports/include
 
-EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib -L$(PS2SDK)/ports/lib -s
+EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib \
+				-L$(PS2DEV)/gskit/lib \
+				-L$(PS2SDK)/ports/lib -s
 
 BIN2C = $(PS2SDK)/bin/bin2c
 

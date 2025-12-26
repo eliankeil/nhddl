@@ -143,32 +143,9 @@ ExitCode uiSkinOptionsLoop(void) {
   while (1) {
     gsKit_clear(gsGlobal, currentTheme.background);
 
-    // Header dinámico según estado
-    if (!editing) {
-      drawTextWindow(0, headerHeight - getFontLineHeight(), gsGlobal->Width, 0,
-                     0, currentTheme.headerText, ALIGN_HCENTER, "Skin Editor");
-    } else {
-      // Texto con íconos L1 y R1 centrados
-      const char *msg = "Select Color Channel";
-      int textWidth = getLineWidth(msg);
-      int totalWidth =
-          getIconWidth(ICON_L1) + 10 + textWidth + 10 + getIconWidth(ICON_R1);
-      int startX = (gsGlobal->Width - totalWidth) / 2;
-      int baseY = headerHeight - getFontLineHeight();
-
-      // Ícono L1
-      drawIconWindow(startX, baseY, 0, headerHeight, 0, FontMainColor,
-                     ALIGN_CENTER, ICON_L1);
-      startX += getIconWidth(ICON_L1) + 10;
-
-      // Texto centrado
-      drawText(startX, baseY, 0, 0, 0, currentTheme.headerText, msg);
-      startX += textWidth + 10;
-
-      // Ícono R1
-      drawIconWindow(startX, baseY, 0, headerHeight, 0, FontMainColor,
-                     ALIGN_CENTER, ICON_R1);
-    }
+    // Header fijo
+    drawTextWindow(0, headerHeight - getFontLineHeight(), gsGlobal->Width, 0, 0,
+                   currentTheme.headerText, ALIGN_HCENTER, "Skin Editor");
 
     // Lista de parámetros centrados con margen fijo
     int lineSpacing = getFontLineHeight() + 10; // margen fijo entre filas
@@ -402,23 +379,41 @@ ExitCode uiSkinOptionsLoop(void) {
     } else {
       // Estado edición
       const char *msgCross = "Back";
+      const char *msgColor = "Channel"; // LEFT/RIGHT → canal
+      const char *msgValue = "Value"; // UP/DOWN   → valor
       const char *msgSquare = "Reset";
-      const char *msgChange = "Change";
 
       int totalWidth =
           getIconWidth(ICON_CROSS) + 5 + getLineWidth(msgCross) + 40 +
-          getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40 +
-          getIconWidth(ICON_LEFTRIGHT) + 5 + getLineWidth(msgChange) + 40;
+          getIconWidth(ICON_LEFTRIGHT) + 5 + getLineWidth(msgColor) + 40 +
+          getIconWidth(ICON_UPDOWN) + 5 + getLineWidth(msgValue) + 40 +
+          getIconWidth(ICON_SQUARE) + 5 + getLineWidth(msgSquare) + 40;
 
       int curX = (gsGlobal->Width - totalWidth) / 2;
 
-      // CROSS → Save
+      // CROSS → Back
       drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
                      currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
       curX += getIconWidth(ICON_CROSS) + 5;
       drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                      currentTheme.headerText, ALIGN_VCENTER, msgCross);
       curX += getLineWidth(msgCross) + 40;
+
+      // LEFT/RIGHT → Color
+      drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
+                     ALIGN_CENTER, ICON_LEFTRIGHT);
+      curX += getIconWidth(ICON_LEFTRIGHT) + 5;
+      drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                     currentTheme.headerText, ALIGN_VCENTER, msgColor);
+      curX += getLineWidth(msgColor) + 40;
+
+      // UP/DOWN → Value
+      drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
+                     ALIGN_CENTER, ICON_UPDOWN);
+      curX += getIconWidth(ICON_UPDOWN) + 5;
+      drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                     currentTheme.headerText, ALIGN_VCENTER, msgValue);
+      curX += getLineWidth(msgValue) + 40;
 
       // SQUARE → Reset
       drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
@@ -427,14 +422,6 @@ ExitCode uiSkinOptionsLoop(void) {
       drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                      currentTheme.headerText, ALIGN_VCENTER, msgSquare);
       curX += getLineWidth(msgSquare) + 40;
-
-      // LEFT/RIGHT → Change
-      drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
-                     ALIGN_CENTER, ICON_LEFTRIGHT);
-      curX += getIconWidth(ICON_LEFTRIGHT) + 5;
-      drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                     currentTheme.headerText, ALIGN_VCENTER, msgChange);
-      curX += getLineWidth(msgChange) + 40;
     }
 
     gsKit_queue_exec(gsGlobal);
@@ -510,19 +497,19 @@ ExitCode uiSkinOptionsLoop(void) {
         continue;
       }
 
-      // L1/R1: cambiar canal activo (flanco único)
-      if ((editInput & PAD_L1) && !(prevInput & PAD_L1)) {
+      // LEFT/RIGHT: cambiar canal activo (flanco único)
+      if ((editInput & PAD_LEFT) && !(prevInput & PAD_LEFT)) {
         editChannel = (editChannel - 1 + 4) % 4;
         repeatCounter = 0;
-      } else if ((editInput & PAD_R1) && !(prevInput & PAD_R1)) {
+      } else if ((editInput & PAD_RIGHT) && !(prevInput & PAD_RIGHT)) {
         editChannel = (editChannel + 1) % 4;
         repeatCounter = 0;
       }
 
-      // LEFT/RIGHT: ajustar valor con flanco + aceleración
-      if (editInput & (PAD_LEFT | PAD_RIGHT)) {
-        int leftEdge = (editInput & PAD_LEFT) && !(prevInput & PAD_LEFT);
-        int rightEdge = (editInput & PAD_RIGHT) && !(prevInput & PAD_RIGHT);
+      // UP/DOWN: ajustar valor con flanco + aceleración
+      if (editInput & (PAD_DOWN | PAD_UP)) {
+        int leftEdge = (editInput & PAD_DOWN) && !(prevInput & PAD_DOWN);
+        int rightEdge = (editInput & PAD_UP) && !(prevInput & PAD_UP);
 
         uint8_t *bytes = (uint8_t *)values[selectedIdx];
         const int channelMap[4] = {3, 2, 1, 0}; // 0=A, 1=B, 2=G, 3=R
@@ -535,7 +522,7 @@ ExitCode uiSkinOptionsLoop(void) {
           bytes[idx] += 1;
 
         // acelerar al mantener presionado
-        if ((editInput & PAD_LEFT) || (editInput & PAD_RIGHT)) {
+        if ((editInput & PAD_DOWN) || (editInput & PAD_UP)) {
           if (leftEdge || rightEdge)
             repeatCounter = 0;
           else
@@ -543,9 +530,9 @@ ExitCode uiSkinOptionsLoop(void) {
 
           if (repeatCounter > repeatDelay &&
               (repeatCounter % repeatSpeed == 0)) {
-            if ((editInput & PAD_LEFT) && bytes[idx] > 0)
+            if ((editInput & PAD_DOWN) && bytes[idx] > 0)
               bytes[idx] -= 1;
-            if ((editInput & PAD_RIGHT) && bytes[idx] < 255)
+            if ((editInput & PAD_UP) && bytes[idx] < 255)
               bytes[idx] += 1;
           }
         }
