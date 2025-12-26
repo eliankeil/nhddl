@@ -448,7 +448,7 @@ ExitCode uiSkinOptionsLoop(void) {
       // CROSS: alterna edición/confirmación del parámetro seleccionado
       if (pressed & PAD_CROSS) {
         editing = 1;
-        editChannel = 0; // empieza en Alpha
+        editChannel = 1; // empieza en Alpha
         repeatCounter = 0;
         prevInput = input;
         continue;
