@@ -186,24 +186,6 @@ ExitCode uiSkinOptionsLoop(void) {
     int headerWidth = (int)getLineWidth(headerBuf);
     int headerX = (gsGlobal->Width - headerWidth) / 2;
 
-    // Dibujar encabezado de canales ABGR
-    const char *channelLabels[4] = {"Alpha", "Blue", "Green", "Red"};
-    uint64_t channelColors[4] = {
-        0xFF00357D, // Alpha resaltado en gris oscuro
-        0xFFFF0000, // Blue resaltado en azul (ABGR)
-        0xFF00FF00, // Green resaltado en verde
-        0xFF0000FF  // Red resaltado en rojo
-    };
-
-    // Calcular posición centrada para el encabezado
-    char headerBuf[64];
-    snprintf(headerBuf, sizeof(headerBuf), "%s   %s   %s   %s",
-             channelLabels[0], channelLabels[1], channelLabels[2],
-             channelLabels[3]);
-
-    int headerWidth = (int)getLineWidth(headerBuf);
-    int headerX = (gsGlobal->Width - headerWidth) / 2;
-
     // Dibujar cada palabra con su color, limpiando detrás
     int curXHeader = headerX;
     for (int c = 0; c < 4; c++) {
