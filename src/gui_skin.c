@@ -186,10 +186,11 @@ ExitCode uiSkinOptionsLoop(void) {
     int headerWidth = (int)getLineWidth(headerBuf);
     int headerX = (gsGlobal->Width - headerWidth) / 2;
 
-    // Dibujar cada palabra con su color, limpiando detrás
+    // Dibujar cada palabra con su color
     int curXHeader = headerX;
     for (int c = 0; c < 4; c++) {
       uint64_t color = currentTheme.headerText; // por defecto
+
       if (editing) {
         if (editChannel == c) {
           color = channelColors[c]; // canal activo resaltado
@@ -198,22 +199,8 @@ ExitCode uiSkinOptionsLoop(void) {
         }
       }
 
-      int textW = getLineWidth(channelLabels[c]);
-      // limpiar área exacta detrás de la palabra (rectángulo opaco)
-      gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-      gsKit_prim_sprite(gsGlobal, curXHeader, headerY, curXHeader + textW,
-                        headerY + getFontLineHeight(), 0,
-                        currentTheme.background);
-      gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-
-      // forzar alpha sólido en el texto activo para evitar "sucio"
-      uint64_t drawColor = color;
-      if (editing && editChannel == c) {
-        drawColor = (color & 0x00FFFFFF) | 0xFF000000;
-      }
-
-      drawText(curXHeader, headerY, 0, 0, 0, drawColor, channelLabels[c]);
-      curXHeader += textW + getLineWidth("   ");
+      drawText(curXHeader, headerY, 0, 0, 0, color, channelLabels[c]);
+      curXHeader += getLineWidth(channelLabels[c]) + getLineWidth("   ");
     }
 
     for (int i = 0; i < totalFields; i++) {
@@ -237,12 +224,6 @@ ExitCode uiSkinOptionsLoop(void) {
                g, r);
       int lineWidth = (int)getLineWidth(buf);
       int centerX = (gsGlobal->Width - lineWidth) / 2;
-
-      // limpiar área de la fila antes de dibujar (rectángulo opaco)
-      gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-      gsKit_prim_sprite(gsGlobal, 0, y, gsGlobal->Width, y + lineSpacing, 0,
-                        currentTheme.background);
-      gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
 
       // Determinar colores para el título
       uint64_t nameColor;
@@ -284,48 +265,12 @@ ExitCode uiSkinOptionsLoop(void) {
                                          : currentTheme.listText;
         }
 
-        int textW = getLineWidth(chanStr[c]);
-        int textH = getFontLineHeight();
+        drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
+        curX += getLineWidth(chanStr[c]);
 
-        if (editing && i == selectedIdx && editChannel == c) {
-          // limpiar área exacta detrás del valor activo (rectángulo opaco)
-          gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-          gsKit_prim_sprite(gsGlobal, curX, y, curX + textW, y + textH, 0,
-                            currentTheme.background);
-          gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-
-          // forzar alpha sólido para el valor activo
-          uint64_t solidColor = (chanColor & 0x00FFFFFF) | 0xFF000000;
-          drawText(curX, y, 0, 0, 0, solidColor, chanStr[c]);
-        } else {
-          // Texto normal (usa el alpha del color definido)
-          drawText(curX, y, 0, 0, 0, chanColor, chanStr[c]);
-        }
-
-        curX += textW;
-
-        // Separador "   :   "
         if (c < 3) {
-          const char *sep = "   :   ";
-          int sepW = getLineWidth(sep);
-
-          if (editing && i == selectedIdx) {
-            // limpiar área detrás del separador en la fila seleccionada
-            gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-            gsKit_prim_sprite(gsGlobal, curX, y, curX + sepW, y + textH, 0,
-                              currentTheme.background);
-            gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-
-            // separador con alpha sólido para evitar suciedad
-            uint64_t sepColor = ((c == editChannel) ? currentTheme.headerText
-                                                    : currentTheme.listText);
-            sepColor = (sepColor & 0x00FFFFFF) | 0xFF000000;
-            drawText(curX, y, 0, 0, 0, sepColor, sep);
-          } else {
-            drawText(curX, y, 0, 0, 0, currentTheme.listText, sep);
-          }
-
-          curX += sepW;
+          drawText(curX, y, 0, 0, 0, currentTheme.listText, "   :   ");
+          curX += getLineWidth("   :   ");
         }
       }
 
@@ -435,7 +380,7 @@ ExitCode uiSkinOptionsLoop(void) {
       // Estado edición
       const char *msgCross = "Back";
       const char *msgColor = "Channel"; // LEFT/RIGHT → canal
-      const char *msgValue = "Value";   // UP/DOWN   → valor
+      const char *msgValue = "Value"; // UP/DOWN   → valor
       const char *msgSquare = "Reset";
 
       int totalWidth =
