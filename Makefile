@@ -7,9 +7,8 @@ EE_BIN = $(ELF_BASE_NAME)_unc.elf
 EE_BIN_PKD = $(ELF_BASE_NAME).elf
 
 EE_OBJS = main.o module_init.o common.o options.o launcher.o title_id.o target.o
-EE_OBJS += gui.o gui_graphics.o gui_args.o gui_skin.o pad.o
+EE_OBJS += gui.o gui_graphics.o gui_args.o pad.o
 EE_OBJS += devices.o devices_mmce.o devices_bdm.o devices_iso.o devices_hdl.o
-
 # Basic modules
 IRX_FILES += sio2man.irx mcman.irx mcserv.irx fileXio.irx iomanX.irx freepad.irx mmceman.irx
 # BDM modules
@@ -21,7 +20,7 @@ IRX_FILES += ps2hdd.irx ps2fs.irx
 ELF_FILES += loader.elf
 
 EE_LIBS = -ldebug -lfileXio -lpatches -lgskit_toolkit -lgskit -ldmakit -lpng -lz -ltiff -lpad
-EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\"" -DSKIN_EDITION="\"Experimental Skin Editor Build\""
+EE_CFLAGS += -mno-gpopt -G0 -DGIT_VERSION="\"${GIT_VERSION}\""
 
 EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
@@ -31,14 +30,9 @@ EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 EE_OBJS += $(ELF_FILES:.elf=_elf.o)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
-EE_INCS := -Iinclude \
-			-I$(PS2DEV)/gsKit/include \
-			-I$(PS2DEV)/gskit/include \
-			-I$(PS2SDK)/ports/include
+EE_INCS := -Iinclude -I$(PS2DEV)/gsKit/include -I$(PS2SDK)/ports/include
 
-EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib \
-				-L$(PS2DEV)/gskit/lib \
-				-L$(PS2SDK)/ports/lib -s
+EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib -L$(PS2SDK)/ports/lib -s
 
 BIN2C = $(PS2SDK)/bin/bin2c
 
@@ -64,7 +58,7 @@ loader/loader.elf: loader
 # smap_udpbd.irx
 iop/smap_udpbd/smap_udpbd.irx: iop/smap_udpbd
 	$(MAKE) -C $<
-	
+
 %smap_udpbd_irx.c: iop/smap_udpbd/smap_udpbd.irx
 	$(BIN2C) iop/smap_udpbd/$(*:$(EE_SRC_DIR)%=%)smap_udpbd.irx $@ $(*:$(EE_SRC_DIR)%=%)smap_udpbd_irx
 
