@@ -570,17 +570,17 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // --- Dibujar íconos de scroll magnetizados al frame ---
   // Se coloca al final de drawTitleList, después del bucle de títulos.
 
-  int scrollMargin = 4; // separación respecto al borde del frame
+  int scrollMargin = 1; // separación respecto al borde del frame
   int iconWidth = 16;   // ancho fijo del PNG del ícono
   int iconHeight = 16;  // alto fijo del PNG del ícono
 
   // Posición del ícono de scroll UP (arriba, cerca del corner TR)
   int scrollUpX = listX2 - iconWidth - scrollMargin;
-  int scrollUpY = listY1 + scrollMargin;
+  int scrollUpY = listY1 + scrollMargin + 3;
 
   // Posición del ícono de scroll DOWN (abajo, cerca del corner BR)
   int scrollDownX = listX2 - iconWidth - scrollMargin;
-  int scrollDownY = listY2 - iconHeight - scrollMargin;
+  int scrollDownY = listY2 - iconHeight - scrollMargin + 3;
   // Rango vertical disponible para el scrollbar (entre UP y DOWN)
   int scrollRangeTop = scrollUpY + iconHeight;
   int scrollRangeBottom = scrollDownY - iconHeight;
