@@ -1,5 +1,6 @@
 #include "gui_skin.h"
 #include "gui.h"
+#include "gui_icons.h"
 #include "gui_graphics.h"
 #include "gui_icons.h"
 #include "pad.h"
