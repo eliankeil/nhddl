@@ -32,6 +32,6 @@ int getFramePartHeight(FramePart part);
 void drawFramePart(float x, float y, int z, uint64_t color, FramePart part);
 
 // Dibuja un marco completo alrededor de un rectángulo
-void drawRoundedFrame(int x1, int y1, int x2, int y2, int z, int th);
+void drawRoundedFrame(int x1, int y1, int x2, int y2, int z);
 
 #endif
