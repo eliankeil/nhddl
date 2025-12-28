@@ -1,6 +1,7 @@
 #include "gui.h"
 #include "common.h"
 #include "gui_args.h"
+#include "gui_frames.h"
 #include "gui_graphics.h"
 #include "gui_icons.h"
 #include "gui_skin.h"
@@ -8,7 +9,6 @@
 #include "options.h"
 #include "pad.h"
 #include "skin_layout.h"
-#include "gui_frames.h"
 #include <dmaKit.h>
 #include <gsKit.h>
 #include <gsToolkit.h>
@@ -438,15 +438,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // Draw title list
   Target *curTitle = titles->first;
 
-  // --- Marco alrededor de la lista ---
-  int blockHeight = maxTitlesPerPage * getFontLineHeight();
-  int listX1 = keepoutArea + 6;
-  int listX2 = coverArtX1 - 10; // hasta antes del área de carátula
-  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
-  int listY2 = listY1 + blockHeight + 8;
-
-  drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
-
   titleY += getFontLineHeight() / 2;
   while (curTitle != NULL) {
     // Do not display titles before the current page
@@ -481,7 +472,14 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   next:
     curTitle = curTitle->next;
   }
+  // --- Marco alrededor de la lista ---
+  int blockHeight = maxTitlesPerPage * getFontLineHeight();
+  int listX1 = keepoutArea + 6;
+  int listX2 = coverArtX1 - 10; // hasta antes del área de carátula
+  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
+  int listY2 = listY1 + blockHeight + 8;
 
+  drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
                     coverArtY2 + 2, 1, currentTheme.coverFrame);
