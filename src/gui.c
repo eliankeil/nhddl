@@ -574,9 +574,13 @@ int scrollMargin   = 1;   // separación respecto al borde del frame
 int iconWidth      = 16;  // ancho fijo del PNG del ícono
 int iconHeight     = 16;  // alto fijo del PNG del ícono
 
-// offsets configurables para mover todo el bloque de íconos
-int offsetScrollX  = 0;   // mover todos los íconos horizontalmente (+ derecha, - izquierda)
-int offsetScrollY  = 0;   // mover todos los íconos verticalmente (+ abajo, - arriba)
+// offsets globales (mueven todo el bloque UP/DOWN/BAR)
+int offsetScrollX  = +3;
+int offsetScrollY  = 0;
+
+// offsets específicos del scrollbar (solo afectan al BAR)
+int offsetBarX     = +3;  // mover un pelín a la derecha
+int offsetBarY     = -7;   // mover verticalmente si lo necesitás
 
 // Posición del ícono de scroll UP
 int scrollUpX = listX2 - iconWidth - scrollMargin + offsetScrollX;
@@ -609,9 +613,9 @@ if (lastIdx > firstIdx) {
     ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
 }
 
-// Posición del scrollbar (también con offsets)
-int scrollBarX = listX2 - iconWidth - scrollMargin + offsetScrollX;
-int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) + offsetScrollY;
+// Posición del scrollbar con offset independiente
+int scrollBarX = listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
+int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) + offsetScrollY + offsetBarY;
 
 // --- Lectura de botones con libpad ---
 struct padButtonStatus buttons;
