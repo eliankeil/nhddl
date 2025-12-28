@@ -196,7 +196,8 @@ int uiLoop(TargetList *titles) {
   int isCoverUninitialized = 1;
   int selectedTitleIdx = 0;
   int maxTitlesPerPage =
-      (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight();
+      (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight() -
+      1;
   Target *curTarget = titles->first;
 
   // Get last launched title and find it in the target list
@@ -474,17 +475,29 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
           drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
                          currentTheme.listText, ALIGN_HCENTER,
                          curTitle->id), // Use y coordinate return by title ID
-                                        // drawing function as an argument
           coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
           modeToString(curTitle->device->mode));
     }
 
-    // Draw title name
-    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0,
-                      ((selectedTitleIdx == curTitle->idx)
-                           ? currentTheme.selectedText
-                           : currentTheme.listText),
-                      curTitle->name);
+    // --- Draw title name ---
+    int textWidth = getLineWidth(curTitle->name);
+    int frameWidth = listX2 - listX1;
+
+    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx) {
+      // scroll automático solo para el título seleccionado
+      static int scrollOffset = 0;
+      scrollOffset = (scrollOffset + 1) % (textWidth + frameWidth);
+
+      titleY = drawText(listX1 - scrollOffset, titleY, 0, listX2, 0,
+                        currentTheme.selectedText, curTitle->name);
+    } else {
+      // texto normal
+      titleY = drawText(listX1, titleY, 0, listX2, 0,
+                        ((selectedTitleIdx == curTitle->idx)
+                             ? currentTheme.selectedText
+                             : currentTheme.listText),
+                        curTitle->name);
+    }
 
   next:
     curTitle = curTitle->next;
