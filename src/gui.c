@@ -480,8 +480,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     }
 
     // --- Draw title name ---
-    int textWidth = getLineWidth(curTitle->name);
-
     // márgenes internos respecto al frame
     int marginLeft = 80;  // espacio entre texto y borde izquierdo
     int marginRight = -8; // espacio entre texto y borde derecho
@@ -492,6 +490,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     // coordenadas del área de texto dentro del frame
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
+
+    int textWidth = getLineWidth(curTitle->name);
     int frameWidth = textX2 - textX1;
 
     // variables estáticas para mantener estado entre frames
