@@ -1,0 +1,74 @@
+#include "gui_frames.h"
+#include "gui_graphics.h"   // para gsGlobal y colores
+#include "gui_icons.h"      // porque usamos el mismo atlas ICONS_PNG
+
+// Tabla de partes del marco (coordenadas UV dentro del atlas ICONS_PNG)
+const FrameIcon FRAME_PARTS[] = {
+    {113, 0, 6, 6},   // FRAME_CORNER_TL
+    {124, 0, 6, 6},   // FRAME_CORNER_TR
+    {113, 11, 6, 6},  // FRAME_CORNER_BL
+    {124, 11, 6, 6},  // FRAME_CORNER_BR
+    {119, 0, 5, 2},   // FRAME_EDGE_TOP
+    {119, 15, 5, 2},  // FRAME_EDGE_BOTTOM
+    {113, 6, 2, 5},   // FRAME_EDGE_LEFT
+    {128, 6, 2, 5}    // FRAME_EDGE_RIGHT
+};
+
+int getFramePartWidth(FramePart part) {
+    return FRAME_PARTS[part].w;
+}
+
+int getFramePartHeight(FramePart part) {
+    return FRAME_PARTS[part].h;
+}
+
+void drawFramePart(float x, float y, int z, uint64_t color, FramePart part) {
+    const FrameIcon *f = &FRAME_PARTS[part];
+    gsKit_prim_sprite_texture(gsGlobal,
+        gsGlobal->Texture, // mismo atlas cargado en initGraphics()
+        x, y, f->x, f->y,
+        x + f->w, y + f->h, f->x + f->w, f->y + f->h,
+        z, color);
+}
+
+// Dibuja un marco completo alrededor del rectángulo [x1,y1]..[x2,y2]
+void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
+    // Esquinas
+    drawFramePart(x1, y1, z, ColorSelected, FRAME_CORNER_TL);
+    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_TR), y1, z, ColorSelected, FRAME_CORNER_TR);
+    drawFramePart(x1, y2 - getFramePartHeight(FRAME_CORNER_BL), z, ColorSelected, FRAME_CORNER_BL);
+    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_BR), y2 - getFramePartHeight(FRAME_CORNER_BR), z, ColorSelected, FRAME_CORNER_BR);
+
+    // Lados: se estiran entre esquinas
+    // Top
+    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+        x1 + getFramePartWidth(FRAME_CORNER_TL), y1,
+        FRAME_PARTS[FRAME_EDGE_TOP].x, FRAME_PARTS[FRAME_EDGE_TOP].y,
+        x2 - getFramePartWidth(FRAME_CORNER_TR), y1 + FRAME_PARTS[FRAME_EDGE_TOP].h,
+        FRAME_PARTS[FRAME_EDGE_TOP].x + FRAME_PARTS[FRAME_EDGE_TOP].w, FRAME_PARTS[FRAME_EDGE_TOP].y + FRAME_PARTS[FRAME_EDGE_TOP].h,
+        z, ColorSelected);
+
+    // Bottom
+    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+        x1 + getFramePartWidth(FRAME_CORNER_BL), y2 - FRAME_PARTS[FRAME_EDGE_BOTTOM].h,
+        FRAME_PARTS[FRAME_EDGE_BOTTOM].x, FRAME_PARTS[FRAME_EDGE_BOTTOM].y,
+        x2 - getFramePartWidth(FRAME_CORNER_BR), y2,
+        FRAME_PARTS[FRAME_EDGE_BOTTOM].x + FRAME_PARTS[FRAME_EDGE_BOTTOM].w, FRAME_PARTS[FRAME_EDGE_BOTTOM].y + FRAME_PARTS[FRAME_EDGE_BOTTOM].h,
+        z, ColorSelected);
+
+    // Left
+    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+        x1, y1 + getFramePartHeight(FRAME_CORNER_TL),
+        FRAME_PARTS[FRAME_EDGE_LEFT].x, FRAME_PARTS[FRAME_EDGE_LEFT].y,
+        x1 + FRAME_PARTS[FRAME_EDGE_LEFT].w, y2 - getFramePartHeight(FRAME_CORNER_BL),
+        FRAME_PARTS[FRAME_EDGE_LEFT].x + FRAME_PARTS[FRAME_EDGE_LEFT].w, FRAME_PARTS[FRAME_EDGE_LEFT].y + FRAME_PARTS[FRAME_EDGE_LEFT].h,
+        z, ColorSelected);
+
+    // Right
+    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+        x2 - FRAME_PARTS[FRAME_EDGE_RIGHT].w, y1 + getFramePartHeight(FRAME_CORNER_TR),
+        FRAME_PARTS[FRAME_EDGE_RIGHT].x, FRAME_PARTS[FRAME_EDGE_RIGHT].y,
+        x2, y2 - getFramePartHeight(FRAME_CORNER_BR),
+        FRAME_PARTS[FRAME_EDGE_RIGHT].x + FRAME_PARTS[FRAME_EDGE_RIGHT].w, FRAME_PARTS[FRAME_EDGE_RIGHT].y + FRAME_PARTS[FRAME_EDGE_RIGHT].h,
+        z, ColorSelected);
+}

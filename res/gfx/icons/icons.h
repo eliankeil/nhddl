@@ -27,6 +27,7 @@ typedef enum {
   ICON_LEFTRIGHT
 } IconType;
 
+// Definiciones reales de íconos y texturas
 const Icon ICONS[] = {
     {0, 0, 25, 25},   // Circle
     {25, 0, 25, 25},  // Cross
@@ -36,9 +37,17 @@ const Icon ICONS[] = {
     {25, 25, 25, 15}, // R1
     {0, 40, 21, 11},  // Select
     {21, 40, 21, 11}, // Start
-    {100, 0, 12, 12},  // Enabled
+    {100, 0, 12, 12}, // Enabled
     {50, 25, 25, 25}, // UpDown
-    {75, 25, 25, 25} // LeftRight
+    {75, 25, 25, 25},  // LeftRight
+    {113, 0, 6, 6},    // CornerTopLeft
+    {124, 0, 6, 6},    // CornerTopRight
+    {113, 11, 6, 6},    // CornerBottomLeft
+    {124, 11, 6, 6},    // CornerBottonRight
+    {119, 0, 5, 2},    // EdgeTop
+    {119, 15, 5, 2},    // EdgeBottom
+    {113, 6, 2, 5},    // EdgeLeft
+    {128, 6, 2, 5}     // EdgeRight
 };
 
 #endif
