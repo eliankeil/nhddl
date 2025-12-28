@@ -1,6 +1,7 @@
 #include "gui_frames.h"
-#include "gui_graphics.h"   // para gsGlobal y colores
-#include "gui_icons.h"      // porque usamos el mismo atlas ICONS_PNG
+#include "gui_graphics.h"   
+#include "gui_icons.h"      
+#include "gui_skin.h"
 
 // Tabla de partes del marco (coordenadas UV dentro del atlas ICONS_PNG)
 const FrameIcon FRAME_PARTS[] = {
