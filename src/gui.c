@@ -492,7 +492,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                         currentTheme.selectedText, curTitle->name);
     } else {
       // texto normal
-      titleY = drawText(listX1, titleY, 0, listX2, 0,
+      titleY = drawText(listX1, 30, titleY, 0, listX2, 0,
                         ((selectedTitleIdx == curTitle->idx)
                              ? currentTheme.selectedText
                              : currentTheme.listText),
