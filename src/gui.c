@@ -445,7 +445,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
   int listY2 = listY1 + blockHeight + 8;
 
-  drawRoundedFrame(listX1, listY1, listX2, listY2, 0, 2);
+  drawRoundedFrame(listX1, listY1, listX2, listY2, 0);
 
   titleY += getFontLineHeight() / 2;
   while (curTitle != NULL) {

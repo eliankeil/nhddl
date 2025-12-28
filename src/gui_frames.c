@@ -25,7 +25,7 @@ int getFramePartHeight(FramePart part) {
 void drawFramePart(float x, float y, int z, uint64_t color, FramePart part) {
     const FrameIcon *f = &FRAME_PARTS[part];
     gsKit_prim_sprite_texture(gsGlobal,
-        gsGlobal->Texture, // mismo atlas cargado en initGraphics()
+        icons, // ✅ usar la textura global del atlas cargada en initGraphics()
         x, y, f->x, f->y,
         x + f->w, y + f->h, f->x + f->w, f->y + f->h,
         z, color);
@@ -41,7 +41,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
 
     // Lados: se estiran entre esquinas
     // Top
-    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+    gsKit_prim_sprite_texture(gsGlobal, icons,
         x1 + getFramePartWidth(FRAME_CORNER_TL), y1,
         FRAME_PARTS[FRAME_EDGE_TOP].x, FRAME_PARTS[FRAME_EDGE_TOP].y,
         x2 - getFramePartWidth(FRAME_CORNER_TR), y1 + FRAME_PARTS[FRAME_EDGE_TOP].h,
@@ -49,7 +49,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         z, ColorSelected);
 
     // Bottom
-    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+    gsKit_prim_sprite_texture(gsGlobal, icons,
         x1 + getFramePartWidth(FRAME_CORNER_BL), y2 - FRAME_PARTS[FRAME_EDGE_BOTTOM].h,
         FRAME_PARTS[FRAME_EDGE_BOTTOM].x, FRAME_PARTS[FRAME_EDGE_BOTTOM].y,
         x2 - getFramePartWidth(FRAME_CORNER_BR), y2,
@@ -57,7 +57,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         z, ColorSelected);
 
     // Left
-    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+    gsKit_prim_sprite_texture(gsGlobal, icons,
         x1, y1 + getFramePartHeight(FRAME_CORNER_TL),
         FRAME_PARTS[FRAME_EDGE_LEFT].x, FRAME_PARTS[FRAME_EDGE_LEFT].y,
         x1 + FRAME_PARTS[FRAME_EDGE_LEFT].w, y2 - getFramePartHeight(FRAME_CORNER_BL),
@@ -65,7 +65,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         z, ColorSelected);
 
     // Right
-    gsKit_prim_sprite_texture(gsGlobal, gsGlobal->Texture,
+    gsKit_prim_sprite_texture(gsGlobal, icons,
         x2 - FRAME_PARTS[FRAME_EDGE_RIGHT].w, y1 + getFramePartHeight(FRAME_CORNER_TR),
         FRAME_PARTS[FRAME_EDGE_RIGHT].x, FRAME_PARTS[FRAME_EDGE_RIGHT].y,
         x2, y2 - getFramePartHeight(FRAME_CORNER_BR),
