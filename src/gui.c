@@ -443,7 +443,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int offsetLeft = -4;    // mover borde izquierdo
   int offsetRight = -200; // mover borde derecho (ejemplo: hacia carátula)
   int offsetTop = -4;     // mover borde superior
-  int offsetBottom = +18;  // mover borde inferior
+  int offsetBottom = +8;  // mover borde inferior
 
   // coordenadas del marco (fijas + offsets)
   int listX1 = keepoutArea + offsetLeft;
@@ -481,10 +481,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // --- Draw title name ---
     // márgenes internos respecto al frame
-    int marginLeft = 10;  // espacio entre texto y borde izquierdo
+    int marginLeft = 6;  // espacio entre texto y borde izquierdo
     int marginRight = -10; // espacio entre texto y borde derecho
     int marginTop = 10;    // espacio extra arriba de cada línea
-    int marginBottom = 10; // espacio extra abajo (se suma al cálculo de blockHeight)
+    int marginBottom = -6; // espacio extra abajo (se suma al cálculo de blockHeight)
 
     // coordenadas del área de texto dentro del frame
     int textX1 = listX1 + marginLeft;
