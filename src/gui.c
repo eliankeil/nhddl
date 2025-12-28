@@ -8,6 +8,7 @@
 #include "options.h"
 #include "pad.h"
 #include "skin_layout.h"
+#include "gui_frames.h"
 #include <dmaKit.h>
 #include <gsKit.h>
 #include <gsToolkit.h>
