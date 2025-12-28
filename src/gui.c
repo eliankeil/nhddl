@@ -579,15 +579,15 @@ int offsetScrollX  = +3;
 int offsetScrollY  = 0;
 
 // offsets específicos del scrollbar (solo afectan al BAR)
-int offsetBarX     = +3;  // mover un pelín a la derecha
-int offsetBarY     = -7;   // mover verticalmente si lo necesitás
+int offsetBarX     = +2;  // mover un pelín a la derecha
+int offsetBarY     = -3;   // mover verticalmente si lo necesitás
 
 // Posición del ícono de scroll UP
-int scrollUpX = listX2 - iconWidth - scrollMargin + offsetScrollX;
+int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
 int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
 // Posición del ícono de scroll DOWN
-int scrollDownX = listX2 - iconWidth - scrollMargin + offsetScrollX;
+int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
 int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
 // Rango vertical disponible para el scrollbar
