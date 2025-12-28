@@ -435,6 +435,15 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   drawTitleListFooter(baseX);
 
+        // --- Marco alrededor de la lista ---
+  int blockHeight = maxTitlesPerPage * getFontLineHeight();
+  int listX1 = keepoutArea + 6;
+  int listX2 = coverArtX1 - 100; // hasta antes del área de carátula
+  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
+  int listY2 = listY1 + blockHeight + 8;
+
+  drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
+
   // Draw title list
   Target *curTitle = titles->first;
 
@@ -471,14 +480,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   next:
     curTitle = curTitle->next;
-      // --- Marco alrededor de la lista ---
-  int blockHeight = maxTitlesPerPage * getFontLineHeight();
-  int listX1 = keepoutArea + 16;
-  int listX2 = coverArtX1 - 10; // hasta antes del área de carátula
-  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
-  int listY2 = listY1 + blockHeight + 8;
-
-  drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
   }
 
   // Draw cover art placeholder/frame
