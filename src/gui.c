@@ -422,7 +422,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int curPage = selectedTitleIdx / maxTitlesPerPage;
 
   // Draw header and footer
-  int titleY = headerHeight;
   int baseX = keepoutArea + 10;
   drawTextWindow(baseX, headerHeight - getFontLineHeight(),
                  gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
