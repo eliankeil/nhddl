@@ -613,7 +613,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // Colores sólidos (sin alpha blending ni superposición)
   // Cuando se presiona pad UP o DOWN, se pinta directamente con selectedText.
   // Al soltar, vuelve a listText.
-  u32 padState = padGetState(0); // lee estado del pad del puerto 0
+  int padState = padGetState(0, 0); // puerto 0, slot 0
   bool padUpPressed = (padState & PAD_UP);
   bool padDownPressed = (padState & PAD_DOWN);
 
