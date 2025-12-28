@@ -481,7 +481,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // --- Draw title name ---
     int textWidth = getLineWidth(curTitle->name);
-    int frameWidth = listX2 - listX1;
 
     // márgenes internos respecto al frame
     int marginLeft = 80;  // espacio entre texto y borde izquierdo
@@ -493,14 +492,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     // coordenadas del área de texto dentro del frame
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
+    int frameWidth = textX2 - textX1;
 
     // variables estáticas para mantener estado entre frames
     static int scrollOffset = 0;
     static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
-
-    int textWidth = getLineWidth(curTitle->name);
-    int frameWidth = textX2 - textX1;
 
     if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx) {
       switch (scrollState) {
@@ -535,11 +532,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       }
 
       // dibujar con offset actual
-      titleY = drawText(textX1 - scrollOffset, titleY, 0, textX2, 0,
+      titleY = drawText(textX1 - scrollOffset, titleY + marginTop, 0, textX2, 0,
                         currentTheme.selectedText, curTitle->name);
     } else {
       // texto normal
-      titleY = drawText(textX1, titleY, 0, textX2, 0,
+      titleY = drawText(textX1, titleY + marginTop, 0, textX2, 0,
                         ((selectedTitleIdx == curTitle->idx)
                              ? currentTheme.selectedText
                              : currentTheme.listText),
