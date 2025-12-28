@@ -457,7 +457,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // márgenes internos respecto al frame
   int marginLeft = 10;   // espacio entre texto y borde izquierdo
-  int marginRight = -10; // espacio entre texto y borde derecho
+  int marginRight = -20; // espacio entre texto y borde derecho
   int marginTop =
       8; // espacio entre el borde superior del frame y el primer título
   int marginBottom =
@@ -580,7 +580,7 @@ int offsetScrollY  = 0;
 
 // offsets específicos del scrollbar (solo afectan al BAR)
 int offsetBarX     = +2;  // mover un pelín a la derecha
-int offsetBarY     = -3;   // mover verticalmente si lo necesitás
+int offsetBarY     = -4;   // mover verticalmente si lo necesitás
 
 // Posición del ícono de scroll UP
 int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
