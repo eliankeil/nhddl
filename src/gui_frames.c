@@ -25,7 +25,7 @@ int getFramePartHeight(FramePart part) {
 void drawFramePart(float x, float y, int z, uint64_t color, FramePart part) {
     const FrameIcon *f = &FRAME_PARTS[part];
     gsKit_prim_sprite_texture(gsGlobal,
-        icons, // ✅ usar la textura global del atlas cargada en initGraphics()
+        icons, // usar la textura global del atlas cargada en initGraphics()
         x, y, f->x, f->y,
         x + f->w, y + f->h, f->x + f->w, f->y + f->h,
         z, color);

@@ -6,9 +6,6 @@
 #include <malloc.h>
 #include <png.h>
 #include <stdlib.h>
-#include <gsKit.h>
-
-extern GSTEXTURE *icons;
 
 
 // Loads 32-bit RGBA PNG texture from memory into GSTEXTURE and uploads it to GS VRAM.

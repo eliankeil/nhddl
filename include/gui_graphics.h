@@ -4,6 +4,12 @@
 #include <gsKit.h>
 #include <stdint.h>
 
+extern GSTEXTURE *icons;
+extern GSTEXTURE *logo;
+
+// además de las demás funciones que ya declarás ahí
+
+
 // Predefined colors
 // static const uint64_t ColorWhite = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80);
 static const uint64_t ColorBlack = GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80);
