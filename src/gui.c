@@ -442,7 +442,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // offsets manuales para cada lado (ajustables)
   int offsetLeft = -4;    // mover borde izquierdo
   int offsetRight = -190; // mover borde derecho (ejemplo: hacia carátula)
-  int offsetTop = +20;     // mover borde superior
+  int offsetTop = +8;     // mover borde superior
   int offsetBottom = +8;  // mover borde inferior
 
   // coordenadas del marco (fijas + offsets)
@@ -454,115 +454,115 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
 
   // Draw title list
-  Target *curTitle = titles->first;
+Target *curTitle = titles->first;
 
-  titleY += getFontLineHeight() / 2;
-  while (curTitle != NULL) {
-    // Do not display titles before the current page
-    if (curTitle->idx < maxTitlesPerPage * curPage) {
-      goto next;
-    }
-    // Do not display titles beyond the current page
-    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) {
+// márgenes internos respecto al frame
+int marginLeft   = 10;   // espacio entre texto y borde izquierdo
+int marginRight  = -10;  // espacio entre texto y borde derecho
+int marginTop    = 8;    // espacio entre el borde superior del frame y el primer título
+int marginBottom = 8;    // espacio entre el borde inferior del frame y el último título
+
+// el primer título arranca dentro del frame, pegado al borde superior + margen
+int titleY = listY1 + marginTop;
+
+while (curTitle != NULL) {
+  // Do not display titles before the current page
+  if (curTitle->idx < maxTitlesPerPage * curPage) {
+    goto next;
+  }
+  // Do not display titles beyond the current page
+  if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) {
+    break;
+  }
+  // cortar si el siguiente título se pasaría del borde inferior del frame
+  if (titleY >= listY2 - marginBottom) {
+    break;
+  }
+
+  // Draw title ID for selected title
+  if (selectedTitleIdx == curTitle->idx) {
+    // Draw title ID and device type under the cover art
+    drawTextWindow(
+        coverArtX1,
+        drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
+                       currentTheme.listText, ALIGN_HCENTER,
+                       curTitle->id), // Use y coordinate return by title ID
+        coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+        modeToString(curTitle->device->mode));
+  }
+  // --- Draw title name ---
+  int textX1 = listX1 + marginLeft;
+  int textX2 = listX2 + marginRight;
+
+  int textWidth  = getLineWidth(curTitle->name);
+  int frameWidth = textX2 - textX1;
+
+  // variables estáticas para mantener estado entre frames
+  static float scrollOffset   = 0.0f;
+  static int   scrollState    = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
+  static int   pauseCounter   = 0;
+  static int   lastTitleIdx   = -1;
+  static int   scrollFinished = 0; // 0=no, 1=ya completó ciclo
+
+  // parámetros configurables
+  const float SCROLL_SPEED = 0.5f; // píxeles por frame (más bajo = más suave)
+  const int   PAUSE_FRAMES = 45;   // pausa de 0.75s a 60fps
+
+  // si cambiamos de título seleccionado, reiniciar scroll
+  if (selectedTitleIdx != lastTitleIdx) {
+    scrollOffset   = 0.0f;
+    scrollState    = 0;
+    pauseCounter   = 0;
+    scrollFinished = 0;
+    lastTitleIdx   = selectedTitleIdx;
+  }
+  if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx && !scrollFinished) {
+    switch (scrollState) {
+    case 0: // IDLE → iniciar scroll a la izquierda
+      scrollState = 1;
+      scrollOffset = 0.0f;
+      break;
+
+    case 1: // desplazando a la izquierda
+      scrollOffset += SCROLL_SPEED;
+      if (textX1 - (int)scrollOffset + textWidth <= textX2) {
+        scrollState = 2; // pasar a pausa
+        pauseCounter = 0;
+      }
+      break;
+
+    case 2: // pausa
+      pauseCounter++;
+      if (pauseCounter >= PAUSE_FRAMES) {
+        scrollState = 3; // empezar a volver a la derecha
+      }
+      break;
+
+    case 3: // desplazando a la derecha
+      scrollOffset -= SCROLL_SPEED;
+      if (scrollOffset <= 0.0f) {
+        scrollOffset   = 0.0f;
+        scrollState    = 0;
+        scrollFinished = 1; // marcar ciclo completado
+      }
       break;
     }
 
-    // Draw title ID for selected title
-    if (selectedTitleIdx == curTitle->idx) {
-      // Draw title ID and device type under the cover art
-      drawTextWindow(
-          coverArtX1,
-          drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
-                         currentTheme.listText, ALIGN_HCENTER,
-                         curTitle->id), // Use y coordinate return by title ID
-          coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-          modeToString(curTitle->device->mode));
-    }
-
-    // --- Draw title name ---
-    // márgenes internos respecto al frame
-    int marginLeft = 10;  // espacio entre texto y borde izquierdo
-    int marginRight = -10; // espacio entre texto y borde derecho
-    int marginTop = 0;    // espacio extra arriba de cada línea
-    int marginBottom =
-        0; // espacio extra abajo (se suma al cálculo de blockHeight)
-
-    // coordenadas del área de texto dentro del frame
-    int textX1 = listX1 + marginLeft;
-    int textX2 = listX2 + marginRight;
-
-    int textWidth = getLineWidth(curTitle->name);
-    int frameWidth = textX2 - textX1;
-
-    // variables estáticas para mantener estado entre frames
-    static float scrollOffset = 0.0f;
-    static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
-    static int pauseCounter = 0;
-    static int lastTitleIdx = -1;
-    static int scrollFinished = 0; // 0=no, 1=ya completó ciclo
-
-    // parámetros configurables
-    const float SCROLL_SPEED = 0.5f; // píxeles por frame (más bajo = más suave)
-    const int PAUSE_FRAMES = 45;     // pausa de 1s a 60fps
-
-    // si cambiamos de título seleccionado, reiniciar scroll
-    if (selectedTitleIdx != lastTitleIdx) {
-      scrollOffset = 0.0f;
-      scrollState = 0;
-      pauseCounter = 0;
-      scrollFinished = 0;
-      lastTitleIdx = selectedTitleIdx;
-    }
-
-    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
-        !scrollFinished) {
-      switch (scrollState) {
-      case 0: // IDLE → iniciar scroll a la izquierda
-        scrollState = 1;
-        scrollOffset = 0.0f;
-        break;
-
-      case 1: // desplazando a la izquierda
-        scrollOffset += SCROLL_SPEED;
-        // cuando la última letra toca el borde derecho
-        if (textX1 - (int)scrollOffset + textWidth <= textX2) {
-          scrollState = 2; // pasar a pausa
-          pauseCounter = 0;
-        }
-        break;
-
-      case 2: // pausa
-        pauseCounter++;
-        if (pauseCounter >= PAUSE_FRAMES) {
-          scrollState = 3; // empezar a volver a la derecha
-        }
-        break;
-
-      case 3: // desplazando a la derecha
-        scrollOffset -= SCROLL_SPEED;
-        if (scrollOffset <= 0.0f) {
-          scrollOffset = 0.0f;
-          scrollState = 0;
-          scrollFinished = 1; // marcar ciclo completado
-        }
-        break;
-      }
-
-      // dibujar con offset actual
-      titleY = drawText((int)(textX1 - scrollOffset), titleY + marginTop, 0,
-                        textX2, 0, currentTheme.selectedText, curTitle->name);
-    } else {
-      // texto normal
-      titleY = drawText(textX1, titleY + marginTop, 0, textX2, 0,
-                        ((selectedTitleIdx == curTitle->idx)
-                             ? currentTheme.selectedText
-                             : currentTheme.listText),
-                        curTitle->name);
-    }
-
-  next:
-    curTitle = curTitle->next;
+    // dibujar con offset actual
+    titleY = drawText((int)(textX1 - scrollOffset), titleY, 0, textX2, 0,
+                      currentTheme.selectedText, curTitle->name);
+  } else {
+    // texto normal
+    titleY = drawText(textX1, titleY, 0, textX2, 0,
+                      ((selectedTitleIdx == curTitle->idx)
+                           ? currentTheme.selectedText
+                           : currentTheme.listText),
+                      curTitle->name);
   }
+
+next:
+  curTitle = curTitle->next;
+}
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
