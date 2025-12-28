@@ -483,16 +483,27 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textWidth = getLineWidth(curTitle->name);
     int frameWidth = listX2 - listX1;
 
-    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx) {
-      // scroll automático solo para el título seleccionado
-      static int scrollOffset = 0;
-      scrollOffset = (scrollOffset + 1) % (textWidth + frameWidth);
+    // márgenes internos respecto al frame
+    int marginLeft = 8;   // espacio entre texto y borde izquierdo
+    int marginRight = -8; // espacio entre texto y borde derecho
+    int marginTop = 0;    // espacio extra arriba de cada línea
+    int marginBottom =
+        0; // espacio extra abajo (se suma al cálculo de blockHeight)
 
-      titleY = drawText(listX1 - scrollOffset, titleY, 0, listX2, 0,
+    // coordenadas del área de texto dentro del frame
+    int textX1 = listX1 + marginLeft;
+    int textX2 = listX2 + marginRight;
+
+    // si el texto excede el ancho y es el título seleccionado → scroll
+    if (textWidth > (textX2 - textX1) && selectedTitleIdx == curTitle->idx) {
+      static int scrollOffset = 0;
+      scrollOffset = (scrollOffset + 1) % (textWidth + (textX2 - textX1));
+
+      titleY = drawText(textX1 - scrollOffset, titleY + marginTop, 0, textX2, 0,
                         currentTheme.selectedText, curTitle->name);
     } else {
       // texto normal
-      titleY = drawText(listX1, 30, titleY, 0, listX2, 0,
+      titleY = drawText(textX1, titleY + marginTop, 0, textX2, 0,
                         ((selectedTitleIdx == curTitle->idx)
                              ? currentTheme.selectedText
                              : currentTheme.listText),
