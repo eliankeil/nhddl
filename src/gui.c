@@ -441,9 +441,9 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // offsets manuales para cada lado (ajustables)
   int offsetLeft = -4;    // mover borde izquierdo
-  int offsetRight = -170; // mover borde derecho (ejemplo: hacia carátula)
+  int offsetRight = -200; // mover borde derecho (ejemplo: hacia carátula)
   int offsetTop = -4;     // mover borde superior
-  int offsetBottom = +8;  // mover borde inferior
+  int offsetBottom = +18;  // mover borde inferior
 
   // coordenadas del marco (fijas + offsets)
   int listX1 = keepoutArea + offsetLeft;
