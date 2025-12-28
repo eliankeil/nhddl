@@ -495,21 +495,37 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int frameWidth = textX2 - textX1;
 
     // variables estáticas para mantener estado entre frames
-    static int scrollOffset = 0;
+    static float scrollOffset = 0.0f;
     static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
+    static int lastTitleIdx = -1;
+    static int scrollFinished = 0; // 0=no, 1=ya completó ciclo
 
-    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx) {
+    // parámetros configurables
+    const float SCROLL_SPEED = 0.5f; // píxeles por frame (más bajo = más suave)
+    const int PAUSE_FRAMES = 30;     // pausa de 1s a 60fps
+
+    // si cambiamos de título seleccionado, reiniciar scroll
+    if (selectedTitleIdx != lastTitleIdx) {
+      scrollOffset = 0.0f;
+      scrollState = 0;
+      pauseCounter = 0;
+      scrollFinished = 0;
+      lastTitleIdx = selectedTitleIdx;
+    }
+
+    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
+        !scrollFinished) {
       switch (scrollState) {
       case 0: // IDLE → iniciar scroll a la izquierda
         scrollState = 1;
-        scrollOffset = 0;
+        scrollOffset = 0.0f;
         break;
 
       case 1: // desplazando a la izquierda
-        scrollOffset++;
+        scrollOffset += SCROLL_SPEED;
         // cuando la última letra toca el borde derecho
-        if (textX1 - scrollOffset + textWidth <= textX2) {
+        if (textX1 - (int)scrollOffset + textWidth <= textX2) {
           scrollState = 2; // pasar a pausa
           pauseCounter = 0;
         }
@@ -517,23 +533,24 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
       case 2: // pausa
         pauseCounter++;
-        if (pauseCounter >= 30) { // ~0.5s a 60fps
-          scrollState = 3;        // empezar a volver a la derecha
+        if (pauseCounter >= PAUSE_FRAMES) {
+          scrollState = 3; // empezar a volver a la derecha
         }
         break;
 
       case 3: // desplazando a la derecha
-        scrollOffset--;
-        if (scrollOffset <= 0) {
-          scrollOffset = 0;
-          scrollState = 0; // volver a IDLE y detener
+        scrollOffset -= SCROLL_SPEED;
+        if (scrollOffset <= 0.0f) {
+          scrollOffset = 0.0f;
+          scrollState = 0;
+          scrollFinished = 1; // marcar ciclo completado
         }
         break;
       }
 
       // dibujar con offset actual
-      titleY = drawText(textX1 - scrollOffset, titleY + marginTop, 0, textX2, 0,
-                        currentTheme.selectedText, curTitle->name);
+      titleY = drawText((int)(textX1 - scrollOffset), titleY + marginTop, 0,
+                        textX2, 0, currentTheme.selectedText, curTitle->name);
     } else {
       // texto normal
       titleY = drawText(textX1, titleY + marginTop, 0, textX2, 0,
