@@ -484,7 +484,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int frameWidth = listX2 - listX1;
 
     // márgenes internos respecto al frame
-    int marginLeft = 8;   // espacio entre texto y borde izquierdo
+    int marginLeft = 80;   // espacio entre texto y borde izquierdo
     int marginRight = -8; // espacio entre texto y borde derecho
     int marginTop = 0;    // espacio extra arriba de cada línea
     int marginBottom =
