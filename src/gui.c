@@ -2,9 +2,12 @@
 #include "common.h"
 #include "gui_args.h"
 #include "gui_graphics.h"
+#include "gui_icons.h"
+#include "gui_skin.h"
 #include "launcher.h"
 #include "options.h"
 #include "pad.h"
+#include "skin_layout.h"
 #include <dmaKit.h>
 #include <gsKit.h>
 #include <gsToolkit.h>
@@ -14,9 +17,6 @@
 #include <ps2sdkapi.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "gui_skin.h"
-#include "skin_layout.h"
-#include "gui_icons.h"
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
@@ -28,7 +28,8 @@ void closeUI();
 int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments);
-void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPage, GSTEXTURE *selectedTitleCover);
+void drawTitleList(TargetList *titles, int selectedTitleIdx,
+                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover);
 void uiLaunchTitle(Target *target, ArgumentList *arguments);
 void drawGameID(const char *game_id);
 int createSplashThread();
@@ -87,8 +88,8 @@ void initVMode(GSGLOBAL *gsGlobal) {
 int uiInit() {
   setDefaultSkin();
   if (loadSkin("mc0:/APP_NHDDL/skin.yaml") < 0) {
-        saveSkin("mc0:/APP_NHDDL/skin.yaml");
-    }
+    saveSkin("mc0:/APP_NHDDL/skin.yaml");
+  }
   if (gsGlobal != NULL) {
     printf("Reinitializing UI\n");
     closeUI();
@@ -100,11 +101,13 @@ int uiInit() {
   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
   // Setup TEST register to ignore fully transparent pixels
-  gsGlobal->Test->ATST = 7;    // Set alpha test method to NOTEQUAL (pixels with A not equal to AREF pass)
+  gsGlobal->Test->ATST = 7; // Set alpha test method to NOTEQUAL (pixels with A
+                            // not equal to AREF pass)
   gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
   gsGlobal->Test->AFAIL = 0;   // Don't update buffers when test fails
 
-  dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
+  dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
+              D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
 
   // Initialize the DMAC
   int res;
@@ -115,10 +118,11 @@ int uiInit() {
 
   gsKit_clear(gsGlobal, currentTheme.background);
 
-// Init screen
+  // Init screen
   gsKit_vram_clear(gsGlobal);
   gsKit_init_screen(gsGlobal);
-  gsKit_display_buffer(gsGlobal); // Switch display buffer to avoid garbage appearing on screen
+  gsKit_display_buffer(
+      gsGlobal); // Switch display buffer to avoid garbage appearing on screen
   gsKit_TexManager_init(gsGlobal);
   // Set alpha and mode, clear active buffer
   gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
@@ -150,7 +154,8 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
   }
   // Reuse line buffer for building texture path
   // Append cover art path to the mountpoint
-  snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath, titleID);
+  snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
+           titleID);
   // Upload new texture
   gsKit_TexManager_invalidate(gsGlobal, coverTexture);
   if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
@@ -174,7 +179,8 @@ void closeUI() {
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
   // Reinitialize UI if video mode doesn't match
-  if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) && (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
+  if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
+      (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
     uiInit();
   }
 
@@ -188,7 +194,8 @@ int uiLoop(TargetList *titles) {
 
   int isCoverUninitialized = 1;
   int selectedTitleIdx = 0;
-  int maxTitlesPerPage = (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight();
+  int maxTitlesPerPage =
+      (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight();
   Target *curTarget = titles->first;
 
   // Get last launched title and find it in the target list
@@ -249,7 +256,7 @@ int uiLoop(TargetList *titles) {
     if (input == -1)            // If input is -1, block until input changes
       input = waitForInput(-1); // Usado al volver de opciones
     else
-      input = pollInput();      // Estado sostenido de botones
+      input = pollInput(); // Estado sostenido de botones
 
     if (gsGlobal->Mode == GS_MODE_PAL)
       frameCount = (frameCount + 1) % 8;
@@ -264,163 +271,180 @@ int uiLoop(TargetList *titles) {
     int pressed = input & ~prevInput;
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
-        Target *target = copyTarget(curTarget);
-        freeTargetList(titles);
-        uiLaunchTitle(target, NULL);
-        return -1;
+      Target *target = copyTarget(curTarget);
+      freeTargetList(titles);
+      uiLaunchTitle(target, NULL);
+      return -1;
     } else if (input & (PAD_UP | PAD_DOWN)) {
-        // --- Navegación con aceleración ---
-        int upEdge   = (input & PAD_UP)   && !(prevInput & PAD_UP);
-        int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
+      // --- Navegación con aceleración ---
+      int upEdge = (input & PAD_UP) && !(prevInput & PAD_UP);
+      int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
 
-        if (upEdge) {
-            selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-            repeatCounter = 0;
+      if (upEdge) {
+        selectedTitleIdx =
+            ((selectedTitleIdx - 1) + titles->total) % titles->total;
+        repeatCounter = 0;
+      }
+      if (downEdge) {
+        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+        repeatCounter = 0;
+      }
+
+      if ((input & PAD_UP) || (input & PAD_DOWN)) {
+        if (upEdge || downEdge) {
+          repeatCounter = 0;
+        } else {
+          repeatCounter++;
         }
-        if (downEdge) {
+
+        if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+          if (input & PAD_UP) {
+            selectedTitleIdx =
+                ((selectedTitleIdx - 1) + titles->total) % titles->total;
+          }
+          if (input & PAD_DOWN) {
             selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-            repeatCounter = 0;
+          }
         }
-
-        if ((input & PAD_UP) || (input & PAD_DOWN)) {
-            if (upEdge || downEdge) {
-                repeatCounter = 0;
-            } else {
-                repeatCounter++;
-            }
-
-            if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
-                if (input & PAD_UP) {
-                    selectedTitleIdx = ((selectedTitleIdx - 1) + titles->total) % titles->total;
-                }
-                if (input & PAD_DOWN) {
-                    selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-                }
-            }
-        } else {
-            repeatCounter = 0;
-        }
+      } else {
+        repeatCounter = 0;
+      }
     } else if (pressed & PAD_R1) {
-        // Switch to the next page (solo flanco)
-        if (selectedTitleIdx == titles->total - 1) {
-            selectedTitleIdx = 0;
-        } else {
-            selectedTitleIdx += maxTitlesPerPage;
-            if (selectedTitleIdx >= titles->total)
-                selectedTitleIdx = titles->total - 1;
-        }
-        repeatCounter = 0;
+      // Switch to the next page (solo flanco)
+      if (selectedTitleIdx == titles->total - 1) {
+        selectedTitleIdx = 0;
+      } else {
+        selectedTitleIdx += maxTitlesPerPage;
+        if (selectedTitleIdx >= titles->total)
+          selectedTitleIdx = titles->total - 1;
+      }
+      repeatCounter = 0;
     } else if (pressed & PAD_L1) {
-        // Switch to the previous page (solo flanco)
-        if (selectedTitleIdx == 0) {
-            selectedTitleIdx = titles->total - 1;
-        } else {
-            selectedTitleIdx -= maxTitlesPerPage;
-            if (selectedTitleIdx < 0)
-                selectedTitleIdx = 0;
-        }
-        repeatCounter = 0;
+      // Switch to the previous page (solo flanco)
+      if (selectedTitleIdx == 0) {
+        selectedTitleIdx = titles->total - 1;
+      } else {
+        selectedTitleIdx -= maxTitlesPerPage;
+        if (selectedTitleIdx < 0)
+          selectedTitleIdx = 0;
+      }
+      repeatCounter = 0;
     } else if (input & PAD_TRIANGLE) {
-        input = -1;
-        prevInput = 0;
-        repeatCounter = 0;
-        if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
-            return -1;
-        }
+      input = -1;
+      prevInput = 0;
+      repeatCounter = 0;
+      if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+        return -1;
+      }
     } else if (input & PAD_START) {
-        repeatCounter = 0;
-        break;
+      repeatCounter = 0;
+      break;
     } else if (input & PAD_SELECT) {
-        ExitCode skinExit = uiSkinOptionsLoop();
-        input = -1;
-        prevInput = 0;
-        repeatCounter = 0;
-        continue;
+      ExitCode skinExit = uiSkinOptionsLoop();
+      input = -1;
+      prevInput = 0;
+      repeatCounter = 0;
+      continue;
     } else {
-        repeatCounter = 0;
+      repeatCounter = 0;
     }
 
     // Actualizar estado anterior al final de la iteración
     frameCount = 0;
     prevInput = input;
+  }
 
-}
-    
-  exit:
+exit:
   closePad();
   closeUI();
   return res;
 }
 
 void drawTitleListFooter(int baseX) {
-    int baseY = gsGlobal->Height - footerHeight;
-    int curX = baseX;
+  int baseY = gsGlobal->Height - footerHeight;
+  int curX = baseX;
 
-    // CIRCLE + CROSS → Launch title (izquierda)
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
-    curX += getIconWidth(ICON_CIRCLE);
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
-    curX += getIconWidth(ICON_CROSS) + 5;
-    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Launch title");
+  // CIRCLE + CROSS → Launch title (izquierda)
+  drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle,
+                 ALIGN_CENTER, ICON_CIRCLE);
+  curX += getIconWidth(ICON_CIRCLE);
+  drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross,
+                 ALIGN_CENTER, ICON_CROSS);
+  curX += getIconWidth(ICON_CROSS) + 5;
+  drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Launch title");
 
-    // Bloques centrados: SKIN + EXIT + NAVIGATE
-    int centerTotal = getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40
-                    + getIconWidth(ICON_START) + getLineWidth("Exit") + 40
-                    + getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
-    int centerX = (gsGlobal->Width - centerTotal) / 2;
+  // Bloques centrados: SKIN + EXIT + NAVIGATE
+  int centerTotal = getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40 +
+                    getIconWidth(ICON_START) + getLineWidth("Exit") + 40 +
+                    getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
+  int centerX = (gsGlobal->Width - centerTotal) / 2;
 
-    // SELECT → Skin
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_SELECT);
-    drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Skin");
-    centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
+  // SELECT → Skin
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+                 ALIGN_CENTER, ICON_SELECT);
+  drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Skin");
+  centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
 
-    // START → Exit
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_START);
-    drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Exit");
-    centerX += getIconWidth(ICON_START) + getLineWidth("Exit") + 40;
+  // START → Exit
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+                 ALIGN_CENTER, ICON_START);
+  drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Exit");
+  centerX += getIconWidth(ICON_START) + getLineWidth("Exit") + 40;
 
-    // PAD → Navigate
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
-    drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
+  // PAD → Navigate
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
+                 ALIGN_CENTER, ICON_UPDOWN);
+  drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Navigate");
 
-    // TRIANGLE → Title options (derecha)
-    int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Title options");
-    drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
-    drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
-                   gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Title options");
+  // TRIANGLE → Title options (derecha)
+  int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) -
+               getLineWidth("Title options");
+  drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
+                 currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
+  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0,
+                 currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
+                 "Title options");
 }
 
-
-
 // Draws title list
-void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
+void drawTitleList(TargetList *titles, int selectedTitleIdx,
+                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
   int curPage = selectedTitleIdx / maxTitlesPerPage;
 
   // Draw header and footer
   int titleY = headerHeight;
   int baseX = keepoutArea + 10;
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, "Title List");
-  snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1, DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1, titles->total);
-  drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                 gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                 ALIGN_HCENTER, "Title List");
+  snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1,
+           DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1,
+           titles->total);
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                 gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                 ALIGN_RIGHT, lineBuffer);
 
   drawTitleListFooter(baseX);
 
   // Draw title list
   Target *curTitle = titles->first;
+
+  // --- Marco alrededor de la lista ---
+  int blockHeight = maxTitlesPerPage * getFontLineHeight();
+  int listX1 = keepoutArea + 6;
+  int listX2 = coverArtX1 - 10; // hasta antes del área de carátula
+  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
+  int listY2 = listY1 + blockHeight + 8;
+
+  drawRoundedFrame(listX1, listY1, listX2, listY2, 0);
 
   titleY += getFontLineHeight() / 2;
   while (curTitle != NULL) {
@@ -436,21 +460,30 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
     // Draw title ID for selected title
     if (selectedTitleIdx == curTitle->idx) {
       // Draw title ID and device type under the cover art
-      drawTextWindow(coverArtX1,
-                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-                                    curTitle->id), // Use y coordinate return by title ID drawing function as an argument
-                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER, modeToString(curTitle->device->mode));
+      drawTextWindow(
+          coverArtX1,
+          drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
+                         currentTheme.listText, ALIGN_HCENTER,
+                         curTitle->id), // Use y coordinate return by title ID
+                                        // drawing function as an argument
+          coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+          modeToString(curTitle->device->mode));
     }
 
     // Draw title name
-    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0, ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText : currentTheme.listText), curTitle->name);
+    titleY = drawText(baseX, titleY, 0, coverArtX1 - 5, 0,
+                      ((selectedTitleIdx == curTitle->idx)
+                           ? currentTheme.selectedText
+                           : currentTheme.listText),
+                      curTitle->name);
 
   next:
     curTitle = curTitle->next;
   }
 
   // Draw cover art placeholder/frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2, coverArtY2 + 2, 1, currentTheme.coverFrame);
+  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
+                    coverArtY2 + 2, 1, currentTheme.coverFrame);
 
   // Draw cover art if it exists
   if (selectedTitleCover != NULL) {
@@ -458,77 +491,86 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx, int maxTitlesPerPag
     // Some PNGs require inverted alpha channel value to display properly
     // Since cover art has nothing to blend, we can bypass the issue altogether
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2, selectedTitleCover->Width,
+    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
+                              coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
+                              selectedTitleCover->Width,
                               selectedTitleCover->Height, 2, FontMainColor);
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.background);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1, currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
+                      1, currentTheme.background);
+    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
+                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
 }
 
 void drawTitleOptionsFooter(int baseX) {
-    int baseY = gsGlobal->Height - footerHeight;
+  int baseY = gsGlobal->Height - footerHeight;
 
-    // CIRCLE + CROSS → Toggle (izquierda)
-    drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconCircle, ALIGN_CENTER, ICON_CIRCLE);
-    drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
-    drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) + getIconWidth(ICON_CROSS),
-                   gsGlobal->Height - 1 - footerHeight, 0, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Toggle");
+  // CIRCLE + CROSS → Toggle (izquierda)
+  drawIconWindow(baseX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle,
+                 ALIGN_CENTER, ICON_CIRCLE);
+  drawIconWindow(baseX + getIconWidth(ICON_CIRCLE), baseY, 0, gsGlobal->Height,
+                 0, currentTheme.iconCross, ALIGN_CENTER, ICON_CROSS);
+  drawTextWindow(baseX + 5 + getIconWidth(ICON_CIRCLE) +
+                     getIconWidth(ICON_CROSS),
+                 gsGlobal->Height - 1 - footerHeight, 0, gsGlobal->Height, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Toggle");
 
-    // Bloques centrados: TEST + SAVE + NAVIGATE
-    int centerTotal = getIconWidth(ICON_SQUARE) + getLineWidth("Test") + 40
-                    + getIconWidth(ICON_START) + getLineWidth("Save") + 40
-                    + getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
-    int centerX = (gsGlobal->Width - centerTotal) / 2;
+  // Bloques centrados: TEST + SAVE + NAVIGATE
+  int centerTotal = getIconWidth(ICON_SQUARE) + getLineWidth("Test") + 40 +
+                    getIconWidth(ICON_START) + getLineWidth("Save") + 40 +
+                    getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
+  int centerX = (gsGlobal->Width - centerTotal) / 2;
 
-    // SQUARE → Test
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconSquare, ALIGN_CENTER, ICON_SQUARE);
-    drawTextWindow(centerX + getIconWidth(ICON_SQUARE) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Test");
-    centerX += getIconWidth(ICON_SQUARE) + getLineWidth("Test") + 40;
+  // SQUARE → Test
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
+                 currentTheme.iconSquare, ALIGN_CENTER, ICON_SQUARE);
+  drawTextWindow(centerX + getIconWidth(ICON_SQUARE) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Test");
+  centerX += getIconWidth(ICON_SQUARE) + getLineWidth("Test") + 40;
 
-    // START → Save
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_CENTER, ICON_START);
-    drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Save");
-    centerX += getIconWidth(ICON_START) + getLineWidth("Save") + 40;
+  // START → Save
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+                 ALIGN_CENTER, ICON_START);
+  drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Save");
+  centerX += getIconWidth(ICON_START) + getLineWidth("Save") + 40;
 
-    // PAD → Navigate
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconPad, ALIGN_CENTER, ICON_UPDOWN);
-    drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY,
-                   0, gsGlobal->Height - 1, 0,
-                   currentTheme.headerText, ALIGN_VCENTER, "Navigate");
+  // PAD → Navigate
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
+                 ALIGN_CENTER, ICON_UPDOWN);
+  drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Navigate");
 
-    // TRIANGLE → Cancel (derecha)
-    int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) - getLineWidth("Cancel");
-    drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
-                   currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT, ICON_TRIANGLE);
-    drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
-                   gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT, "Cancel");
+  // TRIANGLE → Cancel (derecha)
+  int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) -
+               getLineWidth("Cancel");
+  drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
+                 currentTheme.iconTriangle, ALIGN_VCENTER | ALIGN_LEFT,
+                 ICON_TRIANGLE);
+  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0,
+                 currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
+                 "Cancel");
 
-    // L1/R1 → Switch views (arriba)
-    drawTextWindow(0, gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2,
-                   gsGlobal->Width, gsGlobal->Height, 0,
-                   currentTheme.headerText, ALIGN_TOP | ALIGN_HCENTER, "Switch views");
-    drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
-                   (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                   gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
-    drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5,
-                   gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
-                   gsGlobal->Width, gsGlobal->Height, 0,
-                   FontMainColor, ALIGN_TOP | ALIGN_LEFT, ICON_R1);
+  // L1/R1 → Switch views (arriba)
+  drawTextWindow(0,
+                 gsGlobal->Height - 1 - footerHeight - getFontLineHeight() / 2,
+                 gsGlobal->Width, gsGlobal->Height, 0, currentTheme.headerText,
+                 ALIGN_TOP | ALIGN_HCENTER, "Switch views");
+  drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
+                 (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
+                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT,
+                 ICON_L1);
+  drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5,
+                 gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
+                 gsGlobal->Width, gsGlobal->Height, 0, FontMainColor,
+                 ALIGN_TOP | ALIGN_LEFT, ICON_R1);
 }
-
 
 // Draws well-known Neutrino arguments
 // Returns -1 if error occurs
@@ -551,12 +593,16 @@ int uiTitleOptionsLoop(Target *target) {
 
     // Draw header
     snprintf(lineBuffer, 255, "%s\n%s", target->name, target->id);
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, lineBuffer);
+    drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                   gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                   ALIGN_HCENTER, lineBuffer);
 
     int startY = headerHeight + 1.5 * getFontLineHeight();
     for (i = 0; i < uiArgumentsTotal; i++) {
-      startY = getFontLineHeight() / 2 +
-               uiArguments[i].draw(&uiArguments[i], (i == activeArgumentIdx) ? 1 : 0, baseX, startY, 0, gsGlobal->Width - baseX, 0);
+      startY =
+          getFontLineHeight() / 2 +
+          uiArguments[i].draw(&uiArguments[i], (i == activeArgumentIdx) ? 1 : 0,
+                              baseX, startY, 0, gsGlobal->Width - baseX, 0);
     }
 
     // Draw footer
@@ -589,9 +635,11 @@ int uiTitleOptionsLoop(Target *target) {
       // Quit to title list
       goto exit;
     } else {
-      switch (uiArguments[activeArgumentIdx].handleInput(&uiArguments[activeArgumentIdx], input)) {
+      switch (uiArguments[activeArgumentIdx].handleInput(
+          &uiArguments[activeArgumentIdx], input)) {
       case ACTION_CHANGED:
-        uiArguments[activeArgumentIdx].marshal(&uiArguments[activeArgumentIdx], titleArguments);
+        uiArguments[activeArgumentIdx].marshal(&uiArguments[activeArgumentIdx],
+                                               titleArguments);
         break;
       case ACTION_NEXT_ARGUMENT:
         if (activeArgumentIdx < uiArgumentsTotal - 1)
@@ -623,8 +671,12 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
     // Draw header
     snprintf(lineBuffer, 255, "%s\n%s", target->name, target->id);
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_HCENTER, lineBuffer);
-    drawTextWindow(baseX, headerHeight + 1.5 * getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.listText, ALIGN_HCENTER, "Launch arguments");
+    drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                   gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                   ALIGN_HCENTER, lineBuffer);
+    drawTextWindow(baseX, headerHeight + 1.5 * getFontLineHeight(),
+                   gsGlobal->Width - baseX, 0, 0, currentTheme.listText,
+                   ALIGN_HCENTER, "Launch arguments");
 
     // Draw footer
     drawTitleOptionsFooter(baseX);
@@ -632,12 +684,20 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
     int startY = headerHeight + 2.5 * getFontLineHeight();
     int idx = 0;
 
-    // Set number of elements per page according to line height and available screen height
-    int maxArguments = (gsGlobal->Height - startY - footerHeight - getFontLineHeight() / 2) / getFontLineHeight();
+    // Set number of elements per page according to line height and available
+    // screen height
+    int maxArguments =
+        (gsGlobal->Height - startY - footerHeight - getFontLineHeight() / 2) /
+        getFontLineHeight();
     int curPage = selectedArgIdx / maxArguments;
 
-    snprintf(lineBuffer, 255, "Page %d/%d", curPage + 1, (!titleArguments->total) ? 1 : DIV_ROUND(titleArguments->total, maxArguments));
-    startY = drawTextWindow(baseX, startY - getFontLineHeight(), gsGlobal->Width - baseX, 0, 0, currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
+    snprintf(lineBuffer, 255, "Page %d/%d", curPage + 1,
+             (!titleArguments->total)
+                 ? 1
+                 : DIV_ROUND(titleArguments->total, maxArguments));
+    startY = drawTextWindow(baseX, startY - getFontLineHeight(),
+                            gsGlobal->Width - baseX, 0, 0,
+                            currentTheme.headerText, ALIGN_RIGHT, lineBuffer);
 
     Argument *argument = titleArguments->first;
     while (argument != NULL) {
@@ -653,11 +713,16 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
       // Draw argument
       if (!argument->isDisabled)
-        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0, currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
+        drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0,
+                       currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
 
-      snprintf(lineBuffer, 255, "%s%s%s %s", ((argument->isGlobal) ? "[G] " : ""), argument->arg, (!strlen(argument->value)) ? "" : ":",
-               argument->value);
-      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0, ((selectedArgIdx == idx) ? currentTheme.iconEnabled : currentTheme.listText), lineBuffer);
+      snprintf(lineBuffer, 255, "%s%s%s %s",
+               ((argument->isGlobal) ? "[G] " : ""), argument->arg,
+               (!strlen(argument->value)) ? "" : ":", argument->value);
+      startY = drawText(baseX + getIconWidth(ICON_ENABLED), startY, 0, 0, 0,
+                        ((selectedArgIdx == idx) ? currentTheme.iconEnabled
+                                                 : currentTheme.listText),
+                        lineBuffer);
 
       idx++;
     next:
@@ -695,12 +760,15 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
         curArgument->isGlobal = 0;
     } else if (input & PAD_UP) {
       // Point to the previous argument
-      selectedArgIdx = (selectedArgIdx - 1 + titleArguments->total) % titleArguments->total;
-      curArgument = (curArgument->prev) ? curArgument->prev : titleArguments->last;
+      selectedArgIdx =
+          (selectedArgIdx - 1 + titleArguments->total) % titleArguments->total;
+      curArgument =
+          (curArgument->prev) ? curArgument->prev : titleArguments->last;
     } else if (input & PAD_DOWN) {
       // Advance to the next argument
       selectedArgIdx = (selectedArgIdx + 1) % titleArguments->total;
-      curArgument = (curArgument->next) ? curArgument->next : titleArguments->first;
+      curArgument =
+          (curArgument->next) ? curArgument->next : titleArguments->first;
     }
   }
 }
@@ -715,8 +783,10 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
   gsKit_clear(gsGlobal, currentTheme.background);
 
   // Draw screen with GameID and title parameters
-  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s", target->name, target->id, target->fullPath);
-  drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.listText, ALIGN_CENTER, lineBuffer);
+  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s", target->name, target->id,
+           target->fullPath);
+  drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0,
+                 currentTheme.listText, ALIGN_CENTER, lineBuffer);
   drawGameID(target->id);
 
   gsKit_queue_exec(gsGlobal);
@@ -730,7 +800,8 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
 }
 
 //
-// GameID code based on https://github.com/CosmicScale/Retro-GEM-PS2-Disc-Launcher
+// GameID code based on
+// https://github.com/CosmicScale/Retro-GEM-PS2-Disc-Launcher
 //
 
 static uint8_t calculateCRC(const uint8_t *data, int len) {
@@ -743,7 +814,8 @@ static uint8_t calculateCRC(const uint8_t *data, int len) {
 
 void drawGameID(const char *gameID) {
   uint8_t data[64] = {0};
-  int gidlen = strnlen(gameID, 11); // Ensure the length does not exceed 11 characters
+  int gidlen =
+      strnlen(gameID, 11); // Ensure the length does not exceed 11 characters
 
   int dpos = 0;
   data[dpos++] = 0xA5; // detect word
@@ -769,10 +841,14 @@ void drawGameID(const char *gameID) {
     for (int j = 7; j >= 0; j--) {
       int x = xstart + (i * 16 + ((7 - j) * 2));
       int x1 = x + 1;
-      gsKit_prim_sprite(gsGlobal, x, ystart, x1, ystart + height, 0, GS_SETREG_RGBA(0xFF, 0x00, 0xFF, 0x80));
+      gsKit_prim_sprite(gsGlobal, x, ystart, x1, ystart + height, 0,
+                        GS_SETREG_RGBA(0xFF, 0x00, 0xFF, 0x80));
 
-      uint32_t color = (data[i] >> j) & 1 ? GS_SETREG_RGBA(0x00, 0xFF, 0xFF, 0x80) : GS_SETREG_RGBA(0xFF, 0xFF, 0x00, 0x80);
-      gsKit_prim_sprite(gsGlobal, x1, ystart, x1 + 1, ystart + height, 0, color);
+      uint32_t color = (data[i] >> j) & 1
+                           ? GS_SETREG_RGBA(0x00, 0xFF, 0xFF, 0x80)
+                           : GS_SETREG_RGBA(0xFF, 0xFF, 0x00, 0x80);
+      gsKit_prim_sprite(gsGlobal, x1, ystart, x1 + 1, ystart + height, 0,
+                        color);
     }
   }
 }
@@ -782,10 +858,12 @@ void drawGameID(const char *gameID) {
 //
 
 struct {
-  int32_t doneSema;          // Used to signal UI splash thread to exit
-  int32_t newStringSema;     // Used to signal UI splash thread that a new string is ready
-  int32_t drawnSema;         // Used to signal that UI splash thread has finished drawing or closed
-  UILogLevelType level;      // Log level
+  int32_t doneSema;      // Used to signal UI splash thread to exit
+  int32_t newStringSema; // Used to signal UI splash thread that a new string is
+                         // ready
+  int32_t drawnSema;     // Used to signal that UI splash thread has finished
+                         // drawing or closed
+  UILogLevelType level;  // Log level
   char neutrinoVersion[100]; // Neutrino version string
   char buf[255];             // String buffer. String must be null-terminated
 } logBuffer = {};
@@ -832,8 +910,9 @@ void uiSplashThread() {
   gsKit_TexManager_nextFrame(gsGlobal);
   gsKit_clear(gsGlobal, currentTheme.background);
   drawLogo((gsGlobal->Width - getLogoWidth()) / 2, gsGlobal->Height / 4, 2);
-  drawTextWindow(0, (gsGlobal->Height / 4 + getLogoHeight() + 10), gsGlobal->Width, 0, 0, GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80), ALIGN_HCENTER,
-                 SKIN_EDITION);
+  drawTextWindow(0, (gsGlobal->Height / 4 + getLogoHeight() + 10),
+                 gsGlobal->Width, 0, 0, GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80),
+                 ALIGN_HCENTER, SKIN_EDITION);
   gsKit_mode_switch(gsGlobal, GS_ONESHOT);
 
   drawGameID("NHDDL");
@@ -860,10 +939,15 @@ void uiSplashThread() {
       color = ErrorTextColor;
       break;
     }
-    drawTextWindow(0, logStartY, gsGlobal->Width, gsGlobal->Height - footerHeight, 0, color, ALIGN_CENTER, logBuffer.buf);
+    drawTextWindow(0, logStartY, gsGlobal->Width,
+                   gsGlobal->Height - footerHeight, 0, color, ALIGN_CENTER,
+                   logBuffer.buf);
     if (logBuffer.neutrinoVersion[0] != '\0')
-      drawTextWindow(0, (gsGlobal->Height / 4 + getLogoHeight() + getFontLineHeight() + 10), gsGlobal->Width, 0, 0,
-                     GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80), ALIGN_HCENTER, logBuffer.neutrinoVersion);
+      drawTextWindow(
+          0,
+          (gsGlobal->Height / 4 + getLogoHeight() + getFontLineHeight() + 10),
+          gsGlobal->Width, 0, 0, GS_SETREG_RGBA(0x40, 0x40, 0x40, 0x80),
+          ALIGN_HCENTER, logBuffer.neutrinoVersion);
     SignalSema(logBuffer.drawnSema);
   }
   gsKit_queue_reset(gsGlobal->Per_Queue);
