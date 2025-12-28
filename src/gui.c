@@ -568,67 +568,68 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
-  // Se coloca al final de drawTitleList, después del bucle de títulos.
+// Se coloca al final de drawTitleList, después del bucle de títulos.
 
-  int scrollMargin = 1; // separación respecto al borde del frame
-  int iconWidth = 16;   // ancho fijo del PNG del ícono
-  int iconHeight = 16;  // alto fijo del PNG del ícono
+int scrollMargin   = 1;   // separación respecto al borde del frame
+int iconWidth      = 16;  // ancho fijo del PNG del ícono
+int iconHeight     = 16;  // alto fijo del PNG del ícono
 
-  // Posición del ícono de scroll UP (arriba, cerca del corner TR)
-  int scrollUpX = listX2 - iconWidth - scrollMargin;
-  int scrollUpY = listY1 + scrollMargin + 9;
+// offsets configurables para mover todo el bloque de íconos
+int offsetScrollX  = 0;   // mover todos los íconos horizontalmente (+ derecha, - izquierda)
+int offsetScrollY  = 0;   // mover todos los íconos verticalmente (+ abajo, - arriba)
 
-  // Posición del ícono de scroll DOWN (abajo, cerca del corner BR)
-  int scrollDownX = listX2 - iconWidth - scrollMargin;
-  int scrollDownY = listY2 - iconHeight - scrollMargin + 3;
-  // Rango vertical disponible para el scrollbar (entre UP y DOWN)
-  int scrollRangeTop = scrollUpY + iconHeight;
-  int scrollRangeBottom = scrollDownY - iconHeight;
-  int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
+// Posición del ícono de scroll UP
+int scrollUpX = listX2 - iconWidth - scrollMargin + offsetScrollX;
+int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
-  // Calcular total de títulos usando titles->total
-  int totalTitles = titles->total;
-  int firstIdx = 0;
-  int lastIdx = totalTitles - 1;
+// Posición del ícono de scroll DOWN
+int scrollDownX = listX2 - iconWidth - scrollMargin + offsetScrollX;
+int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
-  // --- Wrap-around explícito ---
-  // Si nos pasamos del último, saltar al primero
-  if (selectedTitleIdx > lastIdx) {
+// Rango vertical disponible para el scrollbar
+int scrollRangeTop    = scrollUpY + iconHeight;
+int scrollRangeBottom = scrollDownY - iconHeight;
+int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
+
+// Total de títulos
+int totalTitles = titles->total;
+int firstIdx    = 0;
+int lastIdx     = totalTitles - 1;
+
+// Wrap-around explícito
+if (selectedTitleIdx > lastIdx) {
     selectedTitleIdx = firstIdx;
-  }
-  // Si nos pasamos del primero hacia arriba, saltar al último
-  else if (selectedTitleIdx < firstIdx) {
+} else if (selectedTitleIdx < firstIdx) {
     selectedTitleIdx = lastIdx;
-  }
+}
 
-  // ratio = posición relativa del título seleccionado
-  float ratio = 0.0f;
-  if (lastIdx > firstIdx) {
+// ratio = posición relativa
+float ratio = 0.0f;
+if (lastIdx > firstIdx) {
     ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
-  }
+}
 
-  // Posición del scrollbar dentro del rango dinámico
-  int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight);
-  int scrollBarX = listX2 - iconWidth - scrollMargin;
-  // Colores sólidos (sin alpha blending ni superposición)
-  // Cuando se presiona pad UP o DOWN, se pinta directamente con selectedText.
-  // Al soltar, vuelve a listText.
-  int padState = padGetState(0, 0); // puerto 0, slot 0
-  bool padUpPressed = (padState & PAD_UP);
-  bool padDownPressed = (padState & PAD_DOWN);
+// Posición del scrollbar (también con offsets)
+int scrollBarX = listX2 - iconWidth - scrollMargin + offsetScrollX;
+int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) + offsetScrollY;
 
-  u64 colorUp =
-      padUpPressed ? currentTheme.selectedText : currentTheme.listText;
-  u64 colorDown =
-      padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-  u64 colorBar = currentTheme.listText;
+// --- Lectura de botones con libpad ---
+struct padButtonStatus buttons;
+padRead(0, 0, &buttons); // puerto 0, slot 0
+u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
 
-  // Dibujar íconos con firma correcta de drawIcon
-  // drawIcon(float x, float y, int z, uint64_t color, IconType iconType)
-  drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
-  drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
-           ICON_SCROLLDOWN);
-  drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
+bool padUpPressed   = (btns & PAD_UP);
+bool padDownPressed = (btns & PAD_DOWN);
+
+// Colores sólidos
+u64 colorUp   = padUpPressed   ? currentTheme.selectedText : currentTheme.listText;
+u64 colorDown = padDownPressed ? currentTheme.selectedText : currentTheme.listText;
+u64 colorBar  = currentTheme.listText;
+
+// Dibujar íconos
+drawIcon((float)scrollUpX,   (float)scrollUpY,   0, colorUp,   ICON_SCROLLUP);
+drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown, ICON_SCROLLDOWN);
+drawIcon((float)scrollBarX,  (float)scrollBarY,  0, colorBar,  ICON_SCROLLBAR);
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
