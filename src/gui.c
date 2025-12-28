@@ -628,7 +628,7 @@ bool padDownPressed = (btns & PAD_DOWN);
 // Colores sólidos
 u64 colorUp   = padUpPressed   ? currentTheme.selectedText : currentTheme.listText;
 u64 colorDown = padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-u64 colorBar  = currentTheme.listText;
+u64 colorBar  = currentTheme.selectedText;
 
 // Dibujar íconos
 drawIcon((float)scrollUpX,   (float)scrollUpY,   0, colorUp,   ICON_SCROLLUP);
