@@ -471,15 +471,16 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   next:
     curTitle = curTitle->next;
-  }
-  // --- Marco alrededor de la lista ---
+      // --- Marco alrededor de la lista ---
   int blockHeight = maxTitlesPerPage * getFontLineHeight();
-  int listX1 = keepoutArea + 6;
+  int listX1 = keepoutArea + 16;
   int listX2 = coverArtX1 - 10; // hasta antes del área de carátula
   int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
   int listY2 = listY1 + blockHeight + 8;
 
   drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
+  }
+
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
                     coverArtY2 + 2, 1, currentTheme.coverFrame);
