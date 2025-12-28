@@ -568,12 +568,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
-  // Este bloque se monta en gui.c, dentro de drawTitleList,
-  // inmediatamente después de terminar el bucle de títulos.
+  // Se coloca al final de drawTitleList, después del bucle de títulos.
 
-  int scrollMargin = 4;         // separación respecto al borde del frame
-  int iconWidth = ICON_WIDTH;   // ancho del PNG del ícono
-  int iconHeight = ICON_HEIGHT; // alto del PNG del ícono
+  int scrollMargin = 4; // separación respecto al borde del frame
+  int iconWidth = 16;   // ancho fijo del PNG del ícono
+  int iconHeight = 16;  // alto fijo del PNG del ícono
 
   // Posición del ícono de scroll UP (arriba, cerca del corner TR)
   int scrollUpX = listX2 - iconWidth - scrollMargin;
@@ -587,8 +586,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int scrollRangeBottom = scrollDownY - iconHeight;
   int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
 
-  // Calcular proporción del índice actual respecto al total de títulos
-  int totalTitles = titles->count;
+  // Calcular total de títulos usando titles->total
+  int totalTitles = titles->total;
   int firstIdx = 0;
   int lastIdx = totalTitles - 1;
 
@@ -614,19 +613,22 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // Colores sólidos (sin alpha blending ni superposición)
   // Cuando se presiona pad UP o DOWN, se pinta directamente con selectedText.
   // Al soltar, vuelve a listText.
+  u32 padState = padGetState(0); // lee estado del pad del puerto 0
   bool padUpPressed = (padState & PAD_UP);
   bool padDownPressed = (padState & PAD_DOWN);
 
-  u32 colorUp =
+  u64 colorUp =
       padUpPressed ? currentTheme.selectedText : currentTheme.listText;
-  u32 colorDown =
+  u64 colorDown =
       padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-  u32 colorBar = currentTheme.listText;
+  u64 colorBar = currentTheme.listText;
 
-  // Dibujar íconos magnetizados al frame
-  drawIcon(scrollUpX, scrollUpY, ICON_SCROLLUP, colorUp);
-  drawIcon(scrollDownX, scrollDownY, ICON_SCROLLDOWN, colorDown);
-  drawIcon(scrollBarX, scrollBarY, ICON_SCROLLBAR, colorBar);
+  // Dibujar íconos con firma correcta de drawIcon
+  // drawIcon(float x, float y, int z, uint64_t color, IconType iconType)
+  drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
+  drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
+           ICON_SCROLLDOWN);
+  drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
