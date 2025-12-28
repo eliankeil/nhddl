@@ -51,7 +51,10 @@ typedef enum {
   ICON_START,
   ICON_ENABLED,
   ICON_UPDOWN,
-  ICON_LEFTRIGHT
+  ICON_LEFTRIGHT,
+  ICON_SCROLLUP,
+  ICON_SCROLLBAR,
+  ICON_SCROLLDOWN
 } IconType;
 
 // Initializes and uploads graphics resources to GS VRAM
