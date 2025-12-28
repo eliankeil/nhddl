@@ -481,11 +481,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // --- Draw title name ---
     // márgenes internos respecto al frame
-    int marginLeft = 80;  // espacio entre texto y borde izquierdo
-    int marginRight = -8; // espacio entre texto y borde derecho
-    int marginTop = 0;    // espacio extra arriba de cada línea
-    int marginBottom =
-        0; // espacio extra abajo (se suma al cálculo de blockHeight)
+    int marginLeft = 10;  // espacio entre texto y borde izquierdo
+    int marginRight = -10; // espacio entre texto y borde derecho
+    int marginTop = 10;    // espacio extra arriba de cada línea
+    int marginBottom = 10; // espacio extra abajo (se suma al cálculo de blockHeight)
 
     // coordenadas del área de texto dentro del frame
     int textX1 = listX1 + marginLeft;
@@ -503,7 +502,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // parámetros configurables
     const float SCROLL_SPEED = 0.5f; // píxeles por frame (más bajo = más suave)
-    const int PAUSE_FRAMES = 30;     // pausa de 1s a 60fps
+    const int PAUSE_FRAMES = 45;     // pausa de 1s a 60fps
 
     // si cambiamos de título seleccionado, reiniciar scroll
     if (selectedTitleIdx != lastTitleIdx) {
