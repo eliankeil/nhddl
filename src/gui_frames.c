@@ -34,10 +34,10 @@ void drawFramePart(float x, float y, int z, uint64_t color, FramePart part) {
 // Dibuja un marco completo alrededor del rectángulo [x1,y1]..[x2,y2]
 void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
     // Esquinas
-    drawFramePart(x1, y1, z, ColorSelected, FRAME_CORNER_TL);
-    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_TR), y1, z, ColorSelected, FRAME_CORNER_TR);
-    drawFramePart(x1, y2 - getFramePartHeight(FRAME_CORNER_BL), z, ColorSelected, FRAME_CORNER_BL);
-    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_BR), y2 - getFramePartHeight(FRAME_CORNER_BR), z, ColorSelected, FRAME_CORNER_BR);
+    drawFramePart(x1, y1, z, currentTheme.coverFrame, FRAME_CORNER_TL);
+    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_TR), y1, z, currentTheme.coverFrame, FRAME_CORNER_TR);
+    drawFramePart(x1, y2 - getFramePartHeight(FRAME_CORNER_BL), z, currentTheme.coverFrame, FRAME_CORNER_BL);
+    drawFramePart(x2 - getFramePartWidth(FRAME_CORNER_BR), y2 - getFramePartHeight(FRAME_CORNER_BR), z, currentTheme.coverFrame, FRAME_CORNER_BR);
 
     // Lados: se estiran entre esquinas
     // Top
@@ -46,7 +46,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         FRAME_PARTS[FRAME_EDGE_TOP].x, FRAME_PARTS[FRAME_EDGE_TOP].y,
         x2 - getFramePartWidth(FRAME_CORNER_TR), y1 + FRAME_PARTS[FRAME_EDGE_TOP].h,
         FRAME_PARTS[FRAME_EDGE_TOP].x + FRAME_PARTS[FRAME_EDGE_TOP].w, FRAME_PARTS[FRAME_EDGE_TOP].y + FRAME_PARTS[FRAME_EDGE_TOP].h,
-        z, ColorSelected);
+        z, currentTheme.coverFrame);
 
     // Bottom
     gsKit_prim_sprite_texture(gsGlobal, icons,
@@ -54,7 +54,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         FRAME_PARTS[FRAME_EDGE_BOTTOM].x, FRAME_PARTS[FRAME_EDGE_BOTTOM].y,
         x2 - getFramePartWidth(FRAME_CORNER_BR), y2,
         FRAME_PARTS[FRAME_EDGE_BOTTOM].x + FRAME_PARTS[FRAME_EDGE_BOTTOM].w, FRAME_PARTS[FRAME_EDGE_BOTTOM].y + FRAME_PARTS[FRAME_EDGE_BOTTOM].h,
-        z, ColorSelected);
+        z, currentTheme.coverFrame);
 
     // Left
     gsKit_prim_sprite_texture(gsGlobal, icons,
@@ -62,7 +62,7 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         FRAME_PARTS[FRAME_EDGE_LEFT].x, FRAME_PARTS[FRAME_EDGE_LEFT].y,
         x1 + FRAME_PARTS[FRAME_EDGE_LEFT].w, y2 - getFramePartHeight(FRAME_CORNER_BL),
         FRAME_PARTS[FRAME_EDGE_LEFT].x + FRAME_PARTS[FRAME_EDGE_LEFT].w, FRAME_PARTS[FRAME_EDGE_LEFT].y + FRAME_PARTS[FRAME_EDGE_LEFT].h,
-        z, ColorSelected);
+        z, currentTheme.coverFrame);
 
     // Right
     gsKit_prim_sprite_texture(gsGlobal, icons,
@@ -70,5 +70,5 @@ void drawRoundedFrame(int x1, int y1, int x2, int y2, int z) {
         FRAME_PARTS[FRAME_EDGE_RIGHT].x, FRAME_PARTS[FRAME_EDGE_RIGHT].y,
         x2, y2 - getFramePartHeight(FRAME_CORNER_BR),
         FRAME_PARTS[FRAME_EDGE_RIGHT].x + FRAME_PARTS[FRAME_EDGE_RIGHT].w, FRAME_PARTS[FRAME_EDGE_RIGHT].y + FRAME_PARTS[FRAME_EDGE_RIGHT].h,
-        z, ColorSelected);
+        z, currentTheme.coverFrame);
 }
