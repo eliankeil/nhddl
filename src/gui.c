@@ -576,7 +576,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Posición del ícono de scroll UP (arriba, cerca del corner TR)
   int scrollUpX = listX2 - iconWidth - scrollMargin;
-  int scrollUpY = listY1 + scrollMargin + 3;
+  int scrollUpY = listY1 + scrollMargin + 9;
 
   // Posición del ícono de scroll DOWN (abajo, cerca del corner BR)
   int scrollDownX = listX2 - iconWidth - scrollMargin;
