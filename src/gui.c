@@ -437,8 +437,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
         // --- Marco alrededor de la lista ---
   int blockHeight = maxTitlesPerPage * getFontLineHeight();
-  int listX1 = keepoutArea + 6;
-  int listX2 = coverArtX1 - 100; // hasta antes del área de carátula
+  int listX1 = keepoutArea + -6;
+  int listX2 = coverArtX1 - 200; // hasta antes del área de carátula
   int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
   int listY2 = listY1 + blockHeight + 8;
 
