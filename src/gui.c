@@ -435,12 +435,20 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   drawTitleListFooter(baseX);
 
-        // --- Marco alrededor de la lista ---
+  // --- Marco fijo alrededor de la lista ---
   int blockHeight = maxTitlesPerPage * getFontLineHeight();
-  int listX1 = keepoutArea + -6;
-  int listX2 = coverArtX1 - 200; // hasta antes del área de carátula
-  int listY1 = headerHeight + getFontLineHeight() / 2 - 4;
-  int listY2 = listY1 + blockHeight + 8;
+
+  // offsets manuales para cada lado (ajustables)
+  int offsetLeft = -4;    // mover borde izquierdo
+  int offsetRight = -170; // mover borde derecho (ejemplo: hacia carátula)
+  int offsetTop = -4;     // mover borde superior
+  int offsetBottom = +8;  // mover borde inferior
+
+  // coordenadas del marco (fijas + offsets)
+  int listX1 = keepoutArea + offsetLeft;
+  int listX2 = coverArtX1 + offsetRight;
+  int listY1 = headerHeight + getFontLineHeight() / 2 + offsetTop;
+  int listY2 = listY1 + blockHeight + offsetBottom;
 
   drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
 
