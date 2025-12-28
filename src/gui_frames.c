@@ -5,14 +5,14 @@
 
 // Tabla de partes del marco (coordenadas UV dentro del atlas ICONS_PNG)
 const FrameIcon FRAME_PARTS[] = {
-    {113, 0, 6, 6},   // FRAME_CORNER_TL
-    {124, 0, 6, 6},   // FRAME_CORNER_TR
-    {113, 11, 6, 6},  // FRAME_CORNER_BL
-    {124, 11, 6, 6},  // FRAME_CORNER_BR
-    {119, 0, 5, 2},   // FRAME_EDGE_TOP
-    {119, 15, 5, 2},  // FRAME_EDGE_BOTTOM
-    {113, 6, 2, 5},   // FRAME_EDGE_LEFT
-    {128, 6, 2, 5}    // FRAME_EDGE_RIGHT
+    {102, 14, 9, 9},   // FRAME_CORNER_TL
+    {117, 14, 9, 9},   // FRAME_CORNER_TR
+    {102, 29, 9, 9},  // FRAME_CORNER_BL
+    {117, 29, 9, 9},  // FRAME_CORNER_BR
+    {111, 14, 6, 3},   // FRAME_EDGE_TOP
+    {111, 35, 6, 3},  // FRAME_EDGE_BOTTOM
+    {102, 23, 3, 6},   // FRAME_EDGE_LEFT
+    {123, 23, 3, 6}    // FRAME_EDGE_RIGHT
 };
 
 int getFramePartWidth(FramePart part) {
