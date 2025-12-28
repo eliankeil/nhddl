@@ -484,7 +484,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int frameWidth = listX2 - listX1;
 
     // márgenes internos respecto al frame
-    int marginLeft = 80;   // espacio entre texto y borde izquierdo
+    int marginLeft = 80;  // espacio entre texto y borde izquierdo
     int marginRight = -8; // espacio entre texto y borde derecho
     int marginTop = 0;    // espacio extra arriba de cada línea
     int marginBottom =
@@ -494,16 +494,52 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
 
-    // si el texto excede el ancho y es el título seleccionado → scroll
-    if (textWidth > (textX2 - textX1) && selectedTitleIdx == curTitle->idx) {
-      static int scrollOffset = 0;
-      scrollOffset = (scrollOffset + 1) % (textWidth + (textX2 - textX1));
+    // variables estáticas para mantener estado entre frames
+    static int scrollOffset = 0;
+    static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
+    static int pauseCounter = 0;
 
-      titleY = drawText(textX1 - scrollOffset, titleY + marginTop, 0, textX2, 0,
+    int textWidth = getLineWidth(curTitle->name);
+    int frameWidth = textX2 - textX1;
+
+    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx) {
+      switch (scrollState) {
+      case 0: // IDLE → iniciar scroll a la izquierda
+        scrollState = 1;
+        scrollOffset = 0;
+        break;
+
+      case 1: // desplazando a la izquierda
+        scrollOffset++;
+        // cuando la última letra toca el borde derecho
+        if (textX1 - scrollOffset + textWidth <= textX2) {
+          scrollState = 2; // pasar a pausa
+          pauseCounter = 0;
+        }
+        break;
+
+      case 2: // pausa
+        pauseCounter++;
+        if (pauseCounter >= 30) { // ~0.5s a 60fps
+          scrollState = 3;        // empezar a volver a la derecha
+        }
+        break;
+
+      case 3: // desplazando a la derecha
+        scrollOffset--;
+        if (scrollOffset <= 0) {
+          scrollOffset = 0;
+          scrollState = 0; // volver a IDLE y detener
+        }
+        break;
+      }
+
+      // dibujar con offset actual
+      titleY = drawText(textX1 - scrollOffset, titleY, 0, textX2, 0,
                         currentTheme.selectedText, curTitle->name);
     } else {
       // texto normal
-      titleY = drawText(textX1, titleY + marginTop, 0, textX2, 0,
+      titleY = drawText(textX1, titleY, 0, textX2, 0,
                         ((selectedTitleIdx == curTitle->idx)
                              ? currentTheme.selectedText
                              : currentTheme.listText),
