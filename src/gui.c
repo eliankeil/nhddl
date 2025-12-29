@@ -473,6 +473,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // margen
   int titleY = listY1 + marginTop;
 
+  // el primer título arranca dentro del frame, pegado al borde superior +
+  // margen
+  int titleY = listY1 + marginTop;
+
   while (curTitle != NULL) {
     if (curTitle->idx < maxTitlesPerPage * curPage)
       goto next;
@@ -506,8 +510,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     static int scrollFinished = 0;
     static int holdCounter = 0;
 
-    const int HOLD_FRAMES = 60;
-    const float SCROLL_SPEED = 0.4f;
+    const int HOLD_FRAMES = 45;
+    const float SCROLL_SPEED = 0.3f;
     const int PAUSE_FRAMES = 60;
 
     // reseteo al cambiar selección
