@@ -490,8 +490,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textWidth = getLineWidth(curTitle->name);
 
     // límites de corte reales
-    int cutLeft = textX1 + 10;  // margen de 10px dentro del borde izquierdo
-    int cutRight = textX2 - 10; // margen de 10px dentro del borde derecho
+    int cutLeft = textX1 + 14;  // margen de 10px dentro del borde izquierdo
+    int cutRight = textX2 - 20; // margen de 10px dentro del borde derecho
 
     static float scrollOffset = 0.0f;
     static int scrollState = 0; // 0=START_DELAY, 1=LEFT, 2=PAUSE, 3=RIGHT
