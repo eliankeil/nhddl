@@ -528,8 +528,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
       case 1: // desplazando a la izquierda
         scrollOffset += SCROLL_SPEED;
+        // cuando el extremo derecho del texto entra en el borde derecho del
+        // frame, pausar
         if (textX1 - (int)scrollOffset + textWidth <= textX2) {
-          scrollState = 2; // pasar a pausa
+          scrollState = 2;
           pauseCounter = 0;
         }
         break;
@@ -537,7 +539,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       case 2: // pausa
         pauseCounter++;
         if (pauseCounter >= PAUSE_FRAMES) {
-          scrollState = 3; // empezar a volver a la derecha
+          scrollState = 3; // volver a la derecha
         }
         break;
 
@@ -546,16 +548,16 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         if (scrollOffset <= 0.0f) {
           scrollOffset = 0.0f;
           scrollState = 0;
-          scrollFinished = 1; // marcar ciclo completado
+          scrollFinished = 1; // ciclo completado
         }
         break;
       }
 
-      // --- Dibujar con offset actual, pero sin salirse del margen izquierdo
-      // ---
+      // --- Dibujar con offset actual, clamped al mínimo útil ---
       int drawStartX = textX1 - (int)scrollOffset;
-      if (drawStartX < textX1) {
-        drawStartX = textX1; // clamp: nunca menor al margen izquierdo
+      int minStartX = textX2 - textWidth; // no más a la izquierda que esto
+      if (drawStartX < minStartX) {
+        drawStartX = minStartX;
       }
 
       titleY = drawText(drawStartX, titleY, 0, textX2, 0,
