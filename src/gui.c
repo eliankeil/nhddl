@@ -486,12 +486,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
-
     int textWidth = getLineWidth(curTitle->name);
 
     // límites de corte reales
-    int cutLeft = textX1 + 11;  // margen de 10px dentro del borde izquierdo
-    int cutRight = textX2 - 20; // margen de 10px dentro del borde derecho
+    int cutLeft = textX1 + 11;  // margen real
+    int cutRight = textX2 - 20; // margen derecho
 
     static float scrollOffset = 0.0f;
     static int scrollState = 0; // 0=START_DELAY, 1=LEFT, 2=PAUSE, 3=RIGHT
@@ -504,26 +503,24 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     const float SCROLL_SPEED = 0.5f;
     const int PAUSE_FRAMES = 60;
 
-    // reseteo al cambiar selección
     if (selectedTitleIdx != lastTitleIdx) {
       scrollOffset = 0.0f;
-      scrollState = 0; // volver a START_DELAY
+      scrollState = 0;
       pauseCounter = 0;
-      holdCounter = 0; // reiniciar delay de inicio
+      holdCounter = 0;
       scrollFinished = 0;
       lastTitleIdx = selectedTitleIdx;
     }
 
-    int drawStartX = cutLeft; // valor por defecto
+    int drawStartX = cutLeft;
 
-    // condición de scroll sólo si supera el ancho visible y es el seleccionado
     if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
 
       switch (scrollState) {
       case 0: // START_DELAY
         holdCounter++;
-        drawStartX = cutLeft; // fijo en posición inicial
+        drawStartX = cutLeft;
         if (holdCounter >= HOLD_FRAMES) {
           scrollState = 1;
           scrollOffset = 0.0f;
@@ -537,10 +534,9 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
         drawStartX = cutLeft - (int)scrollOffset;
 
-        // clamp inmediato
-        int minStartX = cutRight - textWidth;
-        if (drawStartX < minStartX) {
-          drawStartX = minStartX;
+        // stop cuando el texto completo entró en la ventana
+        if (drawStartX + textWidth <= cutRight) {
+          drawStartX = cutRight - textWidth;
           scrollState = 2;
           pauseCounter = 0;
         }
@@ -561,7 +557,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
         drawStartX = cutLeft - (int)scrollOffset;
 
-        if (drawStartX > cutLeft) {
+        if (drawStartX >= cutLeft) {
           drawStartX = cutLeft;
           scrollOffset = 0.0f;
           scrollState = 0;
@@ -570,16 +566,14 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         }
       } break;
       }
-
     } else {
-      // texto normal, también recortado por los límites
       if (selectedTitleIdx == curTitle->idx) {
-        holdCounter = 0; // no acumular delay si no hay scroll
+        holdCounter = 0;
       }
       drawStartX = cutLeft;
     }
 
-    // --- Clamp manual con doble corte ---
+    // clamp final
     int minStartX = cutRight - textWidth;
     int maxStartX = cutLeft;
     if (drawStartX < minStartX)
@@ -587,7 +581,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     if (drawStartX > maxStartX)
       drawStartX = maxStartX;
 
-    // usar drawTextClipped para cortar glifos fuera de la ventana
     titleY = drawTextClipped(drawStartX, titleY, cutLeft, cutRight, 0,
                              ((selectedTitleIdx == curTitle->idx)
                                   ? currentTheme.selectedText
