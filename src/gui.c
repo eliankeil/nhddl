@@ -551,9 +551,16 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         break;
       }
 
-      // dibujar con offset actual
-      titleY = drawText((int)(textX1 - scrollOffset), titleY, 0, textX2, 0,
+      // --- Dibujar con offset actual, pero sin salirse del margen izquierdo
+      // ---
+      int drawStartX = textX1 - (int)scrollOffset;
+      if (drawStartX < textX1) {
+        drawStartX = textX1; // clamp: nunca menor al margen izquierdo
+      }
+
+      titleY = drawText(drawStartX, titleY, 0, textX2, 0,
                         currentTheme.selectedText, curTitle->name);
+
     } else {
       // texto normal
       titleY = drawText(textX1, titleY, 0, textX2, 0,
@@ -568,72 +575,77 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
-// Se coloca al final de drawTitleList, después del bucle de títulos.
+  // Se coloca al final de drawTitleList, después del bucle de títulos.
 
-int scrollMargin   = 1;   // separación respecto al borde del frame
-int iconWidth      = 16;  // ancho fijo del PNG del ícono
-int iconHeight     = 16;  // alto fijo del PNG del ícono
+  int scrollMargin = 1; // separación respecto al borde del frame
+  int iconWidth = 16;   // ancho fijo del PNG del ícono
+  int iconHeight = 16;  // alto fijo del PNG del ícono
 
-// offsets globales (mueven todo el bloque UP/DOWN/BAR)
-int offsetScrollX  = +3;
-int offsetScrollY  = 0;
+  // offsets globales (mueven todo el bloque UP/DOWN/BAR)
+  int offsetScrollX = +3;
+  int offsetScrollY = 0;
 
-// offsets específicos del scrollbar (solo afectan al BAR)
-int offsetBarX     = +2;  // mover un pelín a la derecha
-int offsetBarY     = -4;   // mover verticalmente si lo necesitás
+  // offsets específicos del scrollbar (solo afectan al BAR)
+  int offsetBarX = +2; // mover un pelín a la derecha
+  int offsetBarY = -4; // mover verticalmente si lo necesitás
 
-// Posición del ícono de scroll UP
-int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
+  // Posición del ícono de scroll UP
+  int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+  int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
-// Posición del ícono de scroll DOWN
-int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
+  // Posición del ícono de scroll DOWN
+  int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+  int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
-// Rango vertical disponible para el scrollbar
-int scrollRangeTop    = scrollUpY + iconHeight;
-int scrollRangeBottom = scrollDownY - iconHeight;
-int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
+  // Rango vertical disponible para el scrollbar
+  int scrollRangeTop = scrollUpY + iconHeight;
+  int scrollRangeBottom = scrollDownY - iconHeight;
+  int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
 
-// Total de títulos
-int totalTitles = titles->total;
-int firstIdx    = 0;
-int lastIdx     = totalTitles - 1;
+  // Total de títulos
+  int totalTitles = titles->total;
+  int firstIdx = 0;
+  int lastIdx = totalTitles - 1;
 
-// Wrap-around explícito
-if (selectedTitleIdx > lastIdx) {
+  // Wrap-around explícito
+  if (selectedTitleIdx > lastIdx) {
     selectedTitleIdx = firstIdx;
-} else if (selectedTitleIdx < firstIdx) {
+  } else if (selectedTitleIdx < firstIdx) {
     selectedTitleIdx = lastIdx;
-}
+  }
 
-// ratio = posición relativa
-float ratio = 0.0f;
-if (lastIdx > firstIdx) {
+  // ratio = posición relativa
+  float ratio = 0.0f;
+  if (lastIdx > firstIdx) {
     ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
-}
+  }
 
-// Posición del scrollbar con offset independiente
-int scrollBarX = listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
-int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) + offsetScrollY + offsetBarY;
+  // Posición del scrollbar con offset independiente
+  int scrollBarX =
+      listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
+  int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
+                   offsetScrollY + offsetBarY;
 
-// --- Lectura de botones con libpad ---
-struct padButtonStatus buttons;
-padRead(0, 0, &buttons); // puerto 0, slot 0
-u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
+  // --- Lectura de botones con libpad ---
+  struct padButtonStatus buttons;
+  padRead(0, 0, &buttons);  // puerto 0, slot 0
+  u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
 
-bool padUpPressed   = (btns & PAD_UP);
-bool padDownPressed = (btns & PAD_DOWN);
+  bool padUpPressed = (btns & PAD_UP);
+  bool padDownPressed = (btns & PAD_DOWN);
 
-// Colores sólidos
-u64 colorUp   = padUpPressed   ? currentTheme.selectedText : currentTheme.listText;
-u64 colorDown = padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-u64 colorBar  = currentTheme.selectedText;
+  // Colores sólidos
+  u64 colorUp =
+      padUpPressed ? currentTheme.selectedText : currentTheme.listText;
+  u64 colorDown =
+      padDownPressed ? currentTheme.selectedText : currentTheme.listText;
+  u64 colorBar = currentTheme.selectedText;
 
-// Dibujar íconos
-drawIcon((float)scrollUpX,   (float)scrollUpY,   0, colorUp,   ICON_SCROLLUP);
-drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown, ICON_SCROLLDOWN);
-drawIcon((float)scrollBarX,  (float)scrollBarY,  0, colorBar,  ICON_SCROLLBAR);
+  // Dibujar íconos
+  drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
+  drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
+           ICON_SCROLLDOWN);
+  drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
