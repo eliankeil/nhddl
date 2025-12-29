@@ -653,10 +653,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Colores sólidos
   u64 colorUp =
-      padUpPressed ? currentTheme.selectedText : currentTheme.listText;
+      padUpPressed ? currentTheme.iconEnabled : currentTheme.listText;
   u64 colorDown =
-      padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-  u64 colorBar = currentTheme.selectedText;
+      padDownPressed ? currentTheme.iconEnabled : currentTheme.listText;
+  u64 colorBar = currentTheme.iconEnabled;
 
   // Dibujar íconos
   drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
