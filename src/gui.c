@@ -553,22 +553,30 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         break;
       }
 
+      // --- Activar scissor para recorte duro dentro del frame ---
+      gsKit_set_scissor(gsGlobal,
+                        textX1, // borde izquierdo del área de texto
+                        titleY, // Y actual de la línea
+                        textX2, // borde derecho del área de texto
+                        titleY +
+                            getFontLineHeight()); // límite inferior de la línea
+
       // --- Dibujar con offset actual, clamped a ambos márgenes ---
       int drawStartX = textX1 - (int)scrollOffset;
+      int minStartX =
+          textX2 - textWidth; // máximo desplazamiento a la izquierda
+      int maxStartX = textX1; // máximo desplazamiento a la derecha
 
-      // clamp derecho: no más a la izquierda que textX2 - textWidth
-      int minStartX = textX2 - textWidth;
-      if (drawStartX < minStartX) {
+      if (drawStartX < minStartX)
         drawStartX = minStartX;
-      }
-
-      // clamp izquierdo: no más a la derecha que textX1
-      if (drawStartX > textX1) {
-        drawStartX = textX1;
-      }
+      if (drawStartX > maxStartX)
+        drawStartX = maxStartX;
 
       titleY = drawText(drawStartX, titleY, 0, textX2, 0,
                         currentTheme.selectedText, curTitle->name);
+
+      // --- Restaurar scissor a toda la pantalla ---
+      gsKit_set_scissor(gsGlobal, 0, 0, gsGlobal->Width, gsGlobal->Height);
 
     } else {
       // texto normal
