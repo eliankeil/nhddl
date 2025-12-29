@@ -456,11 +456,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   Target *curTitle = titles->first;
 
   // márgenes internos respecto al frame
-  //int marginLeft = 10;   // espacio entre texto y borde izquierdo
- // int marginRight = -10; // espacio entre texto y borde derecho
- // int marginTop =
+  int marginLeft = 10;   // espacio entre texto y borde izquierdo
+  int marginRight = -10; // espacio entre texto y borde derecho
+  int marginTop =
       8; // espacio entre el borde superior del frame y el primer título
- // int marginBottom =
+  int marginBottom =
       8; // espacio entre el borde inferior del frame y el último título
 
   // el primer título arranca dentro del frame, pegado al borde superior +
@@ -488,7 +488,7 @@ while (curTitle != NULL) {
     int textWidth  = getLineWidth(curTitle->name);
 
     // límites de corte reales
-    int cutLeft  = textX1 + 10;   // margen de 10px dentro del borde izquierdo
+    int cutLeft  = textX1 + 0;   // margen de 10px dentro del borde izquierdo
     int cutRight = textX2 - 10;   // margen de 10px dentro del borde derecho
 
     static float scrollOffset = 0.0f;
@@ -497,8 +497,8 @@ while (curTitle != NULL) {
     static int lastTitleIdx = -1;
     static int scrollFinished = 0;
 
-    const float SCROLL_SPEED = 0.5f;
-    const int PAUSE_FRAMES   = 45;
+    const float SCROLL_SPEED = 0.3f;
+    const int PAUSE_FRAMES   = 60;
 
     if (selectedTitleIdx != lastTitleIdx) {
         scrollOffset = 0.0f;
