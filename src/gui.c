@@ -501,7 +501,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     static int holdCounter = 0;
 
     const int HOLD_FRAMES = 45;
-    const float SCROLL_SPEED = 0.4f;
+    const float SCROLL_SPEED = 0.5f;
     const int PAUSE_FRAMES = 60;
 
     // reseteo al cambiar selección
