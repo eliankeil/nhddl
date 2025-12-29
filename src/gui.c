@@ -465,6 +465,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
+  // el primer título arranca dentro del frame, pegado al borde superior +
+  // margen
   int titleY = listY1 + marginTop;
 
   while (curTitle != NULL) {
@@ -490,6 +492,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textWidth = getLineWidth(curTitle->name);
     int frameWidth = textX2 - textX1;
 
+    // límites de corte reales
+    int cutLeft = textX1 + 10;  // margen de 10px dentro del borde izquierdo
+    int cutRight = textX2 - 10; // margen de 10px dentro del borde derecho
+
     static float scrollOffset = 0.0f;
     static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
@@ -507,7 +513,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       lastTitleIdx = selectedTitleIdx;
     }
 
-    if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
+    if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
       switch (scrollState) {
       case 0:
@@ -516,7 +522,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         break;
       case 1:
         scrollOffset += SCROLL_SPEED;
-        if (textX1 - (int)scrollOffset + textWidth <= textX2) {
+        if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
           scrollState = 2;
           pauseCounter = 0;
         }
@@ -537,22 +543,22 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         break;
       }
 
-      // --- Clamp manual para mantener dentro del frame ---
-      int cutRight = textX2 - 10; // margen de seguridad antes del borde derecho
+      // --- Clamp manual con doble corte ---
       int drawStartX = textX1 - (int)scrollOffset;
       int minStartX =
-          cutRight - textWidth; // extremo derecho toca límite de corte
-      int maxStartX = textX1;   // inicio toca borde izquierdo
+          cutRight - textWidth; // extremo derecho toca límite derecho
+      int maxStartX = cutLeft;  // inicio toca límite izquierdo
       if (drawStartX < minStartX)
         drawStartX = minStartX;
       if (drawStartX > maxStartX)
         drawStartX = maxStartX;
 
-      titleY = drawText(drawStartX, titleY, 0, cutRight, 0,
+      titleY = drawText(drawStartX, titleY, cutLeft, cutRight, 0,
                         currentTheme.selectedText, curTitle->name);
 
     } else {
-      titleY = drawText(textX1, titleY, 0, textX2, 0,
+      // texto normal, también recortado por los límites
+      titleY = drawText(cutLeft, titleY, cutLeft, cutRight, 0,
                         ((selectedTitleIdx == curTitle->idx)
                              ? currentTheme.selectedText
                              : currentTheme.listText),
