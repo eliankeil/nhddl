@@ -45,6 +45,15 @@ static char lineBuffer[255];
 // Used to load cover art
 static const char artPath[] = "/ART";
 
+// Función auxiliar para empaquetar los límites del scissor en un u64
+static inline u64 make_scissor(int x1, int y1, int x2, int y2) {
+    return ((u64)(x1 & 0xFFF)) |
+           ((u64)(y1 & 0xFFF) << 16) |
+           ((u64)(x2 & 0xFFF) << 32) |
+           ((u64)(y2 & 0xFFF) << 48);
+}
+
+
 // Cover art sprite coordinates
 // Initialized during uiInit from screen width and height
 static int coverArtX2;
@@ -517,11 +526,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       pauseCounter = 0;
       scrollFinished = 0;
       lastTitleIdx = selectedTitleIdx;
-    }
-    // Función auxiliar para empaquetar los límites del scissor en un u64
-    static inline u64 make_scissor(int x1, int y1, int x2, int y2) {
-      return ((u64)(x1 & 0xFFF)) | ((u64)(y1 & 0xFFF) << 16) |
-             ((u64)(x2 & 0xFFF) << 32) | ((u64)(y2 & 0xFFF) << 48);
     }
 
     if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
