@@ -518,6 +518,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       scrollFinished = 0;
       lastTitleIdx = selectedTitleIdx;
     }
+    // Función auxiliar para empaquetar los límites del scissor en un u64
+    static inline u64 make_scissor(int x1, int y1, int x2, int y2) {
+      return ((u64)(x1 & 0xFFF)) | ((u64)(y1 & 0xFFF) << 16) |
+             ((u64)(x2 & 0xFFF) << 32) | ((u64)(y2 & 0xFFF) << 48);
+    }
+
     if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
       switch (scrollState) {
@@ -528,8 +534,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
       case 1: // desplazando a la izquierda
         scrollOffset += SCROLL_SPEED;
-        // cuando el extremo derecho del texto entra en el borde derecho del
-        // frame, pausar
         if (textX1 - (int)scrollOffset + textWidth <= textX2) {
           scrollState = 2;
           pauseCounter = 0;
@@ -539,7 +543,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       case 2: // pausa
         pauseCounter++;
         if (pauseCounter >= PAUSE_FRAMES) {
-          scrollState = 3; // volver a la derecha
+          scrollState = 3;
         }
         break;
 
@@ -548,22 +552,20 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         if (scrollOffset <= 0.0f) {
           scrollOffset = 0.0f;
           scrollState = 0;
-          scrollFinished = 1; // ciclo completado
+          scrollFinished = 1;
         }
         break;
       }
 
       // --- Activar scissor para recorte duro dentro del frame ---
       u64 scissorRect =
-          GS_SCISSOR(textX1, titleY, textX2, titleY + getFontLineHeight());
+          make_scissor(textX1, titleY, textX2, titleY + getFontLineHeight());
       gsKit_set_scissor(gsGlobal, scissorRect);
 
       // --- Dibujar con offset actual, clamped a ambos márgenes ---
       int drawStartX = textX1 - (int)scrollOffset;
-      int minStartX =
-          textX2 - textWidth; // máximo desplazamiento a la izquierda
-      int maxStartX = textX1; // máximo desplazamiento a la derecha
-
+      int minStartX = textX2 - textWidth;
+      int maxStartX = textX1;
       if (drawStartX < minStartX)
         drawStartX = minStartX;
       if (drawStartX > maxStartX)
@@ -573,7 +575,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                         currentTheme.selectedText, curTitle->name);
 
       // --- Restaurar scissor a toda la pantalla ---
-      u64 fullRect = GS_SCISSOR(0, 0, gsGlobal->Width, gsGlobal->Height);
+      u64 fullRect = make_scissor(0, 0, gsGlobal->Width, gsGlobal->Height);
       gsKit_set_scissor(gsGlobal, fullRect);
 
     } else {
