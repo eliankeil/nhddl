@@ -456,21 +456,15 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   Target *curTitle = titles->first;
 
   // márgenes internos respecto al frame
-  int marginLeft = 10;   // espacio entre texto y borde izquierdo
-  int marginRight = -10; // espacio entre texto y borde derecho
-  int marginTop =
+  //int marginLeft = 10;   // espacio entre texto y borde izquierdo
+ // int marginRight = -10; // espacio entre texto y borde derecho
+ // int marginTop =
       8; // espacio entre el borde superior del frame y el primer título
-  int marginBottom =
+ // int marginBottom =
       8; // espacio entre el borde inferior del frame y el último título
 
   // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
-  // el primer título arranca dentro del frame, pegado al borde superior +
-  // margen
-  // el primer título arranca dentro del frame, pegado al borde superior +
-  // margen el primer título arranca dentro del frame, pegado al borde superior
-  // + margen
-// el primer título arranca dentro del frame, pegado al borde superior + margen
 int titleY = listY1 + marginTop;
 
 while (curTitle != NULL) {
