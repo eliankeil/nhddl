@@ -530,14 +530,17 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         }
         break;
 
-      case 1: // LEFT
-        scrollOffset += SCROLL_SPEED;
+      case 1: // LEFT (ease-in)
+      {
+        // velocidad aumenta progresivamente
+        float speed = SCROLL_SPEED + (scrollOffset * 0.01f);
+        scrollOffset += speed;
         if (cutLeft - (int)scrollOffset + textWidth <= cutRight) {
           scrollState = 2;
           pauseCounter = 0;
         }
         drawStartX = cutLeft - (int)scrollOffset;
-        break;
+      } break;
 
       case 2: // PAUSE
         pauseCounter++;
@@ -547,8 +550,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         drawStartX = cutLeft - (int)scrollOffset;
         break;
 
-      case 3: // RIGHT
-        scrollOffset -= SCROLL_SPEED;
+      case 3: // RIGHT (ease-out)
+      {
+        // velocidad disminuye progresivamente
+        float speed = SCROLL_SPEED + ((textWidth - scrollOffset) * 0.01f);
+        scrollOffset -= speed;
         if (scrollOffset <= 0.0f) {
           scrollOffset = 0.0f;
           scrollState = 0; // volver a START_DELAY
@@ -556,7 +562,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
           scrollFinished = 1;
         }
         drawStartX = cutLeft - (int)scrollOffset;
-        break;
+      } break;
       }
 
     } else {
