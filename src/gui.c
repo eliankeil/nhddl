@@ -465,6 +465,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
+// el primer título arranca dentro del frame, pegado al borde superior + margen
 int titleY = listY1 + marginTop;
 
 while (curTitle != NULL) {
@@ -492,50 +493,65 @@ while (curTitle != NULL) {
     int cutRight = textX2 - 10;   // margen de 10px dentro del borde derecho
 
     static float scrollOffset = 0.0f;
-    static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
+    static int scrollState = 0; // 0=IDLE(espera), 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
     static int lastTitleIdx = -1;
     static int scrollFinished = 0;
 
+    // nuevo: delay de inicio
+    static int holdCounter = 0;
+    const int HOLD_FRAMES  = 45;
+
     const float SCROLL_SPEED = 0.3f;
     const int PAUSE_FRAMES   = 60;
 
+    // reseteo al cambiar selección
     if (selectedTitleIdx != lastTitleIdx) {
-        scrollOffset = 0.0f;
-        scrollState = 0;
-        pauseCounter = 0;
+        scrollOffset   = 0.0f;
+        scrollState    = 0;       // volver a IDLE
+        pauseCounter   = 0;
+        holdCounter    = 0;       // reiniciar delay de inicio
         scrollFinished = 0;
-        lastTitleIdx = selectedTitleIdx;
+        lastTitleIdx   = selectedTitleIdx;
     }
 
+    // condición de scroll sólo si supera el ancho visible y es el seleccionado
     if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
-        switch (scrollState) {
-        case 0:
-            scrollState = 1;
-            scrollOffset = 0.0f;
-            break;
-        case 1:
-            scrollOffset += SCROLL_SPEED;
-            if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
-                scrollState = 2;
-                pauseCounter = 0;
-            }
-            break;
-        case 2:
-            pauseCounter++;
-            if (pauseCounter >= PAUSE_FRAMES) {
-                scrollState = 3;
-            }
-            break;
-        case 3:
-            scrollOffset -= SCROLL_SPEED;
-            if (scrollOffset <= 0.0f) {
+
+        // Fase de espera antes de iniciar el movimiento (anti-tirones)
+        if (scrollState == 0) {
+            holdCounter++;
+            if (holdCounter >= HOLD_FRAMES) {
+                scrollState  = 1;      // iniciar desplazamiento a la izquierda
                 scrollOffset = 0.0f;
-                scrollState = 0;
-                scrollFinished = 1;
+                // opcional: mantener pauseCounter en 0
             }
-            break;
+        } else {
+            switch (scrollState) {
+            case 1: // LEFT
+                scrollOffset += SCROLL_SPEED;
+                if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
+                    scrollState  = 2;
+                    pauseCounter = 0;
+                }
+                break;
+            case 2: // PAUSE en el límite derecho
+                pauseCounter++;
+                if (pauseCounter >= PAUSE_FRAMES) {
+                    scrollState = 3;
+                }
+                break;
+            case 3: // RIGHT (volver al origen)
+                scrollOffset -= SCROLL_SPEED;
+                if (scrollOffset <= 0.0f) {
+                    scrollOffset   = 0.0f;
+                    scrollState    = 0; // volver a IDLE
+                    holdCounter    = 0; // volver a exigir delay si re-entra
+                    scrollFinished = 1;
+                }
+                break;
+            }
         }
 
         // --- Clamp manual con doble corte ---
@@ -551,6 +567,11 @@ while (curTitle != NULL) {
 
     } else {
         // texto normal, también recortado por los límites
+        // si no hay scroll para este ítem, asegurarnos que la fase de hold no acumule
+        if (selectedTitleIdx == curTitle->idx) {
+            holdCounter = 0;
+        }
+
         titleY = drawTextClipped(cutLeft, titleY, cutLeft, cutRight, 0,
                                  ((selectedTitleIdx == curTitle->idx)
                                       ? currentTheme.selectedText
@@ -561,6 +582,7 @@ while (curTitle != NULL) {
 next:
     curTitle = curTitle->next;
 }
+
 
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
