@@ -45,15 +45,6 @@ static char lineBuffer[255];
 // Used to load cover art
 static const char artPath[] = "/ART";
 
-// Función auxiliar para empaquetar los límites del scissor en un u64
-static inline u64 make_scissor(int x1, int y1, int x2, int y2) {
-    return ((u64)(x1 & 0xFFF)) |
-           ((u64)(y1 & 0xFFF) << 16) |
-           ((u64)(x2 & 0xFFF) << 32) |
-           ((u64)(y2 & 0xFFF) << 48);
-}
-
-
 // Cover art sprite coordinates
 // Initialized during uiInit from screen width and height
 static int coverArtX2;
@@ -462,211 +453,175 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
 
   // Draw title list
-  Target *curTitle = titles->first;
+Target *curTitle = titles->first;
 
-  // márgenes internos respecto al frame
-  int marginLeft = 10;   // espacio entre texto y borde izquierdo
-  int marginRight = -20; // espacio entre texto y borde derecho
-  int marginTop =
-      8; // espacio entre el borde superior del frame y el primer título
-  int marginBottom =
-      8; // espacio entre el borde inferior del frame y el último título
+// márgenes internos respecto al frame
+int marginLeft = 10;   // espacio entre texto y borde izquierdo
+int marginRight = -10; // espacio entre texto y borde derecho
+int marginTop = 8;     // espacio entre el borde superior del frame y el primer título
+int marginBottom = 8;  // espacio entre el borde inferior del frame y el último título
 
-  // el primer título arranca dentro del frame, pegado al borde superior +
-  // margen
-  int titleY = listY1 + marginTop;
+// el primer título arranca dentro del frame, pegado al borde superior + margen
+int titleY = listY1 + marginTop;
 
-  while (curTitle != NULL) {
-    // Do not display titles before the current page
-    if (curTitle->idx < maxTitlesPerPage * curPage) {
-      goto next;
-    }
-    // Do not display titles beyond the current page
-    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) {
-      break;
-    }
-    // cortar si el siguiente título se pasaría del borde inferior del frame
-    if (titleY >= listY2 - marginBottom) {
-      break;
-    }
+while (curTitle != NULL) {
+    if (curTitle->idx < maxTitlesPerPage * curPage) goto next;
+    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) break;
+    if (titleY >= listY2 - marginBottom) break;
 
-    // Draw title ID for selected title
     if (selectedTitleIdx == curTitle->idx) {
-      // Draw title ID and device type under the cover art
-      drawTextWindow(
-          coverArtX1,
-          drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
-                         currentTheme.listText, ALIGN_HCENTER,
-                         curTitle->id), // Use y coordinate return by title ID
-          coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-          modeToString(curTitle->device->mode));
+        drawTextWindow(
+            coverArtX1,
+            drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
+                           currentTheme.listText, ALIGN_HCENTER,
+                           curTitle->id),
+            coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+            modeToString(curTitle->device->mode));
     }
-    // --- Draw title name ---
+
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
 
-    int textWidth = getLineWidth(curTitle->name);
+    int textWidth  = getLineWidth(curTitle->name);
     int frameWidth = textX2 - textX1;
 
-    // variables estáticas para mantener estado entre frames
     static float scrollOffset = 0.0f;
     static int scrollState = 0; // 0=IDLE, 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
     static int lastTitleIdx = -1;
-    static int scrollFinished = 0; // 0=no, 1=ya completó ciclo
+    static int scrollFinished = 0;
 
-    // parámetros configurables
-    const float SCROLL_SPEED = 0.5f; // píxeles por frame (más bajo = más suave)
-    const int PAUSE_FRAMES = 45;     // pausa de 0.75s a 60fps
+    const float SCROLL_SPEED = 0.5f;
+    const int PAUSE_FRAMES   = 45;
 
-    // si cambiamos de título seleccionado, reiniciar scroll
     if (selectedTitleIdx != lastTitleIdx) {
-      scrollOffset = 0.0f;
-      scrollState = 0;
-      pauseCounter = 0;
-      scrollFinished = 0;
-      lastTitleIdx = selectedTitleIdx;
+        scrollOffset = 0.0f;
+        scrollState = 0;
+        pauseCounter = 0;
+        scrollFinished = 0;
+        lastTitleIdx = selectedTitleIdx;
     }
 
     if (textWidth > frameWidth && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
-      switch (scrollState) {
-      case 0: // IDLE → iniciar scroll a la izquierda
-        scrollState = 1;
-        scrollOffset = 0.0f;
-        break;
-
-      case 1: // desplazando a la izquierda
-        scrollOffset += SCROLL_SPEED;
-        if (textX1 - (int)scrollOffset + textWidth <= textX2) {
-          scrollState = 2;
-          pauseCounter = 0;
+        switch (scrollState) {
+        case 0:
+            scrollState = 1;
+            scrollOffset = 0.0f;
+            break;
+        case 1:
+            scrollOffset += SCROLL_SPEED;
+            if (textX1 - (int)scrollOffset + textWidth <= textX2) {
+                scrollState = 2;
+                pauseCounter = 0;
+            }
+            break;
+        case 2:
+            pauseCounter++;
+            if (pauseCounter >= PAUSE_FRAMES) {
+                scrollState = 3;
+            }
+            break;
+        case 3:
+            scrollOffset -= SCROLL_SPEED;
+            if (scrollOffset <= 0.0f) {
+                scrollOffset = 0.0f;
+                scrollState = 0;
+                scrollFinished = 1;
+            }
+            break;
         }
-        break;
 
-      case 2: // pausa
-        pauseCounter++;
-        if (pauseCounter >= PAUSE_FRAMES) {
-          scrollState = 3;
-        }
-        break;
+        // --- Clamp manual para mantener dentro del frame ---
+        int drawStartX = textX1 - (int)scrollOffset;
+        int minStartX  = textX2 - textWidth; // extremo derecho toca borde derecho
+        int maxStartX  = textX1;             // inicio toca borde izquierdo
+        if (drawStartX < minStartX) drawStartX = minStartX;
+        if (drawStartX > maxStartX) drawStartX = maxStartX;
 
-      case 3: // desplazando a la derecha
-        scrollOffset -= SCROLL_SPEED;
-        if (scrollOffset <= 0.0f) {
-          scrollOffset = 0.0f;
-          scrollState = 0;
-          scrollFinished = 1;
-        }
-        break;
-      }
-
-      // --- Activar scissor para recorte duro dentro del frame ---
-      u64 scissorRect =
-          make_scissor(textX1, titleY, textX2, titleY + getFontLineHeight());
-      gsKit_set_scissor(gsGlobal, scissorRect);
-
-      // --- Dibujar con offset actual, clamped a ambos márgenes ---
-      int drawStartX = textX1 - (int)scrollOffset;
-      int minStartX = textX2 - textWidth;
-      int maxStartX = textX1;
-      if (drawStartX < minStartX)
-        drawStartX = minStartX;
-      if (drawStartX > maxStartX)
-        drawStartX = maxStartX;
-
-      titleY = drawText(drawStartX, titleY, 0, textX2, 0,
-                        currentTheme.selectedText, curTitle->name);
-
-      // --- Restaurar scissor a toda la pantalla ---
-      u64 fullRect = make_scissor(0, 0, gsGlobal->Width, gsGlobal->Height);
-      gsKit_set_scissor(gsGlobal, fullRect);
+        titleY = drawText(drawStartX, titleY, 0, textX2, 0,
+                          currentTheme.selectedText, curTitle->name);
 
     } else {
-      // texto normal
-      titleY = drawText(textX1, titleY, 0, textX2, 0,
-                        ((selectedTitleIdx == curTitle->idx)
-                             ? currentTheme.selectedText
-                             : currentTheme.listText),
-                        curTitle->name);
+        titleY = drawText(textX1, titleY, 0, textX2, 0,
+                          ((selectedTitleIdx == curTitle->idx)
+                               ? currentTheme.selectedText
+                               : currentTheme.listText),
+                          curTitle->name);
     }
 
-  next:
+next:
     curTitle = curTitle->next;
-  }
+}
+
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
-  // Se coloca al final de drawTitleList, después del bucle de títulos.
+// Se coloca al final de drawTitleList, después del bucle de títulos.
 
-  int scrollMargin = 1; // separación respecto al borde del frame
-  int iconWidth = 16;   // ancho fijo del PNG del ícono
-  int iconHeight = 16;  // alto fijo del PNG del ícono
+int scrollMargin   = 1;   // separación respecto al borde del frame
+int iconWidth      = 16;  // ancho fijo del PNG del ícono
+int iconHeight     = 16;  // alto fijo del PNG del ícono
 
-  // offsets globales (mueven todo el bloque UP/DOWN/BAR)
-  int offsetScrollX = +3;
-  int offsetScrollY = 0;
+// offsets globales (mueven todo el bloque UP/DOWN/BAR)
+int offsetScrollX  = +3;
+int offsetScrollY  = 0;
 
-  // offsets específicos del scrollbar (solo afectan al BAR)
-  int offsetBarX = +2; // mover un pelín a la derecha
-  int offsetBarY = -4; // mover verticalmente si lo necesitás
+// offsets específicos del scrollbar (solo afectan al BAR)
+int offsetBarX     = +2;  // mover un pelín a la derecha
+int offsetBarY     = -4;   // mover verticalmente si lo necesitás
 
-  // Posición del ícono de scroll UP
-  int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-  int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
+// Posición del ícono de scroll UP
+int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
-  // Posición del ícono de scroll DOWN
-  int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-  int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
+// Posición del ícono de scroll DOWN
+int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
-  // Rango vertical disponible para el scrollbar
-  int scrollRangeTop = scrollUpY + iconHeight;
-  int scrollRangeBottom = scrollDownY - iconHeight;
-  int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
+// Rango vertical disponible para el scrollbar
+int scrollRangeTop    = scrollUpY + iconHeight;
+int scrollRangeBottom = scrollDownY - iconHeight;
+int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
 
-  // Total de títulos
-  int totalTitles = titles->total;
-  int firstIdx = 0;
-  int lastIdx = totalTitles - 1;
+// Total de títulos
+int totalTitles = titles->total;
+int firstIdx    = 0;
+int lastIdx     = totalTitles - 1;
 
-  // Wrap-around explícito
-  if (selectedTitleIdx > lastIdx) {
+// Wrap-around explícito
+if (selectedTitleIdx > lastIdx) {
     selectedTitleIdx = firstIdx;
-  } else if (selectedTitleIdx < firstIdx) {
+} else if (selectedTitleIdx < firstIdx) {
     selectedTitleIdx = lastIdx;
-  }
+}
 
-  // ratio = posición relativa
-  float ratio = 0.0f;
-  if (lastIdx > firstIdx) {
+// ratio = posición relativa
+float ratio = 0.0f;
+if (lastIdx > firstIdx) {
     ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
-  }
+}
 
-  // Posición del scrollbar con offset independiente
-  int scrollBarX =
-      listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
-  int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
-                   offsetScrollY + offsetBarY;
+// Posición del scrollbar con offset independiente
+int scrollBarX = listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
+int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) + offsetScrollY + offsetBarY;
 
-  // --- Lectura de botones con libpad ---
-  struct padButtonStatus buttons;
-  padRead(0, 0, &buttons);  // puerto 0, slot 0
-  u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
+// --- Lectura de botones con libpad ---
+struct padButtonStatus buttons;
+padRead(0, 0, &buttons); // puerto 0, slot 0
+u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
 
-  bool padUpPressed = (btns & PAD_UP);
-  bool padDownPressed = (btns & PAD_DOWN);
+bool padUpPressed   = (btns & PAD_UP);
+bool padDownPressed = (btns & PAD_DOWN);
 
-  // Colores sólidos
-  u64 colorUp =
-      padUpPressed ? currentTheme.selectedText : currentTheme.listText;
-  u64 colorDown =
-      padDownPressed ? currentTheme.selectedText : currentTheme.listText;
-  u64 colorBar = currentTheme.selectedText;
+// Colores sólidos
+u64 colorUp   = padUpPressed   ? currentTheme.selectedText : currentTheme.listText;
+u64 colorDown = padDownPressed ? currentTheme.selectedText : currentTheme.listText;
+u64 colorBar  = currentTheme.selectedText;
 
-  // Dibujar íconos
-  drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
-  drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
-           ICON_SCROLLDOWN);
-  drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
+// Dibujar íconos
+drawIcon((float)scrollUpX,   (float)scrollUpY,   0, colorUp,   ICON_SCROLLUP);
+drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown, ICON_SCROLLDOWN);
+drawIcon((float)scrollBarX,  (float)scrollBarY,  0, colorBar,  ICON_SCROLLBAR);
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
