@@ -467,6 +467,9 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // margen
   // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
+  // el primer título arranca dentro del frame, pegado al borde superior +
+  // margen el primer título arranca dentro del frame, pegado al borde superior
+  // + margen
   int titleY = listY1 + marginTop;
 
   while (curTitle != NULL) {
@@ -490,7 +493,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textX2 = listX2 + marginRight;
 
     int textWidth = getLineWidth(curTitle->name);
-    int frameWidth = textX2 - textX1;
 
     // límites de corte reales
     int cutLeft = textX1 + 10;  // margen de 10px dentro del borde izquierdo
@@ -545,24 +547,25 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
       // --- Clamp manual con doble corte ---
       int drawStartX = textX1 - (int)scrollOffset;
-      int minStartX =
-          cutRight - textWidth; // extremo derecho toca límite derecho
-      int maxStartX = cutLeft;  // inicio toca límite izquierdo
+      int minStartX = cutRight - textWidth;
+      int maxStartX = cutLeft;
       if (drawStartX < minStartX)
         drawStartX = minStartX;
       if (drawStartX > maxStartX)
         drawStartX = maxStartX;
 
-      titleY = drawText(drawStartX, titleY, cutLeft, cutRight, 0,
-                        currentTheme.selectedText, curTitle->name);
+      // usar drawTextWindow para cortar glifos fuera de la ventana
+      titleY = drawTextWindow(
+          drawStartX, titleY, cutRight, titleY + getFontLineHeight(), 0,
+          currentTheme.selectedText, ALIGN_LEFT, curTitle->name);
 
     } else {
       // texto normal, también recortado por los límites
-      titleY = drawText(cutLeft, titleY, cutLeft, cutRight, 0,
-                        ((selectedTitleIdx == curTitle->idx)
-                             ? currentTheme.selectedText
-                             : currentTheme.listText),
-                        curTitle->name);
+      titleY = drawTextWindow(
+          cutLeft, titleY, cutRight, titleY + getFontLineHeight(), 0,
+          ((selectedTitleIdx == curTitle->idx) ? currentTheme.selectedText
+                                               : currentTheme.listText),
+          ALIGN_LEFT, curTitle->name);
     }
 
   next:
