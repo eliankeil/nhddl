@@ -70,6 +70,11 @@ int drawText(int x, int y, int z, int maxWidth, int maxHeight, uint64_t color, c
 // Use the faster drawText method if window limits are not important.
 int drawTextWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, const char *text);
 
+// Dibuja texto iniciando en startX, recortando en [cutLeft, cutRight].
+// Devuelve el bottom Y como drawText/drawTextWindow.
+int drawTextClipped(int startX, int startY, int cutLeft, int cutRight,
+                    int z, uint64_t color, const char *text);
+
 // Frees memory used by the font
 void closeFont();
 

@@ -249,6 +249,54 @@ float getLineWidth(const char *text) {
   }
   return lineWidth;
 }
+int drawTextClipped(int startX, int startY, int cutLeft, int cutRight,
+                    int z, uint64_t color, const char *text) {
+    int x = startX;
+    int y = startY;
+    const BMFontChar *glyph;
+
+    // Alpha como en drawText
+    gsKit_set_primalpha(gsGlobal, GS_BLEND_BACK2FRONT, 0);
+    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (text[i] == '\n') break; // lista usa una sola línea
+
+        glyph = getGlyph(text[i]);
+        if (glyph == NULL) continue;
+
+        int glyphX = x;
+        int glyphW = glyph->xadvance;
+
+        // Clip lógico horizontal
+        if (glyphX + glyphW <= cutLeft) {
+            x += glyphW; // completamente a la izquierda → no dibujar
+            continue;
+        }
+        if (glyphX >= cutRight) {
+            break;       // completamente a la derecha → cortar
+        }
+
+        // Dibujar glifo
+        drawGlyph(glyph, glyphX, y, z, color);
+        x += glyphW;
+
+        // Kerning
+        if (glyph->kernings && (text[i + 1] != '\0')) {
+            for (int k = 0; k < glyph->kerningsCount; k++) {
+                if (glyph->kernings[k].secondChar == text[i + 1]) {
+                    x += glyph->kernings[k].amount;
+                }
+            }
+        }
+    }
+
+    // Reset alpha
+    gsKit_set_test(gsGlobal, GS_ATEST_ON);
+    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+
+    return (y + getFontLineHeight());
+}
 
 // Draws the text in [x1,y1],[x2,y2] window.
 // Doesn't draw the glyphs that do not fit in the set window.
