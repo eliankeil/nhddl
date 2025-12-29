@@ -456,7 +456,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   Target *curTitle = titles->first;
 
   // márgenes internos respecto al frame
-  int marginLeft = 0;   // espacio entre texto y borde izquierdo
+  int marginLeft = 0;  // espacio entre texto y borde izquierdo
   int marginRight = 0; // espacio entre texto y borde derecho
   int marginTop =
       8; // espacio entre el borde superior del frame y el primer título
@@ -465,125 +465,131 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
-// el primer título arranca dentro del frame, pegado al borde superior + margen
-int titleY = listY1 + marginTop;
+  // el primer título arranca dentro del frame, pegado al borde superior +
+  // margen
+  int titleY = listY1 + marginTop;
 
-while (curTitle != NULL) {
-    if (curTitle->idx < maxTitlesPerPage * curPage) goto next;
-    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1)) break;
-    if (titleY >= listY2 - marginBottom) break;
+  // el primer título arranca dentro del frame, pegado al borde superior +
+  // margen
+  int titleY = listY1 + marginTop;
+
+  while (curTitle != NULL) {
+    if (curTitle->idx < maxTitlesPerPage * curPage)
+      goto next;
+    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1))
+      break;
+    if (titleY >= listY2 - marginBottom)
+      break;
 
     if (selectedTitleIdx == curTitle->idx) {
-        drawTextWindow(
-            coverArtX1,
-            drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
-                           currentTheme.listText, ALIGN_HCENTER,
-                           curTitle->id),
-            coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-            modeToString(curTitle->device->mode));
+      drawTextWindow(coverArtX1,
+                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0,
+                                    0, currentTheme.listText, ALIGN_HCENTER,
+                                    curTitle->id),
+                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+                     modeToString(curTitle->device->mode));
     }
 
     int textX1 = listX1 + marginLeft;
     int textX2 = listX2 + marginRight;
 
-    int textWidth  = getLineWidth(curTitle->name);
+    int textWidth = getLineWidth(curTitle->name);
 
     // límites de corte reales
-    int cutLeft  = textX1 + 10;   // margen de 10px dentro del borde izquierdo
-    int cutRight = textX2 - 10;   // margen de 10px dentro del borde derecho
+    int cutLeft = textX1 + 10;  // margen de 10px dentro del borde izquierdo
+    int cutRight = textX2 - 10; // margen de 10px dentro del borde derecho
 
     static float scrollOffset = 0.0f;
-    static int scrollState = 0; // 0=IDLE(espera), 1=LEFT, 2=PAUSE, 3=RIGHT
+    static int scrollState = 0; // 0=START_DELAY, 1=LEFT, 2=PAUSE, 3=RIGHT
     static int pauseCounter = 0;
     static int lastTitleIdx = -1;
     static int scrollFinished = 0;
-
-    // nuevo: delay de inicio
     static int holdCounter = 0;
-    const int HOLD_FRAMES  = 45;
 
-    const float SCROLL_SPEED = 0.3f;
-    const int PAUSE_FRAMES   = 60;
+    const int HOLD_FRAMES = 60;
+    const float SCROLL_SPEED = 0.4f;
+    const int PAUSE_FRAMES = 60;
 
     // reseteo al cambiar selección
     if (selectedTitleIdx != lastTitleIdx) {
-        scrollOffset   = 0.0f;
-        scrollState    = 0;       // volver a IDLE
-        pauseCounter   = 0;
-        holdCounter    = 0;       // reiniciar delay de inicio
-        scrollFinished = 0;
-        lastTitleIdx   = selectedTitleIdx;
+      scrollOffset = 0.0f;
+      scrollState = 0; // volver a START_DELAY
+      pauseCounter = 0;
+      holdCounter = 0; // reiniciar delay de inicio
+      scrollFinished = 0;
+      lastTitleIdx = selectedTitleIdx;
     }
+
+    int drawStartX = cutLeft; // valor por defecto
 
     // condición de scroll sólo si supera el ancho visible y es el seleccionado
     if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
         !scrollFinished) {
 
-        // Fase de espera antes de iniciar el movimiento (anti-tirones)
-        if (scrollState == 0) {
-            holdCounter++;
-            if (holdCounter >= HOLD_FRAMES) {
-                scrollState  = 1;      // iniciar desplazamiento a la izquierda
-                scrollOffset = 0.0f;
-                // opcional: mantener pauseCounter en 0
-            }
-        } else {
-            switch (scrollState) {
-            case 1: // LEFT
-                scrollOffset += SCROLL_SPEED;
-                if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
-                    scrollState  = 2;
-                    pauseCounter = 0;
-                }
-                break;
-            case 2: // PAUSE en el límite derecho
-                pauseCounter++;
-                if (pauseCounter >= PAUSE_FRAMES) {
-                    scrollState = 3;
-                }
-                break;
-            case 3: // RIGHT (volver al origen)
-                scrollOffset -= SCROLL_SPEED;
-                if (scrollOffset <= 0.0f) {
-                    scrollOffset   = 0.0f;
-                    scrollState    = 0; // volver a IDLE
-                    holdCounter    = 0; // volver a exigir delay si re-entra
-                    scrollFinished = 1;
-                }
-                break;
-            }
+      switch (scrollState) {
+      case 0: // START_DELAY
+        holdCounter++;
+        drawStartX = cutLeft; // fijo en posición inicial
+        if (holdCounter >= HOLD_FRAMES) {
+          scrollState = 1;
+          scrollOffset = 0.0f;
         }
+        break;
 
-        // --- Clamp manual con doble corte ---
-        int drawStartX = textX1 - (int)scrollOffset;
-        int minStartX  = cutRight - textWidth;
-        int maxStartX  = cutLeft;
-        if (drawStartX < minStartX) drawStartX = minStartX;
-        if (drawStartX > maxStartX) drawStartX = maxStartX;
+      case 1: // LEFT
+        scrollOffset += SCROLL_SPEED;
+        if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
+          scrollState = 2;
+          pauseCounter = 0;
+        }
+        drawStartX = textX1 - (int)scrollOffset;
+        break;
 
-        // usar drawTextClipped para cortar glifos fuera de la ventana
-        titleY = drawTextClipped(drawStartX, titleY, cutLeft, cutRight, 0,
-                                 currentTheme.selectedText, curTitle->name);
+      case 2: // PAUSE
+        pauseCounter++;
+        if (pauseCounter >= PAUSE_FRAMES) {
+          scrollState = 3;
+        }
+        drawStartX = textX1 - (int)scrollOffset;
+        break;
 
+      case 3: // RIGHT
+        scrollOffset -= SCROLL_SPEED;
+        if (scrollOffset <= 0.0f) {
+          scrollOffset = 0.0f;
+          scrollState = 0; // volver a START_DELAY
+          holdCounter = 0;
+          scrollFinished = 1;
+        }
+        drawStartX = textX1 - (int)scrollOffset;
+        break;
+      }
     } else {
-        // texto normal, también recortado por los límites
-        // si no hay scroll para este ítem, asegurarnos que la fase de hold no acumule
-        if (selectedTitleIdx == curTitle->idx) {
-            holdCounter = 0;
-        }
-
-        titleY = drawTextClipped(cutLeft, titleY, cutLeft, cutRight, 0,
-                                 ((selectedTitleIdx == curTitle->idx)
-                                      ? currentTheme.selectedText
-                                      : currentTheme.listText),
-                                 curTitle->name);
+      // texto normal, también recortado por los límites
+      if (selectedTitleIdx == curTitle->idx) {
+        holdCounter = 0; // no acumular delay si no hay scroll
+      }
+      drawStartX = cutLeft;
     }
 
-next:
+    // --- Clamp manual con doble corte ---
+    int minStartX = cutRight - textWidth;
+    int maxStartX = cutLeft;
+    if (drawStartX < minStartX)
+      drawStartX = minStartX;
+    if (drawStartX > maxStartX)
+      drawStartX = maxStartX;
+
+    // usar drawTextClipped para cortar glifos fuera de la ventana
+    titleY = drawTextClipped(drawStartX, titleY, cutLeft, cutRight, 0,
+                             ((selectedTitleIdx == curTitle->idx)
+                                  ? currentTheme.selectedText
+                                  : currentTheme.listText),
+                             curTitle->name);
+
+  next:
     curTitle = curTitle->next;
-}
-
-
+  }
 
   // --- Dibujar íconos de scroll magnetizados al frame ---
   // Se coloca al final de drawTitleList, después del bucle de títulos.
