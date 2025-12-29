@@ -463,7 +463,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int marginBottom =
       8; // espacio entre el borde inferior del frame y el último título
 
- // el primer título arranca dentro del frame, pegado al borde superior +
+  // el primer título arranca dentro del frame, pegado al borde superior +
   // margen
   int titleY = listY1 + marginTop;
 
@@ -490,7 +490,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int textWidth = getLineWidth(curTitle->name);
 
     // límites de corte reales
-    int cutLeft = textX1 + 14;  // margen de 10px dentro del borde izquierdo
+    int cutLeft = textX1 + 11;  // margen de 10px dentro del borde izquierdo
     int cutRight = textX2 - 20; // margen de 10px dentro del borde derecho
 
     static float scrollOffset = 0.0f;
@@ -501,7 +501,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     static int holdCounter = 0;
 
     const int HOLD_FRAMES = 45;
-    const float SCROLL_SPEED = 0.3f;
+    const float SCROLL_SPEED = 0.4f;
     const int PAUSE_FRAMES = 60;
 
     // reseteo al cambiar selección
@@ -532,11 +532,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
       case 1: // LEFT
         scrollOffset += SCROLL_SPEED;
-        if (textX1 - (int)scrollOffset + textWidth <= cutRight) {
+        if (cutLeft - (int)scrollOffset + textWidth <= cutRight) {
           scrollState = 2;
           pauseCounter = 0;
         }
-        drawStartX = textX1 - (int)scrollOffset;
+        drawStartX = cutLeft - (int)scrollOffset;
         break;
 
       case 2: // PAUSE
@@ -544,7 +544,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         if (pauseCounter >= PAUSE_FRAMES) {
           scrollState = 3;
         }
-        drawStartX = textX1 - (int)scrollOffset;
+        drawStartX = cutLeft - (int)scrollOffset;
         break;
 
       case 3: // RIGHT
@@ -555,9 +555,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
           holdCounter = 0;
           scrollFinished = 1;
         }
-        drawStartX = textX1 - (int)scrollOffset;
+        drawStartX = cutLeft - (int)scrollOffset;
         break;
       }
+
     } else {
       // texto normal, también recortado por los límites
       if (selectedTitleIdx == curTitle->idx) {
