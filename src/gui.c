@@ -553,11 +553,18 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         break;
       }
 
-      // --- Dibujar con offset actual, clamped al mínimo útil ---
+      // --- Dibujar con offset actual, clamped a ambos márgenes ---
       int drawStartX = textX1 - (int)scrollOffset;
-      int minStartX = textX2 - textWidth; // no más a la izquierda que esto
+
+      // clamp derecho: no más a la izquierda que textX2 - textWidth
+      int minStartX = textX2 - textWidth;
       if (drawStartX < minStartX) {
         drawStartX = minStartX;
+      }
+
+      // clamp izquierdo: no más a la derecha que textX1
+      if (drawStartX > textX1) {
+        drawStartX = textX1;
       }
 
       titleY = drawText(drawStartX, titleY, 0, textX2, 0,
