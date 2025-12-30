@@ -678,12 +678,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     // Temporaily disable alpha blending
     // Some PNGs require inverted alpha channel value to display properly
     // Since cover art has nothing to blend, we can bypass the issue altogether
-    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+   // gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                               coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                               selectedTitleCover->Width,
                               selectedTitleCover->Height, 2, FontMainColor);
-    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+   // gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
     gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                       1, currentTheme.background);
