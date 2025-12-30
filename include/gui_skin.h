@@ -14,6 +14,7 @@ typedef struct {
     uint64_t iconSquare;
     uint64_t iconTriangle;
     uint64_t iconPad;
+    uint64_t iconStart;
 } ThemeColors;
 
 extern ThemeColors currentTheme;
