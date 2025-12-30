@@ -383,7 +383,7 @@ void drawTitleListFooter(int baseX) {
   int centerX = (gsGlobal->Width - centerTotal) / 2;
 
   // SELECT → Skin
-  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
                  ALIGN_CENTER, ICON_SELECT);
   drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY, 0,
                  gsGlobal->Height - 1, 0, currentTheme.headerText,
@@ -391,7 +391,7 @@ void drawTitleListFooter(int baseX) {
   centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
 
   // START → Exit
-  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
                  ALIGN_CENTER, ICON_START);
   drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
                  gsGlobal->Height - 1, 0, currentTheme.headerText,
@@ -715,7 +715,7 @@ void drawTitleOptionsFooter(int baseX) {
   centerX += getIconWidth(ICON_SQUARE) + getLineWidth("Test") + 40;
 
   // START → Save
-  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, FontMainColor,
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
                  ALIGN_CENTER, ICON_START);
   drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
                  gsGlobal->Height - 1, 0, currentTheme.headerText,
@@ -747,11 +747,11 @@ void drawTitleOptionsFooter(int baseX) {
                  ALIGN_TOP | ALIGN_HCENTER, "Switch views");
   drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
                  (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                 gsGlobal->Height, 0, FontMainColor, ALIGN_TOP | ALIGN_RIGHT,
+                 gsGlobal->Height, 0, currentTheme.iconStart, ALIGN_TOP | ALIGN_RIGHT,
                  ICON_L1);
   drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5,
                  gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
-                 gsGlobal->Width, gsGlobal->Height, 0, FontMainColor,
+                 gsGlobal->Width, gsGlobal->Height, 0, currentTheme.iconStart,
                  ALIGN_TOP | ALIGN_LEFT, ICON_R1);
 }
 
