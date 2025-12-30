@@ -98,7 +98,7 @@ int uiInit() {
   }
   gsGlobal = gsKit_init_global();
   initVMode(gsGlobal);
-  gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
+  gsGlobal->PSM = GS_PSM_CT32; // Set color depth to avoid PAL VRAM issues
   gsGlobal->PSMZ = GS_PSMZ_16S;
   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
@@ -163,8 +163,8 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
         return -1;
     }
     gsKit_TexManager_bind(gsGlobal, coverTexture);
-    free(coverTexture->Mem);
-    coverTexture->Mem = NULL;
+    //free(coverTexture->Mem);
+    //coverTexture->Mem = NULL;
 
     // 🔹 ICO art
     snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath, titleID);
@@ -702,14 +702,15 @@ if (icoTexture != NULL) {
     int icoY1 = coverArtY1;
     int icoX2 = icoX1 + icoTexture->Width;
     int icoY2 = icoY1 + icoTexture->Height;
-
+gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(1,0,1,0,0), 0);
     gsKit_prim_sprite_texture(gsGlobal, icoTexture,
                               icoX1, icoY1,
                               0.0f, 0.0f,
                               icoX2, icoY2,
                               icoTexture->Width,
                               icoTexture->Height,
-                              2, GS_SETREG_RGBA(0xFF,0xFF,0xFF,0x80));
+                              2, GS_SETREG_RGBA(0x80,0xFF,0xFF,0x80));
+                              gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0,1,0,1,0), 0);
 }
 
 }
