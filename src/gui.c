@@ -99,7 +99,7 @@ int uiInit() {
   initVMode(gsGlobal);
   gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
   gsGlobal->PSMZ = GS_PSMZ_16S;
-  gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+  gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
   // Setup TEST register to ignore fully transparent pixels
   gsGlobal->Test->ATST = 1; // Set alpha test method to NOTEQUAL (pixels with A
