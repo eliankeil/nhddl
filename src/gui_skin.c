@@ -1,7 +1,7 @@
 #include "gui_skin.h"
 #include "gui.h"
-#include "gui_icons.h"
 #include "gui_graphics.h"
+#include "gui_icons.h"
 #include "pad.h"
 #include "skin_layout.h"
 #include <libpad.h>
@@ -48,7 +48,8 @@ int saveSkin(const char *path) {
   fprintf(f, "iconCircle:     0x%08X\n", (unsigned int)currentTheme.iconCircle);
   fprintf(f, "iconCross:    0x%08X\n", (unsigned int)currentTheme.iconCross);
   fprintf(f, "iconSquare:    0x%08X\n", (unsigned int)currentTheme.iconSquare);
-  fprintf(f, "iconTriangle:    0x%08X\n", (unsigned int)currentTheme.iconTriangle);
+  fprintf(f, "iconTriangle:    0x%08X\n",
+          (unsigned int)currentTheme.iconTriangle);
   fprintf(f, "iconPad:    0x%08X\n", (unsigned int)currentTheme.iconPad);
   fprintf(f, "iconStart:    0x%08X\n", (unsigned int)currentTheme.iconStart);
 
@@ -107,9 +108,10 @@ int loadSkin(const char *path) {
 
 // Campos del skin (labels visibles en pantalla)
 const char *fields[] = {
-    "Background",  "Titles Text", "Selected Text", "Header+Footer Text",
-    "Enable Icon", "Cover+Titles Border",    "Circle Icon",   "Cross Icon",
-    "Square Icon", "Triangle Icon", "Pad Icon", "Sel+Sta+L1+R1 Icon"};
+    "Background",         "Titles Text", "Selected Text",
+    "Header+Footer Text", "Enable Icon", "Cover+Titles Border",
+    "Circle Icon",        "Cross Icon",  "Square Icon",
+    "Triangle Icon",      "Pad Icon",    "Sel+Sta+L1+R1 Icon"};
 
 uint64_t *values[] = {&currentTheme.background,   &currentTheme.listText,
                       &currentTheme.selectedText, &currentTheme.headerText,
@@ -133,19 +135,18 @@ ExitCode uiSkinOptionsLoop(void) {
   // … resto del cuerpo de la función …
 
   // Defaults por índice de parámetro (en orden de fields[])
-  const uint64_t defaults[12] = {
-      (uint64_t)BGColor,         // background
-      (uint64_t)FontMainColor,   // listText
-      (uint64_t)ColorSelected,   // selectedText
-      (uint64_t)HeaderTextColor, // headerText
-      (uint64_t)IconEnabled,     // iconEnabled
-      (uint64_t)FontMainColor,   // coverFrame
-      (uint64_t)IconCircle,      //iconCircle
-      (uint64_t)IconCross,       // iconCross
-      (uint64_t)IconSquare,      // iconSquare
-      (uint64_t)IconTriangle,    // iconTriangle
-      (uint64_t)IconPad,         // iconPad
-      (uint64_t)IconStart};       // iconStart
+  const uint64_t defaults[12] = {(uint64_t)BGColor,         // background
+                                 (uint64_t)FontMainColor,   // listText
+                                 (uint64_t)ColorSelected,   // selectedText
+                                 (uint64_t)HeaderTextColor, // headerText
+                                 (uint64_t)IconEnabled,     // iconEnabled
+                                 (uint64_t)FontMainColor,   // coverFrame
+                                 (uint64_t)IconCircle,      // iconCircle
+                                 (uint64_t)IconCross,       // iconCross
+                                 (uint64_t)IconSquare,      // iconSquare
+                                 (uint64_t)IconTriangle,    // iconTriangle
+                                 (uint64_t)IconPad,         // iconPad
+                                 (uint64_t)IconStart};      // iconStart
 
   while (1) {
     gsKit_clear(gsGlobal, currentTheme.background);
@@ -319,17 +320,23 @@ ExitCode uiSkinOptionsLoop(void) {
                          prevY + prevH, 0, currentTheme.iconPad, ALIGN_VCENTER,
                          ICON_LEFTRIGHT);
         } else if (i == 11) { // Sel+Sta+L1+R1 Icon
-          drawIconWindow(prevX, prevY, 0, prevY + prevH, 0,
+          int curX = prevX;
+
+          drawIconWindow(curX, prevY, 0, prevY + prevH, 0,
                          currentTheme.iconStart, ALIGN_VCENTER, ICON_SELECT);
-          drawIconWindow(prevX + getIconWidth(ICON_SELECT) + 10, prevY, 0,
-                         prevY + prevH, 0, currentTheme.iconStart, ALIGN_VCENTER,
-                         ICON_START);
-          drawIconWindow(prevX + getIconWidth(ICON_START) + 10, prevY, 0,
-                         prevY + prevH, 0, currentTheme.iconStart, ALIGN_VCENTER,
-                         ICON_L1);
-          drawIconWindow(prevX + getIconWidth(ICON_L1) + 10, prevY, 0,
-                         prevY + prevH, 0, currentTheme.iconStart, ALIGN_VCENTER,
-                         ICON_R1);
+          curX += getIconWidth(ICON_SELECT) + 10;
+
+          drawIconWindow(curX, prevY, 0, prevY + prevH, 0,
+                         currentTheme.iconStart, ALIGN_VCENTER, ICON_START);
+          curX += getIconWidth(ICON_START) + 10;
+
+          drawIconWindow(curX, prevY, 0, prevY + prevH, 0,
+                         currentTheme.iconStart, ALIGN_VCENTER, ICON_L1);
+          curX += getIconWidth(ICON_L1) + 10;
+
+          drawIconWindow(curX, prevY, 0, prevY + prevH, 0,
+                         currentTheme.iconStart, ALIGN_VCENTER, ICON_R1);
+
         } else {
           // otros parámetros → preview normal
           gsKit_prim_sprite(gsGlobal, prevX, prevY, prevX + prevW,
@@ -374,8 +381,8 @@ ExitCode uiSkinOptionsLoop(void) {
       curX += getLineWidth(msgCross) + 40;
 
       // START → Save
-      drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
-                     ALIGN_CENTER, ICON_START);
+      drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0,
+                     currentTheme.iconStart, ALIGN_CENTER, ICON_START);
       curX += getIconWidth(ICON_START) + 5;
       drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                      currentTheme.headerText, ALIGN_VCENTER, msgStart);

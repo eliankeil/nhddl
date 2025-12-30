@@ -26,8 +26,9 @@ static const uint64_t IconCircle = GS_SETREG_RGBA(0x9F, 0x41, 0x1F, 0x80);
 static const uint64_t IconCross = GS_SETREG_RGBA(0x67, 0x7A, 0xB8, 0x80);
 static const uint64_t IconSquare = GS_SETREG_RGBA(0x89, 0x54, 0x79, 0x80);
 static const uint64_t IconTriangle = GS_SETREG_RGBA(0x13, 0x7D, 0x4D, 0x80);
-static const uint64_t IconPad = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
-static const uint64_t IconStart = GS_SETREG_RGBA(0x20, 0x20, 0x20, 0x80);
+static const uint64_t IconPad = GS_SETREG_RGBA(0x55, 0x55, 0x55, 0x80);
+static const uint64_t IconStart = GS_SETREG_RGBA(0x44, 0x44, 0x44, 0x80);
+static const uint64_t coverFrame = GS_SETREG_RGBA(0x44, 0x44, 0x44, 0x80);
 
 // Initialized in gui.c
 extern GSGLOBAL *gsGlobal;
