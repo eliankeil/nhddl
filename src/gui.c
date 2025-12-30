@@ -99,10 +99,10 @@ int uiInit() {
   initVMode(gsGlobal);
   gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
   gsGlobal->PSMZ = GS_PSMZ_16S;
-  gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+  gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
   // Setup TEST register to ignore fully transparent pixels
-  gsGlobal->Test->ATST = 1; // Set alpha test method to NOTEQUAL (pixels with A
+  gsGlobal->Test->ATST = 7; // Set alpha test method to NOTEQUAL (pixels with A
                             // not equal to AREF pass)
   gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
   gsGlobal->Test->AFAIL = 0;   // Don't update buffers when test fails
@@ -673,12 +673,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     // Temporaily disable alpha blending
     // Some PNGs require inverted alpha channel value to display properly
     // Since cover art has nothing to blend, we can bypass the issue altogether
-   // gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                               coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                               selectedTitleCover->Width,
                               selectedTitleCover->Height, 2, FontMainColor);
-   // gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
     gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                       1, currentTheme.background);
