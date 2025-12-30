@@ -39,6 +39,7 @@ void closeUISplashThread();
 
 GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
+static GSTEXTURE *icoTexture;
 static char lineBuffer[255];
 
 // Path relative to storage device mountpoint.
@@ -97,17 +98,15 @@ int uiInit() {
   }
   gsGlobal = gsKit_init_global();
   initVMode(gsGlobal);
-
-  // 🔹 CAMBIO: usar CT32 para preservar canal alfa en texturas
-  gsGlobal->PSM = GS_PSM_CT32; // antes GS_PSM_CT24
+  gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
   gsGlobal->PSMZ = GS_PSMZ_16S;
   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
-
-  // 🔹 Alpha test: descartar píxeles con alfa = 0
-  gsGlobal->Test->ATST = 7;    // NOTEQUAL
-  gsGlobal->Test->AREF = 0x00; // referencia = 0
-  gsGlobal->Test->AFAIL = 0;   // KEEP
+  // Setup TEST register to ignore fully transparent pixels
+  gsGlobal->Test->ATST = 7; // Set alpha test method to NOTEQUAL (pixels with A
+                            // not equal to AREF pass)
+  gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
+  gsGlobal->Test->AFAIL = 0;   // Don't update buffers when test fails
 
   dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
               D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
@@ -124,10 +123,10 @@ int uiInit() {
   // Init screen
   gsKit_vram_clear(gsGlobal);
   gsKit_init_screen(gsGlobal);
-  gsKit_display_buffer(gsGlobal);
+  gsKit_display_buffer(
+      gsGlobal); // Switch display buffer to avoid garbage appearing on screen
   gsKit_TexManager_init(gsGlobal);
-
-  // 🔹 Blending clásico SRC*ALPHA + DST*(1-ALPHA)
+  // Set alpha and mode, clear active buffer
   gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
   gsKit_set_test(gsGlobal, GS_ATEST_ON);
   gsKit_mode_switch(gsGlobal, GS_ONESHOT);
@@ -145,33 +144,41 @@ int uiInit() {
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
-
-  // 🔹 Mantener delayed para que TexManager maneje VRAM correctamente
   coverTexture->Delayed = 1;
+icoTexture = calloc(sizeof(GSTEXTURE), 1);
+icoTexture->Delayed = 1;
 
   return 0;
 }
 
-// Invalidates currently loaded texture and loads a new one
 int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
-  if (device->metadev) { // Fallback to metadata device
-    device = device->metadev;
-  }
-  snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-           titleID);
+    if (device->metadev) {
+        device = device->metadev;
+    }
 
-  gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-  if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
-    return -1;
-  }
-  gsKit_TexManager_bind(gsGlobal, coverTexture);
+    // Cover art
+    snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath, titleID);
+    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
+        return -1;
+    }
+    gsKit_TexManager_bind(gsGlobal, coverTexture);
+    free(coverTexture->Mem);
+    coverTexture->Mem = NULL;
 
-  // 🔹 CAMBIO: no liberar Mem inmediatamente, dejar que TexManager maneje VRAM
-  // free(coverTexture->Mem);
-  // coverTexture->Mem = NULL;
+    // 🔹 ICO art
+    snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath, titleID);
+    gsKit_TexManager_invalidate(gsGlobal, icoTexture);
+    if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
+        return -1;
+    }
+    gsKit_TexManager_bind(gsGlobal, icoTexture);
+    // 🔹 NO liberar Mem aquí, porque necesitamos el canal alfa intacto
+    // icoTexture->Delayed = 1; // opcional, igual que coverTexture
 
-  return 0;
+    return 0;
 }
+
 
 // Frees textures and deinits gsKit
 void closeUI() {
@@ -180,7 +187,6 @@ void closeUI() {
   free(coverTexture);
   gsKit_deinit_global(gsGlobal);
 }
-
 
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
@@ -678,18 +684,34 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     // Temporaily disable alpha blending
     // Some PNGs require inverted alpha channel value to display properly
     // Since cover art has nothing to blend, we can bypass the issue altogether
-   // gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                               coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                               selectedTitleCover->Width,
                               selectedTitleCover->Height, 2, FontMainColor);
-   // gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   } else {
     gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                       1, currentTheme.background);
     drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
                    currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
+// 🔹 Draw ico art (con blending activo)
+if (icoTexture != NULL) {
+    int icoX1 = coverArtX1 - COVER_ART_RES_W; // a la izquierda de coverArt
+    int icoY1 = coverArtY1;
+    int icoX2 = icoX1 + icoTexture->Width;
+    int icoY2 = icoY1 + icoTexture->Height;
+
+    gsKit_prim_sprite_texture(gsGlobal, icoTexture,
+                              icoX1, icoY1,
+                              0.0f, 0.0f,
+                              icoX2, icoY2,
+                              icoTexture->Width,
+                              icoTexture->Height,
+                              2, GS_SETREG_RGBA(0xFF,0xFF,0xFF,0x80));
+}
+
 }
 
 void drawTitleOptionsFooter(int baseX) {
