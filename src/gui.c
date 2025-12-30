@@ -102,10 +102,10 @@ int uiInit() {
   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
   gsGlobal->DoubleBuffering = GS_SETTING_ON;
   // Setup TEST register to ignore fully transparent pixels
-  gsGlobal->Test->ATST = GS_ALWAYS; // Set alpha test method to NOTEQUAL (pixels with A
+  gsGlobal->Test->ATST = 1; // Set alpha test method to NOTEQUAL (pixels with A
                             // not equal to AREF pass)
   gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
-  gsGlobal->Test->AFAIL = GS_AFAIL_KEEP;   // Don't update buffers when test fails
+  gsGlobal->Test->AFAIL = 0;   // Don't update buffers when test fails
 
   dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
               D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
