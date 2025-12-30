@@ -144,7 +144,7 @@ ExitCode uiSkinOptionsLoop(void) {
       (uint64_t)IconCross,       // iconCross
       (uint64_t)IconSquare,      // iconSquare
       (uint64_t)IconTriangle,    // iconTriangle
-      (uint64_t)IconPad         // iconPad
+      (uint64_t)IconPad,         // iconPad
       (uint64_t)IconStart};       // iconStart
 
   while (1) {
