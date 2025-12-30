@@ -137,6 +137,7 @@ int uiInit() {
     printf("ERROR: Failed to initialize font\n");
     return -1;
   };
+gsKit_TexManager_bind(gsGlobal, icoTexture);
 
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -702,7 +703,7 @@ if (icoTexture != NULL) {
     int icoY1 = coverArtY1;
     int icoX2 = icoX1 + icoTexture->Width;
     int icoY2 = icoY1 + icoTexture->Height;
-gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(1,0,1,0,0), 0);
+
     gsKit_prim_sprite_texture(gsGlobal, icoTexture,
                               icoX1, icoY1,
                               0.0f, 0.0f,
@@ -710,7 +711,6 @@ gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(1,0,1,0,0), 0);
                               icoTexture->Width,
                               icoTexture->Height,
                               2, GS_SETREG_RGBA(0x80,0xFF,0xFF,0x80));
-                              gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0,1,0,1,0), 0);
 }
 
 }
