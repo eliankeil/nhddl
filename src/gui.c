@@ -417,16 +417,16 @@ int uiLoop(TargetList *titles) {
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -40.0f;
+      logoAnimState.targetDistance = -60.0f;
       logoAnimState.currentOffset = 0.0f;
-      logoAnimState.delayFrames = 30;
+      logoAnimState.delayFrames = 5;
       logoAnimState.isFinished = false;
 
       // Disc Art (Mueve 64px a la derecha)
       discAnimState.startPosition = (float)discArtX1;
       discAnimState.targetDistance = 64.0f;
       discAnimState.currentOffset = 0.0f;
-      discAnimState.delayFrames = 30;
+      discAnimState.delayFrames = 5;
       discAnimState.isFinished = false;
     }
 
@@ -812,7 +812,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                     coverArtY2 + 2, 1, currentTheme.coverFrame);
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int LOGO_MOVE_FRAMES = 35;
+  const int LOGO_MOVE_FRAMES = 80;
 
   // ************************************************
   // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
@@ -831,7 +831,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int DISC_MOVE_FRAMES = 45;
+  const int DISC_MOVE_FRAMES = 80;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
