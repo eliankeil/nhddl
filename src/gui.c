@@ -68,7 +68,20 @@ static GSTEXTURE *coverTexture;
 static GSTEXTURE *logoTexture;
 static GSTEXTURE *discTexture; // Nuevo: Disc Texture
 static char lineBuffer[255];
+static int lastTitleIdx = -1;
+static int frameCounter = 0;
 
+// Estructura para manejar el estado de una animación de un solo eje (X)
+typedef struct {
+  float startPosition;  // Posición X inicial (X1 base)
+  float targetDistance; // Distancia total a recorrer (ej: -40.0f o 64.0f)
+  float currentOffset;  // Desplazamiento actual (dx)
+  int delayFrames;      // Frames de pausa inicial (30)
+  bool isFinished;      // true si la animación ha terminado
+} AnimationState;
+
+static AnimationState logoAnimState;
+static AnimationState discAnimState;
 // Path relative to storage device mountpoint.
 static const char artPath[] = "/ART";
 
@@ -300,6 +313,45 @@ void closeUI() {
   gsKit_deinit_global(gsGlobal);
 }
 
+// Función de Easing (Deceleración) - Quartic Ease Out
+// t: tiempo/progreso actual (de 0 a 1)
+float easeOutQuart(float t) {
+  // 1 - (1 - t)^4
+  t = 1.0f - t;
+  return 1.0f - (t * t * t * t);
+}
+
+// Lógica para avanzar la animación de un solo objeto.
+void animateSprite(AnimationState *state, int totalFrames) {
+  if (state->isFinished) {
+    return;
+  }
+
+  if (frameCounter < state->delayFrames) {
+    // Pausa inicial
+    return;
+  }
+
+  // Calcular el tiempo transcurrido desde el fin de la pausa
+  float elapsedFrames = (float)(frameCounter - state->delayFrames);
+
+  // Progreso (t) de 0.0 a 1.0
+  float progress = elapsedFrames / (float)totalFrames;
+
+  if (progress >= 1.0f) {
+    // Fin del movimiento
+    state->currentOffset = state->targetDistance;
+    state->isFinished = true;
+    return;
+  }
+
+  // Aplicar la curva de easing para frenar suavemente
+  float easedProgress = easeOutQuart(progress);
+
+  // Calcular el desplazamiento (Offset) actual
+  state->currentOffset = state->targetDistance * easedProgress;
+}
+
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
 
@@ -358,6 +410,24 @@ int uiLoop(TargetList *titles) {
     if (curTarget->idx != selectedTitleIdx) {
       curTarget = getTargetByIdx(titles, selectedTitleIdx);
       isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
+      // ************************************************
+      // LÓGICA DE ABORTO/REINICIO DE ANIMACIÓN
+      // ************************************************
+      frameCounter = 0;
+
+      // Logo Art (Mueve 40px a la izquierda)
+      logoAnimState.startPosition = (float)logoArtX1;
+      logoAnimState.targetDistance = -40.0f;
+      logoAnimState.currentOffset = 0.0f;
+      logoAnimState.delayFrames = 30;
+      logoAnimState.isFinished = false;
+
+      // Disc Art (Mueve 64px a la derecha)
+      discAnimState.startPosition = (float)discArtX1;
+      discAnimState.targetDistance = 64.0f;
+      discAnimState.currentOffset = 0.0f;
+      discAnimState.delayFrames = 30;
+      discAnimState.isFinished = false;
     }
 
     if (!isCoverUninitialized)
@@ -741,22 +811,40 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
                     coverArtY2 + 2, 1, currentTheme.coverFrame);
 
+  // Duración del movimiento después de la pausa (ajustable)
+  const int LOGO_MOVE_FRAMES = 35;
+
   // ************************************************
   // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
   // ************************************************
   if (logoTexture != NULL && logoTexture->Mem == NULL) {
-    gsKit_prim_sprite_texture(gsGlobal, logoTexture, (float)logoArtX1,
-                              (float)logoArtY1, 0.0f, 0.0f, (float)logoArtX2,
+
+    animateSprite(&logoAnimState, LOGO_MOVE_FRAMES);
+
+    float finalLogoArtX1 = (float)logoArtX1 + logoAnimState.currentOffset;
+    float finalLogoArtX2 = (float)logoArtX2 + logoAnimState.currentOffset;
+
+    gsKit_prim_sprite_texture(gsGlobal, logoTexture, finalLogoArtX1,
+                              (float)logoArtY1, 0.0f, 0.0f, finalLogoArtX2,
                               (float)logoArtY2, (float)logoTexture->Width,
                               (float)logoTexture->Height, 3, FontMainColor);
   }
+
+  // Duración del movimiento después de la pausa (ajustable)
+  const int DISC_MOVE_FRAMES = 45;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
   // ************************************************
   if (discTexture != NULL && discTexture->Mem == NULL) {
-    gsKit_prim_sprite_texture(gsGlobal, discTexture, (float)discArtX1,
-                              (float)discArtY1, 0.0f, 0.0f, (float)discArtX2,
+
+    animateSprite(&discAnimState, DISC_MOVE_FRAMES);
+
+    float finalDiscArtX1 = (float)discArtX1 + discAnimState.currentOffset;
+    float finalDiscArtX2 = (float)discArtX2 + discAnimState.currentOffset;
+
+    gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
+                              (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
                               (float)discArtY2, (float)discTexture->Width,
                               (float)discTexture->Height, 3, FontMainColor);
   }
@@ -775,6 +863,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
                    currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
+  // Incrementar el contador de frames para la animación
+  frameCounter++;
 }
 
 void drawTitleOptionsFooter(int baseX) {
