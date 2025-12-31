@@ -18,42 +18,13 @@
 #include <ps2sdkapi.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h> // Necesario para strcmp
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
 // Assuming 140x200 cover art
 #define COVER_ART_RES_W 140
 #define COVER_ART_RES_H 200
-
-// ************************************************
-// 1. FUNCIÓN DE CORRECCIÓN DE ALPHA AÑADIDA
-// ************************************************
-
-// Corrige la inversión del canal Alpha en la memoria RAM de la textura (PSMCT32).
-// Asume el formato AARRGGBB, donde el Alpha es el byte más alto.
-void correctAlpha(GSTEXTURE *tex) {
-    // La corrección solo es necesaria si la textura es de 32 bits y tiene datos.
-    if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
-        return;
-    }
-
-    u32 num_pixels = tex->Width * tex->Height;
-    u32 *pixels = (u32 *)tex->Mem;
-
-    for (u32 i = 0; i < num_pixels; i++) {
-        u32 pixel_value = pixels[i];
-        
-        // Extraer el Alpha (bits 24-31, asumiendo AARRGGBB o similar)
-        u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
-        
-        // Invertir el canal Alpha: Alpha_Nuevo = 255 - Alpha_Original
-        u8 new_alpha = 0xFF - alpha;
-
-        // Recomponer el píxel: Alpha Nuevo << 24 | (RGB original)
-        pixels[i] = (pixel_value & 0x00FFFFFF) | (new_alpha << 24);
-    }
-}
-
 
 void closeUI();
 int uiLoop(TargetList *titles);
@@ -71,6 +42,12 @@ GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
 static char lineBuffer[255];
 
+// *************************************************************
+// NUEVO FLAG ESTÁTICO PARA EL HACK CONDICIONAL DE ALPHA
+// 1 si la carátula cargada requiere desactivar el Alpha Blending.
+static int coverNeedsAlphaHack = 0;
+// *************************************************************
+
 // Path relative to storage device mountpoint.
 // Used to load cover art
 static const char artPath[] = "/ART";
@@ -87,7 +64,6 @@ const int headerHeight = 20 + keepoutArea;
 const int footerHeight = 40 + keepoutArea;
 
 void initVMode(GSGLOBAL *gsGlobal) {
-// ... (sin cambios)
    switch (LAUNCHER_OPTIONS.vmode) {
    case GS_MODE_NTSC:
       printf("Forcing NTSC mode\n");
@@ -174,13 +150,10 @@ int uiInit() {
    coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
-   
-   // ************************************************
-   // CORRECCIÓN DEL ERROR ORIGINAL Y PSM
-   // Debe ser CT32 para que el canal Alpha del PNG funcione.
-   // ************************************************
-   coverTexture->PSM = GS_PSM_CT32; 
    coverTexture->Delayed = 1;
+    
+    // Inicializar el flag de hack
+    coverNeedsAlphaHack = 0;
 
    return 0;
 }
@@ -197,18 +170,28 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
    // Upload new texture
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
    
-   // gsKit_texture_png ahora intentará cargar en coverTexture->PSM, que es GS_PSM_CT32
+  // *************************************************************
+  // Lógica de Marcado: Asume que las que no se dibujaban tienen Alpha invertido.
+  // Esas son las que deben usar el Hack (Alpha Blending OFF).
+  // **REEMPLAZA ESTOS IDs CON LOS REALES QUE TE ESTÁN DANDO PROBLEMAS DE COLOR**
+  coverNeedsAlphaHack = 0; // Reset por defecto
+  
+  // Ejemplos de IDs problemáticos (¡Ajusta estos!)
+  if (strcmp(titleID, "SLUS-20000") == 0 || 
+      strcmp(titleID, "SCES-50000") == 0 ||
+      strcmp(titleID, "SLES-51234") == 0 ||
+      strcmp(titleID, "PBPX-95000") == 0) {
+      // Las 3 o 4 carátulas problemáticas que antes no se dibujaban
+      // y ahora se dibujan brillantes/azules, deben tener este flag en 1.
+      coverNeedsAlphaHack = 1; 
+  }
+  // *************************************************************
+  
    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
+      // Si la carga falló, no hay carátula, no hay hack.
+    coverNeedsAlphaHack = 0; 
       return -1;
    }
-   
-   // ************************************************
-   // 2. APLICACIÓN DE LA CORRECCIÓN DE ALPHA EN RAM
-   // ************************************************
-   if (coverTexture->Mem != NULL) {
-      correctAlpha(coverTexture);
-   }
-
    gsKit_TexManager_bind(gsGlobal, coverTexture);
    // Free memory after the texture has been uploaded
    free(coverTexture->Mem);
@@ -226,7 +209,6 @@ void closeUI() {
 
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
-   // ... (sin cambios)
    // Reinitialize UI if video mode doesn't match
    if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
          (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
@@ -297,7 +279,7 @@ int uiLoop(TargetList *titles) {
          drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
       else
          drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL);
-   // ... (sin cambios)
+
       gsKit_queue_exec(gsGlobal);
       gsKit_finish();
       gsKit_sync_flip(gsGlobal);
@@ -411,7 +393,6 @@ exit:
 }
 
 void drawTitleListFooter(int baseX) {
-// ... (sin cambios)
    int baseY = gsGlobal->Height - footerHeight;
    int curX = baseX;
 
@@ -468,7 +449,6 @@ void drawTitleListFooter(int baseX) {
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
                              int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
-// ... (sin cambios en la lógica de lista y scroll)
    int curPage = selectedTitleIdx / maxTitlesPerPage;
 
    // Draw header and footer
@@ -720,15 +700,27 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
    // Draw cover art if it exists
    if (selectedTitleCover != NULL) {
-      // ************************************************
-      // 3. ELIMINACIÓN DEL HACK DE BLENDING
-      // La corrección de Alpha en la carga estandariza la textura.
-      // El Alpha Blending debe estar ON para dibujar correctamente la transparencia.
-      // ************************************************
+    
+    // *************************************************************
+    // CORRECCIÓN CLAVE: Aplicación Condicional del Hack de Alpha
+    // *************************************************************
+    if (coverNeedsAlphaHack) {
+        // Desactivar Alpha Blending para arreglar el problema de color/brillo
+        // en las carátulas que tenían Alpha invertido/problemas de color.
+        gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    }
+    
       gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                                              coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                                              selectedTitleCover->Width,
                                              selectedTitleCover->Height, 2, FontMainColor);
+    
+    if (coverNeedsAlphaHack) {
+        // Reactivar Alpha Blending para el resto de la interfaz de usuario.
+        gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+    }
+    // *************************************************************
+    
    } else {
       gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                                  1, currentTheme.background);
