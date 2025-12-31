@@ -45,6 +45,7 @@ void applyAlphaCorrection(GSTEXTURE *tex) {
         u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
         
         // Aplicar la inversión: Alpha_Nuevo = 0x80 - Alpha_Original
+        // Esto corrige el Alpha Invertido (0xFF -> 0x80-0xFF ~= 0x00)
         u8 new_alpha = 0x80 - alpha;
 
         // Recomponer el píxel: Alpha Nuevo << 24 | (RGB original)
@@ -53,8 +54,9 @@ void applyAlphaCorrection(GSTEXTURE *tex) {
 }
 
 // ************************************************
-// 2. FUNCIÓN DE DETECCIÓN MEJORADA (EXCLUYE CASO 3)
+// 2. FUNCIÓN DE DETECCIÓN MEJORADA (EXCLUYE CASO 3: PNG-24)
 // ************************************************
+// Retorna 1 si necesita corrección (Casos 1 y 2), 0 si es PNG-24 (Caso 3) o Alpha Normal.
 static int needsAlphaCorrection(GSTEXTURE *tex) {
     if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
         return 0;
@@ -65,8 +67,8 @@ static int needsAlphaCorrection(GSTEXTURE *tex) {
     int count_high_alpha = 0;
     
     // Umbral estricto: 99.9% para asumir que es un PNG-24 (Caso 3).
-    // Usamos el 99.9% para que los Casos 1/2 con Alpha invertido, que pueden tener 
-    // algunos píxeles 0x00, pasen a la corrección.
+    // Esto asegura que imágenes con un borde ligeramente transparente (Alpha Invertido)
+    // pasen a la corrección.
     const u32 opaco_umbral = (u32)(num_pixels * 0.999); 
     
     for (u32 i = 0; i < num_pixels; i++) {
@@ -90,7 +92,7 @@ static int needsAlphaCorrection(GSTEXTURE *tex) {
         return 1;
     }
 
-    // Alpha Normal (Straight) - No hay píxeles 0xFF en el área transparente.
+    // Alpha Normal (Straight) - No hay píxeles 0xFF en el área transparente (o muy pocos).
     return 0;
 }
 
@@ -246,7 +248,6 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
     // ************************************************
     if (coverTexture->Mem != NULL) {
         // Solo aplicar la corrección si detectamos que tiene Alpha invertido (Casos 1/2)
-        // Esto EXCLUYE los PNG-24 (Caso 3) que se dibujarán opacos (Alpha 0xFF)
         if (needsAlphaCorrection(coverTexture)) {
             applyAlphaCorrection(coverTexture);
         }
@@ -269,10 +270,52 @@ void closeUI() {
 
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
-// ... (el resto del código de uiLoop, drawTitleListFooter y drawTitleList permanece sin cambios)
-// ...
-// ... (tu código original de aquí en adelante es el mismo)
-// ...
+    // Reinitialize UI if video mode doesn't match
+    if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
+        (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
+        uiInit();
+    }
+
+    int res = 0;
+    if ((gsGlobal == NULL) && (res = uiInit())) {
+        printf("ERROR: Failed to init UI: %d\n", res);
+        goto exit;
+    }
+    // Init gamepad inputs
+    initPad();
+
+    int isCoverUninitialized = 1;
+    int selectedTitleIdx = 0;
+    int maxTitlesPerPage =
+        (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight() -
+        1;
+    Target *curTarget = titles->first;
+
+    // Get last launched title and find it in the target list
+    char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
+    if (!getLastLaunchedTitle(lastTitle)) {
+        int mountpointLen;
+        while (curTarget != NULL) {
+            // Compare paths without the mountpoint
+            mountpointLen = getRelativePathIdx(curTarget->fullPath);
+            if (mountpointLen == -1)
+                mountpointLen = 0;
+
+            if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
+                selectedTitleIdx = curTarget->idx;
+                break;
+            }
+            curTarget = curTarget->next;
+        }
+        // Reinitialize target if last launched title couldn't be loaded
+        if (curTarget == NULL) {
+            curTarget = titles->first;
+        }
+    }
+    free(lastTitle);
+
+    // Load cover art
+    isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
 
     // Main UI loop
     int frameCount = 0;
@@ -297,7 +340,7 @@ int uiLoop(TargetList *titles) {
             drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
         else
             drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL);
-    // ... (sin cambios)
+        
         gsKit_queue_exec(gsGlobal);
         gsKit_finish();
         gsKit_sync_flip(gsGlobal);
@@ -411,7 +454,6 @@ exit:
 }
 
 void drawTitleListFooter(int baseX) {
-// ... (sin cambios)
     int baseY = gsGlobal->Height - footerHeight;
     int curX = baseX;
 
@@ -468,7 +510,6 @@ void drawTitleListFooter(int baseX) {
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
                            int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
-// ... (sin cambios en la lógica de lista y scroll)
     int curPage = selectedTitleIdx / maxTitlesPerPage;
 
     // Draw header and footer
@@ -720,11 +761,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // Draw cover art if it exists
     if (selectedTitleCover != NULL) {
-        // ************************************************
-        // 4. DIBUJO ESTANDARIZADO
         // La corrección de Alpha en la carga (loadCoverArt) maneja la transparencia.
         // El Alpha Blending debe estar ON para dibujar correctamente la transparencia.
-        // ************************************************
         gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                                          coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                                          selectedTitleCover->Width,
