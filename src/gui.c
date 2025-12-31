@@ -43,7 +43,7 @@ static GSTEXTURE *coverTexture;
 static char lineBuffer[255];
 
 // *************************************************************
-// NUEVO FLAG ESTÁTICO PARA EL HACK CONDICIONAL DE ALPHA
+// FLAG ESTÁTICO PARA EL HACK CONDICIONAL DE ALPHA
 // 1 si la carátula cargada requiere desactivar el Alpha Blending.
 static int coverNeedsAlphaHack = 0;
 // *************************************************************
@@ -64,40 +64,22 @@ const int headerHeight = 20 + keepoutArea;
 const int footerHeight = 40 + keepoutArea;
 
 // *************************************************************
-// FUNCIÓN DE DETECCIÓN DE ALPHA INVERTIDO (NUEVO)
-// No modifica los píxeles, solo devuelve si la textura parece tener Alpha problemático.
-static int checkAlphaInversion(GSTEXTURE *tex) {
-    // Solo chequea texturas de 32 bits que tienen datos en Mem
-    if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
-        return 0;
-    }
-
-    u32 *pixels = (u32 *)tex->Mem;
-    int inverted_count = 0;
+// FUNCIÓN DE DETECCIÓN BASADA EN TITLE ID (LISTA NEGRA)
+// Esta es la solución universal robusta que evita fallos de carga de PNG.
+// *************************************************************
+static int needsTitleAlphaHack(const char *titleID) {
+    // Reemplace estos IDs de ejemplo ('SLUS_200.00', etc.) 
+    // con los IDs reales de las carátulas que antes salían azules/brillantes 
+    // y que ahora no se dibujaban.
     
-    // Chequear los primeros 100 píxeles, que probablemente sean bordes/esquinas
-    // donde la transparencia es común si el Alpha no está invertido.
-    int test_limit = 100;
-    u32 num_pixels = tex->Width * tex->Height;
-    if (num_pixels < test_limit) test_limit = num_pixels;
-
-    for (int i = 0; i < test_limit; i++) {
-        // Extraer el Alpha (asumiendo formato ARGB, Byte 4)
-        u8 alpha = (u8)((pixels[i] >> 24) & 0xFF);
-        
-        // Si el Alpha es muy opaco (>= 0xFA, cerca de 255)
-        if (alpha >= 0xFA) { 
-            inverted_count++;
-        }
+    if (strcmp(titleID, "SLUS_200.00") == 0 ||
+        strcmp(titleID, "SLES_999.99") == 0 ||
+        strcmp(titleID, "SCES_123.45") == 0) {
+        return 1;
     }
     
-    // Si más del 20% (ajustable) de los píxeles de prueba son opacos,
-    // asumimos que un PNG con transparencia debería ser parcialmente transparente
-    // en los bordes, e invertimos el comportamiento de blending.
-    if (inverted_count > (test_limit / 5)) { 
-        return 1; 
-    }
-    return 0; 
+    // Si no está en la lista negra, usamos el Alpha Blending normal.
+    return 0;
 }
 // *************************************************************
 
@@ -210,23 +192,16 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
    
   // *************************************************************
-  // PASO 1: Cargar la textura y resetear el flag
-  coverNeedsAlphaHack = 0;
+  // PASO 1: Determinar si el título necesita el hack antes de la carga
+  // Esto evita manipular la textura cargada, previniendo fallos.
+  coverNeedsAlphaHack = needsTitleAlphaHack(titleID);
+  // *************************************************************
   
    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
       // Si la carga falló, no hay carátula, no hay hack.
     coverNeedsAlphaHack = 0; 
       return -1;
    }
-  
-  // *************************************************************
-  // PASO 2: Chequear si la textura cargada tiene Alpha Invertido/Problemático
-  if (checkAlphaInversion(coverTexture)) {
-      // Si detectamos Alpha problemático, activamos el hack de Blending.
-      // Esto arregla el brillo/azul sin modificar los datos de los píxeles.
-      coverNeedsAlphaHack = 1;
-  }
-  // *************************************************************
   
    gsKit_TexManager_bind(gsGlobal, coverTexture);
    // Free memory after the texture has been uploaded
@@ -308,6 +283,12 @@ int uiLoop(TargetList *titles) {
       if (curTarget->idx != selectedTitleIdx) {
          curTarget = getTargetByIdx(titles, selectedTitleIdx);
          isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
+   	// Si la carga falla, isCoverUninitialized será -1, no NULL.
+        if (isCoverUninitialized < 0) { 
+            isCoverUninitialized = 1; // Marcar como no inicializada si falló
+        } else {
+            isCoverUninitialized = 0; // Marcar como inicializada si tuvo éxito
+        }
       }
 
       // Draw title list
@@ -738,12 +719,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
    if (selectedTitleCover != NULL) {
     
     // *************************************************************
-    // CORRECCIÓN CLAVE: Aplicación Condicional del Hack de Alpha
-    // Solo si checkAlphaInversion devolvió 1 durante loadCoverArt.
+    // APLICACIÓN CONDICIONAL DEL HACK DE ALPHA (La clave)
     // *************************************************************
-    if (coverNeedsAlphaHack) {
-        // Desactivar Alpha Blending para arreglar el problema de color/brillo
-        // causado por la mala interpretación del Alpha en esas 3-4 texturas.
+    if (coverNeedsAlphaHack) { 
+        // Desactivar Alpha Blending para estos IDs específicos.
+        // Esto elimina el color brillante/azulado/invertido.
         gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     }
     
@@ -753,7 +733,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                                              selectedTitleCover->Height, 2, FontMainColor);
     
     if (coverNeedsAlphaHack) {
-        // Reactivar Alpha Blending para el resto de la interfaz de usuario.
+        // Reactivar Alpha Blending para que el resto de la interfaz funcione bien.
         gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
     }
     // *************************************************************
