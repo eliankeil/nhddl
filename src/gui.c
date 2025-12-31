@@ -192,7 +192,7 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
    }
    // Reuse line buffer for building texture path
    // Append cover art path to the mountpoint
-   snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
+   snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
                  titleID);
    // Upload new texture
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
