@@ -62,7 +62,7 @@ static int icoArtY2;
 static int icoArtX1;
 static int icoArtY1;
 
-// NUEVO: Contador para el retraso después de cargar el cover art
+// Contador para el retraso después de cargar el cover art
 static int coverArtLoadFrames = 0; 
 #define COVER_ART_DELAY_FRAMES 30 // El retraso solicitado (30 frames)
 
@@ -184,9 +184,8 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
         titleID);
   
   // Invalida la textura anterior para que el TexManager pueda liberar o reutilizar el espacio.
-  // Mantenemos VifPtr a NULL para que el TexManager elija la mejor ubicación.
   gsKit_TexManager_invalidate(gsGlobal, coverTexture); 
-  coverTexture->VifPtr = NULL;
+// coverTexture->VifPtr = NULL; // ELIMINADO por error de compilación
 
   if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
    coverTexture->Mem = NULL;
@@ -208,10 +207,7 @@ load_ico:
   // Upload new texture (ICO)
   gsKit_TexManager_invalidate(gsGlobal, icoTexture);
   
-  // *** CLAVE: Forzar una reasignación de VRAM específica para icoArt ***
-  // Al invalidar y establecer VifPtr a NULL, obligamos al TexManager a 
-  // reasignar la textura, aislándola de posibles corrupciones de la carga anterior.
-  icoTexture->VifPtr = NULL; 
+// icoTexture->VifPtr = NULL; // ELIMINADO por error de compilación
   
   if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
    // Si falla, establecemos el puntero a NULL
@@ -310,7 +306,7 @@ int uiLoop(TargetList *titles) {
    else
      drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL, NULL); 
 
-      // NUEVO: Incrementar el contador de delay
+      // Incrementar el contador de delay
       if (coverArtLoadFrames > 0 && coverArtLoadFrames <= COVER_ART_DELAY_FRAMES) {
             coverArtLoadFrames++;
       }
@@ -750,18 +746,16 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // --- DIBUJAR ICON ART ---
   if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
    
-   // *** CLAVE: Restaurar explícitamente el estado de transparencia ANTES de dibujar el icono ***
-   // El uso de drawText o drawIcon previo pudo haber modificado la configuración de PrimAlphaEnable o el Alpha Test.
+   // CLAVE: Restaurar explícitamente el estado de transparencia ANTES de dibujar el icono
    
    // 1. Alpha Blending: Activo para permitir transparencia
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
    
-   // 2. Alpha Blending Mode: Configuración estándar de gsKit para mezcla de texturas
-   // (Fuente = Textura; Destino = Marco)
+   // 2. Alpha Blending Mode: Configuración estándar para mezcla
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
    
-   // 3. Alpha Test: Activo para descartar píxeles completamente transparentes (los que se veían sólidos)
-   // La configuración global (ATST=7, AREF=0x00) debe estar vigente desde uiInit.
+   // 3. Alpha Test: Activo para descartar píxeles completamente transparentes (Alpha=0)
+   // La configuración (ATST=7, AREF=0x00) está en uiInit y debe ser reafirmada.
    gsKit_set_test(gsGlobal, GS_ATEST_ON); 
    
 
@@ -773,10 +767,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                        (float)selectedTitleIcon->Width,
                        (float)selectedTitleIcon->Height, 
                        2, currentTheme.iconEnabled); 
-   
-   // Desactivar el test o el blending si el próximo elemento (drawText, drawIcon, etc.) 
-   // espera el estado por defecto. En este caso, lo mantenemos activo ya que la UI restante lo usa.
-   // (Si se rompe la próxima línea de texto, aquí es donde debemos restaurar el estado inicial).
    
   } else if (selectedTitleCover != NULL) {
       // Dibuja placeholder, asegurando que el blending esté activado
