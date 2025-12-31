@@ -30,8 +30,8 @@ int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments);
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover,
-                   GSTEXTURE *selectedTitleIcon); // <-- Agregado el argumento icoArt
+         int maxTitlesPerPage, GSTEXTURE *selectedTitleCover,
+         GSTEXTURE *selectedTitleIcon); // <-- Agregado el argumento icoArt
 void uiLaunchTitle(Target *target, ArgumentList *arguments);
 void drawGameID(const char *game_id);
 int createSplashThread();
