@@ -811,6 +811,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
             drawTextWindow(icoArtDrawX1, icoArtDrawY1, icoArtDrawX2, icoArtDrawY2, 1,
                            currentTheme.coverFrame, ALIGN_CENTER, "No ico art");
      }
+  }
 }
 
 void drawTitleOptionsFooter(int baseX) {
