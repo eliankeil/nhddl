@@ -21,20 +21,19 @@
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
-// Assuming 140x200 cover art
+// Dimensiones de las Artes
 #define COVER_ART_RES_W 140
 #define COVER_ART_RES_H 200
-
-// Logo art size definition (300x125px)
 #define LOGO_ART_RES_W 300
 #define LOGO_ART_RES_H 125
+#define DISC_ART_RES_W 128
+#define DISC_ART_RES_H 128
 
 // ************************************************
-// 1. FUNCIÓN DE CORRECCIÓN DE ALPHA AÑADIDA
+// FUNCIÓN DE CORRECCIÓN DE ALPHA
 // ************************************************
 
 // Corrige la inversión del canal Alpha en la memoria RAM de la textura (PSMCT32).
-// Asume el formato AARRGGBB.
 void correctAlpha(GSTEXTURE *tex) {
     if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
         return;
@@ -45,13 +44,8 @@ void correctAlpha(GSTEXTURE *tex) {
 
     for (u32 i = 0; i < num_pixels; i++) {
         u32 pixel_value = pixels[i];
-        
         u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
-        
-        // Invertir el canal Alpha
         u8 new_alpha = 0x80 - alpha;
-
-        // Recomponer el píxel
         pixels[i] = (pixel_value & 0x00FFFFFF) | (new_alpha << 24);
     }
 }
@@ -71,23 +65,30 @@ void closeUISplashThread();
 
 GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
-static GSTEXTURE *logoTexture; // Nuevo: Logo Texture
+static GSTEXTURE *logoTexture;
+static GSTEXTURE *discTexture; // Nuevo: Disc Texture
 static char lineBuffer[255];
 
 // Path relative to storage device mountpoint.
 static const char artPath[] = "/ART";
 
-// Cover art sprite coordinates
+// Coordenadas de Cover Art
 static int coverArtX2;
 static int coverArtY2;
 static int coverArtX1;
 static int coverArtY1;
 
-// Nuevo: Coordenadas de Logo art
+// Coordenadas de Logo Art
 static int logoArtX1;
 static int logoArtY1;
 static int logoArtX2;
 static int logoArtY2;
+
+// Nuevo: Coordenadas de Disc Art
+static int discArtX1;
+static int discArtY1;
+static int discArtX2;
+static int discArtY2;
 
 const int keepoutArea = 20;
 const int headerHeight = 20 + keepoutArea;
@@ -178,31 +179,37 @@ int uiInit() {
     coverArtX1 = coverArtX2 - COVER_ART_RES_W;
     coverArtY1 = coverArtY2 - COVER_ART_RES_H;
     
-    // LOGO ART: Inicialización y Coordenadas (CENTRADAS)
+    // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
     logoTexture = calloc(sizeof(GSTEXTURE), 1);
     logoTexture->PSM = GS_PSM_CT32;
     logoTexture->Delayed = 1;
     
-    // Centrar el logo horizontalmente en el espacio de la carátula
     logoArtX1 = coverArtX1 + (COVER_ART_RES_W / 2) - (LOGO_ART_RES_W / 2);
     logoArtX2 = logoArtX1 + LOGO_ART_RES_W;
-    
-    // Centrar el logo verticalmente en el espacio de la carátula
     logoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (LOGO_ART_RES_H / 2);
     logoArtY2 = logoArtY1 + LOGO_ART_RES_H;
+
+    // DISC ART: Inicialización y Coordenadas (Centrado en Cover Area)
+    discTexture = calloc(sizeof(GSTEXTURE), 1);
+    discTexture->PSM = GS_PSM_CT32;
+    discTexture->Delayed = 1;
+
+    discArtX1 = coverArtX1 + (COVER_ART_RES_W / 2) - (DISC_ART_RES_W / 2);
+    discArtX2 = discArtX1 + DISC_ART_RES_W;
+    discArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (DISC_ART_RES_H / 2);
+    discArtY2 = discArtY1 + DISC_ART_RES_H;
+
 
     return 0;
 }
 
-// Invalidates currently loaded textures and loads new ones (LOGO and COVER)
+// loadArt: Unificada para LOGO, DISC y COVER
 int loadArt(struct DeviceMapEntry *device, char *titleID) {
     if (device->metadev) {
         device = device->metadev;
     }
 
     // --- 1. LÓGICA DE CARGA DE LOGO ART (*_LGO.png) ---
-    
-    // Invalidar y limpiar punteros de VRAM/RAM de LOGO anterior
     gsKit_TexManager_invalidate(gsGlobal, logoTexture);
     if (logoTexture->Mem != NULL) { free(logoTexture->Mem); logoTexture->Mem = NULL; }
     logoTexture->Vram = 0; logoTexture->VramClut = 0;
@@ -219,9 +226,24 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
         }
     }
 
-    // --- 2. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
+    // --- 2. LÓGICA DE CARGA DE DISC ART (*_ICO.png) ---
+    gsKit_TexManager_invalidate(gsGlobal, discTexture);
+    if (discTexture->Mem != NULL) { free(discTexture->Mem); discTexture->Mem = NULL; }
+    discTexture->Vram = 0; discTexture->VramClut = 0;
     
-    // Invalidar y limpiar punteros de VRAM/RAM de COVER anterior
+    snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
+             titleID);
+    
+    int discLoaded = 0;
+    if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
+        if (discTexture->Mem != NULL) {
+            correctAlpha(discTexture);
+            gsKit_TexManager_bind(gsGlobal, discTexture);
+            discLoaded = 1;
+        }
+    }
+
+    // --- 3. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
     gsKit_TexManager_invalidate(gsGlobal, coverTexture);
     if (coverTexture->Mem != NULL) { free(coverTexture->Mem); coverTexture->Mem = NULL; }
     coverTexture->Vram = 0; coverTexture->VramClut = 0;
@@ -239,21 +261,12 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     }
     
     // ************************************************
-    // LIBERACIÓN DE MEMORIA RAM PENDIENTE (AL FINAL DE LA CARGA)
-    // CoverArt limpia la memoria de ambos.
+    // LIBERACIÓN DE MEMORIA RAM (CLEANUP FINAL)
     // ************************************************
     
-    // Liberar RAM de LOGO
-    if (logoLoaded) {
-        free(logoTexture->Mem);
-        logoTexture->Mem = NULL;
-    }
-    
-    // Liberar RAM de COVER
-    if (coverLoaded) {
-        free(coverTexture->Mem);
-        coverTexture->Mem = NULL;
-    }
+    if (logoLoaded) { free(logoTexture->Mem); logoTexture->Mem = NULL; }
+    if (discLoaded) { free(discTexture->Mem); discTexture->Mem = NULL; }
+    if (coverLoaded) { free(coverTexture->Mem); coverTexture->Mem = NULL; }
     
     return coverLoaded ? 0 : -1;
 }
@@ -263,7 +276,8 @@ void closeUI() {
     gsKit_vram_clear(gsGlobal);
     closeFont();
     free(coverTexture);
-    free(logoTexture); // Liberar LogoTexture
+    free(logoTexture);
+    free(discTexture); // Liberar DiscTexture
     gsKit_deinit_global(gsGlobal);
 }
 
@@ -280,7 +294,6 @@ int uiLoop(TargetList *titles) {
         printf("ERROR: Failed to init UI: %d\n", res);
         goto exit;
     }
-    // Init gamepad inputs
     initPad();
 
     int isCoverUninitialized = 1;
@@ -290,12 +303,10 @@ int uiLoop(TargetList *titles) {
             1;
     Target *curTarget = titles->first;
 
-    // Get last launched title and find it in the target list
     char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
     if (!getLastLaunchedTitle(lastTitle)) {
         int mountpointLen;
         while (curTarget != NULL) {
-            // Compare paths without the mountpoint
             mountpointLen = getRelativePathIdx(curTarget->fullPath);
             if (mountpointLen == -1)
                 mountpointLen = 0;
@@ -306,17 +317,14 @@ int uiLoop(TargetList *titles) {
             }
             curTarget = curTarget->next;
         }
-        // Reinitialize target if last launched title couldn't be loaded
         if (curTarget == NULL) {
             curTarget = titles->first;
         }
     }
     free(lastTitle);
 
-    // Load cover art (Usamos loadArt)
     isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
 
-    // Main UI loop
     int frameCount = 0;
     int prevInput = 0;
     int input = 0;
@@ -328,13 +336,11 @@ int uiLoop(TargetList *titles) {
         gsKit_clear(gsGlobal, currentTheme.background);
         gsKit_TexManager_nextFrame(gsGlobal);
 
-        // Reload target if index has changed
         if (curTarget->idx != selectedTitleIdx) {
             curTarget = getTargetByIdx(titles, selectedTitleIdx);
-            isCoverUninitialized = loadArt(curTarget->device, curTarget->id); // Usamos loadArt
+            isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
         }
 
-        // Draw title list
         if (!isCoverUninitialized)
             drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
         else
@@ -344,7 +350,6 @@ int uiLoop(TargetList *titles) {
         gsKit_finish();
         gsKit_sync_flip(gsGlobal);
 
-        // Process user inputs:
         if (input == -1) 
             input = waitForInput(-1);
         else
@@ -366,7 +371,6 @@ int uiLoop(TargetList *titles) {
             uiLaunchTitle(target, NULL);
             return -1;
         } else if (input & (PAD_UP | PAD_DOWN)) {
-            // --- Navegación con aceleración ---
             int upEdge = (input & PAD_UP) && !(prevInput & PAD_UP);
             int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
 
@@ -400,7 +404,6 @@ int uiLoop(TargetList *titles) {
                 repeatCounter = 0;
             }
         } else if (pressed & PAD_R1) {
-            // Switch to the next page
             if (selectedTitleIdx == titles->total - 1) {
                 selectedTitleIdx = 0;
             } else {
@@ -410,7 +413,6 @@ int uiLoop(TargetList *titles) {
             }
             repeatCounter = 0;
         } else if (pressed & PAD_L1) {
-            // Switch to the previous page
             if (selectedTitleIdx == 0) {
                 selectedTitleIdx = titles->total - 1;
             } else {
@@ -439,7 +441,6 @@ int uiLoop(TargetList *titles) {
             repeatCounter = 0;
         }
 
-        // Actualizar estado anterior al final de la iteración
         frameCount = 0;
         prevInput = input;
     }
@@ -454,7 +455,6 @@ void drawTitleListFooter(int baseX) {
     int baseY = gsGlobal->Height - footerHeight;
     int curX = baseX;
 
-    // CIRCLE + CROSS → Launch title (izquierda)
     drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle,
                              ALIGN_CENTER, ICON_CIRCLE);
     curX += getIconWidth(ICON_CIRCLE);
@@ -464,13 +464,11 @@ void drawTitleListFooter(int baseX) {
     drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
                              currentTheme.headerText, ALIGN_VCENTER, "Launch title");
 
-    // Bloques centrados: SKIN + EXIT + NAVIGATE
     int centerTotal = getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40 +
                               getIconWidth(ICON_START) + getLineWidth("Exit") + 40 +
                               getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
     int centerX = (gsGlobal->Width - centerTotal) / 2;
 
-    // SELECT → Skin
     drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
                              ALIGN_CENTER, ICON_SELECT);
     drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY, 0,
@@ -478,7 +476,6 @@ void drawTitleListFooter(int baseX) {
                              ALIGN_VCENTER, "Skin");
     centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
 
-    // START → Exit
     drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
                              ALIGN_CENTER, ICON_START);
     drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
@@ -486,14 +483,12 @@ void drawTitleListFooter(int baseX) {
                              ALIGN_VCENTER, "Exit");
     centerX += getIconWidth(ICON_START) + getLineWidth("Exit") + 40;
 
-    // PAD → Navigate
     drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
                              ALIGN_CENTER, ICON_UPDOWN);
     drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
                              gsGlobal->Height - 1, 0, currentTheme.headerText,
                              ALIGN_VCENTER, "Navigate");
 
-    // TRIANGLE → Title options (derecha)
     int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) -
                          getLineWidth("Title options");
     drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
@@ -509,7 +504,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                              int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
     int curPage = selectedTitleIdx / maxTitlesPerPage;
 
-    // Draw header and footer
     int baseX = keepoutArea + 10;
     drawTextWindow(baseX, headerHeight - getFontLineHeight(),
                              gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
@@ -523,16 +517,13 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     drawTitleListFooter(baseX);
 
-    // --- Marco fijo alrededor de la lista ---
     int blockHeight = maxTitlesPerPage * getFontLineHeight();
 
-    // offsets manuales para cada lado (ajustables)
     int offsetLeft = -4;
     int offsetRight = -190;
     int offsetTop = +2;
     int offsetBottom = +14;
 
-    // coordenadas del marco (fijas + offsets)
     int listX1 = keepoutArea + offsetLeft;
     int listX2 = coverArtX1 + offsetRight;
     int listY1 = headerHeight + getFontLineHeight() / 2 + offsetTop;
@@ -540,19 +531,13 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
 
-    // Draw title list
     Target *curTitle = titles->first;
 
-    // márgenes internos respecto al frame
     int marginLeft = 0;
     int marginRight = 0;
-    int marginTop =
-            8;
-    int marginBottom =
-            8;
+    int marginTop = 8;
+    int marginBottom = 8;
 
-    // el primer título arranca dentro del frame, pegado al borde superior +
-    // margen
     int titleY = listY1 + marginTop;
 
     while (curTitle != NULL) {
@@ -576,7 +561,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         int textX2 = listX2 + marginRight;
         int textWidth = getLineWidth(curTitle->name);
 
-        // límites de corte reales
         int cutLeft = textX1 + 11;
         int cutRight = textX2 - 20;
 
@@ -606,7 +590,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
              !scrollFinished) {
 
             switch (scrollState) {
-            case 0: // START_DELAY
+            case 0:
                 holdCounter++;
                 drawStartX = cutLeft;
                 if (holdCounter >= HOLD_FRAMES) {
@@ -615,14 +599,13 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                 }
                 break;
 
-            case 1: // LEFT (ease-in)
+            case 1:
             {
                 float speed = SCROLL_SPEED + (scrollOffset * 0.01f);
                 scrollOffset += speed;
 
                 drawStartX = cutLeft - (int)scrollOffset;
 
-                // stop cuando el texto completo entró en la ventana
                 if (drawStartX + textWidth <= cutRight) {
                     drawStartX = cutRight - textWidth;
                     scrollState = 2;
@@ -630,7 +613,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                 }
             } break;
 
-            case 2: // PAUSE
+            case 2:
                 pauseCounter++;
                 if (pauseCounter >= PAUSE_FRAMES) {
                     scrollState = 3;
@@ -638,7 +621,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                 drawStartX = cutLeft - (int)scrollOffset;
                 break;
 
-            case 3: // RIGHT (ease-out)
+            case 3:
             {
                 float speed = SCROLL_SPEED + ((textWidth - scrollOffset) * 0.01f);
                 scrollOffset -= speed;
@@ -661,7 +644,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
             drawStartX = cutLeft;
         }
 
-        // clamp final
         int minStartX = cutRight - textWidth;
         int maxStartX = cutLeft;
         if (drawStartX < minStartX)
@@ -679,58 +661,48 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         curTitle = curTitle->next;
     }
 
-    // --- Dibujar íconos de scroll magnetizados al frame ---
+    // --- Dibujar íconos de scroll ---
     
     int scrollMargin = 1;
     int iconWidth = 16;
     int iconHeight = 16;
 
-    // offsets globales
     int offsetScrollX = +3;
     int offsetScrollY = 0;
 
-    // offsets específicos del scrollbar
     int offsetBarX = +2;
     int offsetBarY = -4;
 
-    // Posición del ícono de scroll UP
     int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
     int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
-    // Posición del ícono de scroll DOWN
     int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
     int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
-    // Rango vertical disponible para el scrollbar
     int scrollRangeTop = scrollUpY + iconHeight;
     int scrollRangeBottom = scrollDownY - iconHeight;
     int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
 
-    // Total de títulos
     int totalTitles = titles->total;
     int firstIdx = 0;
     int lastIdx = totalTitles - 1;
 
-    // Wrap-around explícito
     if (selectedTitleIdx > lastIdx) {
         selectedTitleIdx = firstIdx;
     } else if (selectedTitleIdx < firstIdx) {
         selectedTitleIdx = lastIdx;
     }
 
-    // ratio = posición relativa
     float ratio = 0.0f;
     if (lastIdx > firstIdx) {
         ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
     }
 
-    // Posición del scrollbar con offset independiente
     int scrollBarX =
             listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
     int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
                              offsetScrollY + offsetBarY;
 
-    // --- Lectura de botones con libpad ---
     struct padButtonStatus buttons;
     padRead(0, 0, &buttons);
     u32 btns = ~buttons.btns;
@@ -738,14 +710,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     bool padUpPressed = (btns & PAD_UP);
     bool padDownPressed = (btns & PAD_DOWN);
 
-    // Colores sólidos
     u64 colorUp =
             padUpPressed ? currentTheme.iconEnabled : currentTheme.listText;
     u64 colorDown =
             padDownPressed ? currentTheme.iconEnabled : currentTheme.listText;
     u64 colorBar = currentTheme.iconEnabled;
 
-    // Dibujar íconos
     drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
     drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
                  ICON_SCROLLDOWN);
@@ -756,7 +726,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                               coverArtY2 + 2, 1, currentTheme.coverFrame);
 
     // ************************************************
-    // DIBUJADO DE LOGO ART (PRIORIDAD 1)
+    // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
     // ************************************************
     if (logoTexture != NULL && logoTexture->Mem == NULL) {
         gsKit_prim_sprite_texture(gsGlobal, logoTexture, (float)logoArtX1,
@@ -765,8 +735,21 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                                   (float)logoTexture->Width,
                                   (float)logoTexture->Height, 3, FontMainColor);
     }
+    
+    // ************************************************
+    // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
+    // ************************************************
+    if (discTexture != NULL && discTexture->Mem == NULL) {
+        gsKit_prim_sprite_texture(gsGlobal, discTexture, (float)discArtX1,
+                                  (float)discArtY1, 0.0f, 0.0f,
+                                  (float)discArtX2, (float)discArtY2,
+                                  (float)discTexture->Width,
+                                  (float)discTexture->Height, 3, FontMainColor);
+    }
 
-    // Draw cover art if it exists (PRIORIDAD 2)
+    // ************************************************
+    // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+    // ************************************************
     if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
         gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                                   coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
