@@ -25,6 +25,36 @@
 #define COVER_ART_RES_W 140
 #define COVER_ART_RES_H 200
 
+// ************************************************
+// 1. FUNCIÓN DE CORRECCIÓN DE ALPHA AÑADIDA
+// ************************************************
+
+// Corrige la inversión del canal Alpha en la memoria RAM de la textura (PSMCT32).
+// Asume el formato AARRGGBB, donde el Alpha es el byte más alto.
+void correctAlpha(GSTEXTURE *tex) {
+    // La corrección solo es necesaria si la textura es de 32 bits y tiene datos.
+    if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
+        return;
+    }
+
+    u32 num_pixels = tex->Width * tex->Height;
+    u32 *pixels = (u32 *)tex->Mem;
+
+    for (u32 i = 0; i < num_pixels; i++) {
+        u32 pixel_value = pixels[i];
+        
+        // Extraer el Alpha (bits 24-31, asumiendo AARRGGBB o similar)
+        u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
+        
+        // Invertir el canal Alpha: Alpha_Nuevo = 255 - Alpha_Original
+        u8 new_alpha = 0xFF - alpha;
+
+        // Recomponer el píxel: Alpha Nuevo << 24 | (RGB original)
+        pixels[i] = (pixel_value & 0x00FFFFFF) | (new_alpha << 24);
+    }
+}
+
+
 void closeUI();
 int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
@@ -57,6 +87,7 @@ const int headerHeight = 20 + keepoutArea;
 const int footerHeight = 40 + keepoutArea;
 
 void initVMode(GSGLOBAL *gsGlobal) {
+// ... (sin cambios)
    switch (LAUNCHER_OPTIONS.vmode) {
    case GS_MODE_NTSC:
       printf("Forcing NTSC mode\n");
@@ -97,16 +128,15 @@ int uiInit() {
    }
    gsGlobal = gsKit_init_global();
    initVMode(gsGlobal);
-   // Manteniendo CT24 como estaba.
-   gsGlobal->PSM = GS_PSM_CT24; 
+   gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
    gsGlobal->PSMZ = GS_PSMZ_16S;
-   gsGlobal->PrimAlphaEnable = GS_SETTING_ON; // Mantener Alpha Blending activo
+   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
    gsGlobal->DoubleBuffering = GS_SETTING_ON;
-   
-   // Setup TEST register to ignore fully transparent pixels (Good practice)
-   gsGlobal->Test->ATST = 7;         // Set alpha test method to NOTEQUAL
-   gsGlobal->Test->AREF = 0x00;    // Set reference value to 0x00 (transparent)
-   gsGlobal->Test->AFAIL = 0;       // Don't update buffers when test fails
+   // Setup TEST register to ignore fully transparent pixels
+   gsGlobal->Test->ATST = 7; // Set alpha test method to NOTEQUAL (pixels with A
+                                          // not equal to AREF pass)
+   gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
+   gsGlobal->Test->AFAIL = 0;    // Don't update buffers when test fails
 
    dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
                      D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
@@ -126,11 +156,8 @@ int uiInit() {
    gsKit_display_buffer(
          gsGlobal); // Switch display buffer to avoid garbage appearing on screen
    gsKit_TexManager_init(gsGlobal);
-   
-   // Set standard alpha blend mode for drawing textures with transparency
-   // Alpha = (SourceAlpha * SourceColor) + ((1 - SourceAlpha) * DestinationColor)
+   // Set alpha and mode, clear active buffer
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
-   
    gsKit_set_test(gsGlobal, GS_ATEST_ON);
    gsKit_mode_switch(gsGlobal, GS_ONESHOT);
    gsKit_clear(gsGlobal, currentTheme.background);
@@ -148,9 +175,10 @@ int uiInit() {
    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
    
-   // --- CORRECCIÓN y OPTIMIZACIÓN ---
-   // Usar 'PSM' en lugar de 'VramPSM' (soluciona error de compilación)
-   // Forzar la carga de la carátula en 32-bit (GS_PSM_CT32) para gestionar la transparencia PNG correctamente.
+   // ************************************************
+   // CORRECCIÓN DEL ERROR ORIGINAL Y PSM
+   // Debe ser CT32 para que el canal Alpha del PNG funcione.
+   // ************************************************
    coverTexture->PSM = GS_PSM_CT32; 
    coverTexture->Delayed = 1;
 
@@ -168,10 +196,19 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
                  titleID);
    // Upload new texture
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-   // gsKit_texture_png usa coverTexture->PSM para saber el formato de carga.
+   
+   // gsKit_texture_png ahora intentará cargar en coverTexture->PSM, que es GS_PSM_CT32
    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
       return -1;
    }
+   
+   // ************************************************
+   // 2. APLICACIÓN DE LA CORRECCIÓN DE ALPHA EN RAM
+   // ************************************************
+   if (coverTexture->Mem != NULL) {
+      correctAlpha(coverTexture);
+   }
+
    gsKit_TexManager_bind(gsGlobal, coverTexture);
    // Free memory after the texture has been uploaded
    free(coverTexture->Mem);
@@ -189,6 +226,7 @@ void closeUI() {
 
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
+   // ... (sin cambios)
    // Reinitialize UI if video mode doesn't match
    if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
          (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
@@ -251,8 +289,6 @@ int uiLoop(TargetList *titles) {
       // Reload target if index has changed
       if (curTarget->idx != selectedTitleIdx) {
          curTarget = getTargetByIdx(titles, selectedTitleIdx);
-         // Se mantiene la llamada síncrona, pero se recomienda moverla a un hilo
-         // secundario para eliminar el bloqueo de la UI durante I/O (discutido previamente).
          isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
       }
 
@@ -261,7 +297,7 @@ int uiLoop(TargetList *titles) {
          drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
       else
          drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL);
-
+   // ... (sin cambios)
       gsKit_queue_exec(gsGlobal);
       gsKit_finish();
       gsKit_sync_flip(gsGlobal);
@@ -354,7 +390,7 @@ int uiLoop(TargetList *titles) {
          repeatCounter = 0;
          break;
       } else if (input & PAD_SELECT) {
-         uiSkinOptionsLoop(); // Se omite el uso de 'skinExit' para evitar la advertencia
+         ExitCode skinExit = uiSkinOptionsLoop();
          input = -1;
          prevInput = 0;
          repeatCounter = 0;
@@ -375,6 +411,7 @@ exit:
 }
 
 void drawTitleListFooter(int baseX) {
+// ... (sin cambios)
    int baseY = gsGlobal->Height - footerHeight;
    int curX = baseX;
 
@@ -431,6 +468,7 @@ void drawTitleListFooter(int baseX) {
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
                              int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
+// ... (sin cambios en la lógica de lista y scroll)
    int curPage = selectedTitleIdx / maxTitlesPerPage;
 
    // Draw header and footer
@@ -682,7 +720,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
    // Draw cover art if it exists
    if (selectedTitleCover != NULL) {
-      // MEJORA: El alpha blending se gestiona globalmente en uiInit() y por la carga PSMCT32.
+      // ************************************************
+      // 3. ELIMINACIÓN DEL HACK DE BLENDING
+      // La corrección de Alpha en la carga estandariza la textura.
+      // El Alpha Blending debe estar ON para dibujar correctamente la transparencia.
+      // ************************************************
       gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                                              coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                                              selectedTitleCover->Width,
