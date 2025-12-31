@@ -24,8 +24,8 @@
 // Dimensiones de las Artes
 #define COVER_ART_RES_W 140
 #define COVER_ART_RES_H 200
-#define LOGO_ART_RES_W 200
-#define LOGO_ART_RES_H 83
+#define LOGO_ART_RES_W 150
+#define LOGO_ART_RES_H 62
 #define DISC_ART_RES_W 128
 #define DISC_ART_RES_H 128
 
@@ -173,7 +173,7 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 10);
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 15);
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
@@ -183,8 +183,8 @@ int uiInit() {
   logoTexture->PSM = GS_PSM_CT32;
   logoTexture->Delayed = 1;
 
-  logoArtX2 = (gsGlobal->Width - 15);
-  logoArtY2 = coverArtY1 - 2;
+  logoArtX2 = (gsGlobal->Width - 10);
+  logoArtY2 = coverArtY1 + 10;
   logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
   logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
