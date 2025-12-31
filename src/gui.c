@@ -30,7 +30,8 @@ int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments);
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover);
+                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover,
+                   GSTEXTURE *selectedTitleIcon); // <-- Agregado el argumento icoArt
 void uiLaunchTitle(Target *target, ArgumentList *arguments);
 void drawGameID(const char *game_id);
 int createSplashThread();
@@ -272,7 +273,6 @@ int uiLoop(TargetList *titles) {
  coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // <--- Inicializar/resetear el contador
 
  // Main UI loop
- int frameCount = 0;
   int frameCount = 0;
   int prevInput = 0;
   int input = 0;
@@ -472,7 +472,7 @@ void drawTitleListFooter(int baseX) {
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
          int maxTitlesPerPage, GSTEXTURE *selectedTitleCover, 
          GSTEXTURE *selectedTitleIcon) { // <--- NUEVO: Recibe el icono
-
+  int curPage = selectedTitleIdx / maxTitlesPerPage;
   // Draw header and footer
   int baseX = keepoutArea + 10;
   drawTextWindow(baseX, headerHeight - getFontLineHeight(),
