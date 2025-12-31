@@ -874,7 +874,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         }
     }
     // ----------------------------------------------------
-}
+
 
 
 void drawTitleOptionsFooter(int baseX) {
