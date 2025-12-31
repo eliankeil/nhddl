@@ -215,71 +215,94 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
     // --- 1. LÓGICA DE CARGA DE COVER ART (COV.png) ---
     snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
              titleID);
-    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+    gsKit_TexManager_invalidate(gsGlobal, coverTexture); // Limpia referencia VRAM anterior
 
     int coverLoaded = 0;
+    // Carga a RAM
     if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
         if (coverTexture->Mem != NULL) {
-            correctAlpha(coverTexture);
+            // Aplicar la corrección (la doble inversión que el sistema necesita)
+            correctAlpha(coverTexture); 
+            
+            // Subir a VRAM y gestionar espacio
+            gsKit_TexManager_upload(gsGlobal, coverTexture);
+            
+            // Liberar RAM explícitamente si el upload no lo hizo
+            if (coverTexture->Mem != NULL) {
+                free(coverTexture->Mem);
+                coverTexture->Mem = NULL;
+            }
         }
-        gsKit_TexManager_bind(gsGlobal, coverTexture);
-        free(coverTexture->Mem);
-        coverTexture->Mem = NULL;
         coverLoaded = 1;
     }
 
 
     // --- 2. LÓGICA DE CARGA DE ICO ART (ICO.png) ---
-    // Invalidar la textura antigua de ICO
+    // Invalidar y preparar la textura para una nueva asignación en VRAM
     gsKit_TexManager_invalidate(gsGlobal, icoTexture);
-    icoTexture->Mem = (void *)1; // Temporalmente marcado como "no cargado/no disponible"
+    icoTexture->Mem = (void *)1; // Marcar como "no disponible" por defecto
 
     // Construir la ruta a ICO.png
     snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
              titleID);
 
-    // Cargar la nueva textura
+    // Cargar a RAM
     if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer) == 0) {
-        // Éxito en la carga
+        // Éxito en la carga.
         if (icoTexture->Mem != NULL) {
+            // Aplicar la corrección Alpha necesaria
             correctAlpha(icoTexture);
-            gsKit_TexManager_bind(gsGlobal, icoTexture);
-            free(icoTexture->Mem);
-            icoTexture->Mem = NULL; // Mem == NULL ahora significa que está en VRAM
+            
+            // Subir a VRAM y gestionar el espacio para evitar corrupción
+            gsKit_TexManager_upload(gsGlobal, icoTexture);
+
+            // Liberar RAM explícitamente
+            if (icoTexture->Mem != NULL) {
+                free(icoTexture->Mem);
+                icoTexture->Mem = NULL; // Mem == NULL -> Cargado en VRAM
+            }
         }
     
         // 3. Inicializar la posición de la animación de ICO ART
         icoArtY = coverArtY1 + (COVER_ART_RES_H / 2) - (ICO_ART_RES / 2);
 
-        // Posición X final: solapa 64px (la mitad del ícono) en la izquierda de coverArtX1
-        const int overlap = ICO_ART_RES / 2; // 64
+        const int overlap = ICO_ART_RES / 2;
         icoArtFinalX = coverArtX1 - overlap;
-
-        // Posición X inicial (fuera de pantalla, a la izquierda)
         icoArtScrollX = (float)(-ICO_ART_RES - 10);
         
-        // Resetear el estado de la animación
         icoArtAnimationState = 0;
         icoArtFrameCounter = 0;
     } else {
-        // Falló la carga de ICO.png. icoTexture->Mem ya está marcado como (void*)1 (no cargado).
-        // Se asegura que icoTexture->Mem no sea NULL para distinguirlo de "Cargado en VRAM".
+        // Falló la carga. icoTexture->Mem permanece como (void*)1.
     }
 
-    // Retornar 0 si al menos la carátula principal se cargó, -1 si falló todo.
     return coverLoaded ? 0 : -1;
 }
 
 // ************************************************
-// FUNCIÓN CLOSEUI CORREGIDA (AÑADE LIBERACIÓN DE ICOTEXTURE)
+// FUNCIÓN CLOSEUI CORREGIDA (AÑADE INVALIDACIÓN Y LIBERACIÓN SEGURA)
 // ************************************************
 // Frees textures and deinits gsKit
 void closeUI() {
     gsKit_vram_clear(gsGlobal);
     closeFont();
-    // Liberación de las dos texturas
+    
+    // 1. INVALIDAR VRAM: Notifica al TexManager que el espacio de VRAM 
+    //    de estas texturas ya no se usará. Esto evita corrupción.
+    if (coverTexture != NULL) {
+        gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+    }
+    if (icoTexture != NULL) {
+        gsKit_TexManager_invalidate(gsGlobal, icoTexture);
+    }
+    
+    // 2. LIBERAR RAM (Estructuras GSTEXTURE):
+    //    Esto libera la memoria asignada con calloc en uiInit().
+    //    Nota: La memoria RAM de la imagen (Mem) se liberó en loadCoverArt() 
+    //    o se liberó automáticamente en gsKit_TexManager_upload().
     free(coverTexture);
     free(icoTexture);
+    
     gsKit_deinit_global(gsGlobal);
 }
 
