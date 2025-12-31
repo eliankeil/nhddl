@@ -18,7 +18,7 @@
 #include <ps2sdkapi.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h> // Necesario para 'bool' si no está en otro encabezado
+#include <stdbool.h> 
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
@@ -31,7 +31,7 @@ int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments);
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-              int maxTitlesPerPage, GSTEXTURE *selectedTitleCover,
+              int maxTitlesPerPage, GSTEXTURE *selectedTitleCover, 
               GSTEXTURE *selectedTitleIcon);
 void uiLaunchTitle(Target *target, ArgumentList *arguments);
 void drawGameID(const char *game_id);
@@ -111,14 +111,13 @@ int uiInit() {
    }
    gsGlobal = gsKit_init_global();
    initVMode(gsGlobal);
-   gsGlobal->PSM = GS_PSM_CT24; // Set color depth to avoid PAL VRAM issues
+   gsGlobal->PSM = GS_PSM_CT24; 
    gsGlobal->PSMZ = GS_PSMZ_16S;
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
    gsGlobal->DoubleBuffering = GS_SETTING_ON;
-   // Setup TEST register to ignore fully transparent pixels
-   gsGlobal->Test->ATST = 7; // Set alpha test method to NOTEQUAL (pixels with A
-                                          // not equal to AREF pass)
-   gsGlobal->Test->AREF = 0x00; // Set reference value to 0x00 (transparent)
+   // Setup TEST register to ignore fully transparent pixels (ALPHA TEST)
+   gsGlobal->Test->ATST = 7; // NOTEQUAL
+   gsGlobal->Test->AREF = 0x00; // Reference 0x00 (transparent)
    gsGlobal->Test->AFAIL = 0;    // Don't update buffers when test fails
 
    dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
@@ -137,7 +136,7 @@ int uiInit() {
    gsKit_vram_clear(gsGlobal);
    gsKit_init_screen(gsGlobal);
    gsKit_display_buffer(
-         gsGlobal); // Switch display buffer to avoid garbage appearing on screen
+         gsGlobal); 
    gsKit_TexManager_init(gsGlobal);
    // Set alpha and mode, clear active buffer
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
@@ -158,20 +157,16 @@ int uiInit() {
    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
    coverTexture->Delayed = 1;
-   // El formato de PNG por defecto puede ser un problema si tiene transparencia
-   // Vamos a forzar un formato de color seguro para Cover Art (que no debería tener transparencia)
-   coverTexture->PSM = GS_PSM_CT24; 
+   coverTexture->PSM = GS_PSM_CT24; // Forzar para Cover Art
 
-   // NUEVO: Init icon texture (a la izquierda de cover art, centrado verticalmente)
+   // NUEVO: Init icon texture
   icoTexture = calloc(sizeof(GSTEXTURE), 1);
-  icoArtX2 = coverArtX1 - 20; // 20 pixeles de separación
+  icoArtX2 = coverArtX1 - 20; 
   icoArtX1 = icoArtX2 - ICON_ART_RES_W;
-  icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); // Centrado con coverArt
+  icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); 
   icoArtY2 = icoArtY1 + ICON_ART_RES_H;
   icoTexture->Delayed = 1;
-  // ICO Art necesita transparencia, usamos CT32 (si tu sistema lo soporta) o CT24.
-  // CT32 es mejor para transparencia si no usas paletas.
-  icoTexture->PSM = GS_PSM_CT32; 
+  icoTexture->PSM = GS_PSM_CT32; // Forzar para Icon Art con Alpha
 
    return 0;
 }
@@ -181,20 +176,28 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
   if (device->metadev) { // Fallback to metadata device
    device = device->metadev;
   }
+
+// --- CLAVE: Reiniciar el TexManager para prevenir fragmentación VRAM ---
+// Esto libera todas las texturas anteriores y fuerza una asignación contigua
+// (o al menos limpia) para las nuevas texturas.
+  gsKit_TexManager_init(gsGlobal); 
+
   // --- 1. Carga y subida de COVER ART ---
   // Reuse line buffer for building texture path
-  // Append cover art path to the mountpoint
   snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
         titleID);
+  
   // Upload new texture (COV)
-  gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-  // Usamos GS_PSM_CT24 para la carga de PNG (el PSM del GSTEXTURE se usa como hint)
+  // No es necesario invalidar si reiniciamos el TexManager, pero se mantiene la llamada por seguridad
+  gsKit_TexManager_invalidate(gsGlobal, coverTexture); 
+
+  // Intentamos cargar PNG. Si tiene canal alfa, gsKit lo cargará en CT32 aunque pidamos CT24.
   if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
-   // Si falla, establecemos el puntero a NULL para que drawTitleList sepa que no hay cover
    coverTexture->Mem = NULL;
-   coverArtLoadFrames = 0; // Si falla, no hay delay
-   goto load_ico; // Continuamos al ICO incluso si el COV falla
+   coverArtLoadFrames = 0; 
+   goto load_ico; 
   }
+
   gsKit_TexManager_bind(gsGlobal, coverTexture);
   // Free memory after the texture has been uploaded (COV)
   free(coverTexture->Mem);
@@ -206,15 +209,18 @@ load_ico:
   // Construimos la ruta para icoArt
   snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
         titleID);
+  
   // Upload new texture (ICO)
   gsKit_TexManager_invalidate(gsGlobal, icoTexture);
-  // Usamos GS_PSM_CT32 para ICO, que soporta mejor la transparencia nativa
+  
+  // Cargamos el ICO. Si el PNG es de 32 bits (RGB+Alpha), se cargará en CT32.
   if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
    // Si falla, establecemos el puntero a NULL
    icoTexture->Mem = NULL;
-   return -1; // Retornar error si ambos fallaron o solo el ICO
+   return -1; 
   }
   gsKit_TexManager_bind(gsGlobal, icoTexture);
+  
   // Free memory after the texture has been uploaded (ICO)
   free(icoTexture->Mem);
   icoTexture->Mem = NULL;
@@ -227,7 +233,7 @@ void closeUI() {
   gsKit_vram_clear(gsGlobal);
   closeFont();
   free(coverTexture);
-  free(icoTexture); // Liberar la estructura icoTexture
+  free(icoTexture); 
   gsKit_deinit_global(gsGlobal);
 }
 
@@ -279,15 +285,15 @@ int uiLoop(TargetList *titles) {
 
 // Load cover art
   isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
-  coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // Inicializar/resetear el contador
+  coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; 
 
   // Main UI loop
-   int frameCount = 0; // CORREGIDO: Eliminada la doble declaración
+   int frameCount = 0; 
    int prevInput = 0;
    int input = 0;
    int repeatCounter = 0;
-   const int repeatDelay = 20; // ~1s a 60fps
-   const int repeatSpeed = 2;   // cada 2 frames después del delay
+   const int repeatDelay = 20; 
+   const int repeatSpeed = 2;   
 
    while (1) {
    gsKit_clear(gsGlobal, currentTheme.background);
@@ -297,14 +303,14 @@ int uiLoop(TargetList *titles) {
    if (curTarget->idx != selectedTitleIdx) {
      curTarget = getTargetByIdx(titles, selectedTitleIdx);
      isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
-     coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // Resetear en cambio de título
+     coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; 
    }
 
    // Draw title list
    if (!isCoverUninitialized)
-     drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture, icoTexture); // Pasar icoTexture
+     drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture, icoTexture); 
    else
-     drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL, NULL); // Pasar NULL
+     drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL, NULL); 
 
       // NUEVO: Incrementar el contador de delay
       if (coverArtLoadFrames > 0 && coverArtLoadFrames <= COVER_ART_DELAY_FRAMES) {
@@ -316,10 +322,10 @@ int uiLoop(TargetList *titles) {
       gsKit_sync_flip(gsGlobal);
 
       // Process user inputs:
-      if (input == -1)                  // If input is -1, block until input changes
-         input = waitForInput(-1); // Usado al volver de opciones
+      if (input == -1)                  
+         input = waitForInput(-1); 
       else
-         input = pollInput(); // Estado sostenido de botones
+         input = pollInput(); 
 
       if (gsGlobal->Mode == GS_MODE_PAL)
          frameCount = (frameCount + 1) % 8;
@@ -653,52 +659,41 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
    }
 
    // --- Dibujar íconos de scroll magnetizados al frame ---
-   // Se coloca al final de drawTitleList, después del bucle de títulos.
+   int scrollMargin = 1; 
+   int iconWidth = 16;    
+   int iconHeight = 16;   
 
-   int scrollMargin = 1; // separación respecto al borde del frame
-   int iconWidth = 16;    // ancho fijo del PNG del ícono
-   int iconHeight = 16;   // alto fijo del PNG del ícono
-
-   // offsets globales (mueven todo el bloque UP/DOWN/BAR)
    int offsetScrollX = +3;
    int offsetScrollY = 0;
 
-   // offsets específicos del scrollbar (solo afectan al BAR)
-   int offsetBarX = +2; // mover un pelín a la derecha
-   int offsetBarY = -4; // mover verticalmente si lo necesitás
+   int offsetBarX = +2; 
+   int offsetBarY = -4; 
 
-   // Posición del ícono de scroll UP
    int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
    int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
 
-   // Posición del ícono de scroll DOWN
    int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
    int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
 
-   // Rango vertical disponible para el scrollbar
    int scrollRangeTop = scrollUpY + iconHeight;
    int scrollRangeBottom = scrollDownY - iconHeight;
    int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
 
-   // Total de títulos
    int totalTitles = titles->total;
    int firstIdx = 0;
    int lastIdx = totalTitles - 1;
 
-   // Wrap-around explícito
    if (selectedTitleIdx > lastIdx) {
       selectedTitleIdx = firstIdx;
    } else if (selectedTitleIdx < firstIdx) {
       selectedTitleIdx = lastIdx;
    }
 
-   // ratio = posición relativa
    float ratio = 0.0f;
    if (lastIdx > firstIdx) {
       ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
    }
 
-   // Posición del scrollbar con offset independiente
    int scrollBarX =
          listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
    int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
@@ -706,8 +701,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
    // --- Lectura de botones con libpad ---
    struct padButtonStatus buttons;
-   padRead(0, 0, &buttons);   // puerto 0, slot 0
-   u32 btns = ~buttons.btns; // invertir: 0=presionado, 1=liberado
+   padRead(0, 0, &buttons);   
+   u32 btns = ~buttons.btns; 
 
    bool padUpPressed = (btns & PAD_UP);
    bool padDownPressed = (btns & PAD_DOWN);
@@ -731,9 +726,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Draw cover art if it exists
   if (selectedTitleCover != NULL) {
-   // Desactivamos temporalmente el Alpha Blending (correcto para cover art)
+   // Desactivamos Alpha Blending para la carátula principal
    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-
+   gsKit_set_test(gsGlobal, GS_ATEST_OFF); // Desactivar Alpha Test
+   
    // USANDO Width/Height como UV2 (CORRECCIÓN VRAM)
    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, 
                        coverArtX1, coverArtY1, 
@@ -743,8 +739,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                        (float)selectedTitleCover->Height, 
                        2, FontMainColor);
    
-   // Activamos el blending para el resto de los elementos (iconos, texto)
+   // Activamos el blending y el test de nuevo
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON; 
+   gsKit_set_test(gsGlobal, GS_ATEST_ON); 
+
   } else {
    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                  1, currentTheme.background);
@@ -754,13 +752,14 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
    
   // --- DIBUJAR ICON ART ---
   if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
-   // CORRECCIÓN EXTRA: Re-establecer el Alpha Blending justo antes de dibujar
-   // el ícono, asegurando que el modo GS_SETREG_ALPHA(0, 1, 0, 1, 0)
-   // está activo. Aunque se enciende al final de dibujar cover, es buena práctica.
-   // El blending DEBE estar activo para ICO ART.
+   // CLAVE DE TRANSPARENCIA: Forzar la configuración de blending y alpha test
+   // antes de dibujar el ícono, asegurando que los píxeles Alpha=0 no pasen.
+   // Esto debería resolver el problema de las áreas transparentes con color sólido.
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+   gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+   gsKit_set_test(gsGlobal, GS_ATEST_ON); 
 
-   // CORRECCIÓN VRAM/UV: Usar Width/Height como U2/V2.
+   // DIBUJO DEL ICONO: Con la configuración de transparencia activa y UV correctos
    gsKit_prim_sprite_texture(gsGlobal, selectedTitleIcon, 
                        icoArtX1, icoArtY1, 
                        0.0f, 0.0f, 
@@ -771,7 +770,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   } else if (selectedTitleCover != NULL) {
       // Dibuja placeholder
    gsKit_prim_sprite(gsGlobal, icoArtX1, icoArtY1, icoArtX2, icoArtY2,
-                 1, currentTheme.coverFrame & 0xFFFFFF80); // Marco con transparencia reducida
+                 1, currentTheme.coverFrame & 0xFFFFFF80); 
   }
 }
 
