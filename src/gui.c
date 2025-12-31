@@ -524,7 +524,7 @@ void drawTitleListFooter(int baseX) {
                          gsGlobal->Width - baseX, gsGlobal->Height, 0,
                          currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
                          "Title options");
-}
+
 
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
