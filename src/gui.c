@@ -221,13 +221,12 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
     // Carga a RAM
     if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
         if (coverTexture->Mem != NULL) {
-            // Aplicar la corrección (la doble inversión que el sistema necesita)
             correctAlpha(coverTexture); 
             
-            // Subir a VRAM y gestionar espacio
-            gsKit_TexManager_upload(gsGlobal, coverTexture);
+            // Reemplazado: gsKit_TexManager_upload -> gsKit_TexManager_bind
+            gsKit_TexManager_bind(gsGlobal, coverTexture);
             
-            // Liberar RAM explícitamente si el upload no lo hizo
+            // Liberar RAM explícitamente
             if (coverTexture->Mem != NULL) {
                 free(coverTexture->Mem);
                 coverTexture->Mem = NULL;
@@ -238,23 +237,18 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
 
 
     // --- 2. LÓGICA DE CARGA DE ICO ART (ICO.png) ---
-    // Invalidar y preparar la textura para una nueva asignación en VRAM
     gsKit_TexManager_invalidate(gsGlobal, icoTexture);
     icoTexture->Mem = (void *)1; // Marcar como "no disponible" por defecto
 
-    // Construir la ruta a ICO.png
     snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
              titleID);
 
-    // Cargar a RAM
     if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer) == 0) {
-        // Éxito en la carga.
         if (icoTexture->Mem != NULL) {
-            // Aplicar la corrección Alpha necesaria
             correctAlpha(icoTexture);
             
-            // Subir a VRAM y gestionar el espacio para evitar corrupción
-            gsKit_TexManager_upload(gsGlobal, icoTexture);
+            // Reemplazado: gsKit_TexManager_upload -> gsKit_TexManager_bind
+            gsKit_TexManager_bind(gsGlobal, icoTexture);
 
             // Liberar RAM explícitamente
             if (icoTexture->Mem != NULL) {
@@ -263,17 +257,13 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
             }
         }
     
-        // 3. Inicializar la posición de la animación de ICO ART
+        // ... (Inicialización de animación sin cambios)
         icoArtY = coverArtY1 + (COVER_ART_RES_H / 2) - (ICO_ART_RES / 2);
-
         const int overlap = ICO_ART_RES / 2;
         icoArtFinalX = coverArtX1 - overlap;
         icoArtScrollX = (float)(-ICO_ART_RES - 10);
-        
         icoArtAnimationState = 0;
         icoArtFrameCounter = 0;
-    } else {
-        // Falló la carga. icoTexture->Mem permanece como (void*)1.
     }
 
     return coverLoaded ? 0 : -1;
