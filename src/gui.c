@@ -24,8 +24,8 @@
 // Dimensiones de las Artes
 #define COVER_ART_RES_W 140
 #define COVER_ART_RES_H 200
-#define LOGO_ART_RES_W 300
-#define LOGO_ART_RES_H 125
+#define LOGO_ART_RES_W 200
+#define LOGO_ART_RES_H 83
 #define DISC_ART_RES_W 128
 #define DISC_ART_RES_H 128
 
@@ -33,30 +33,30 @@
 // FUNCIÓN DE CORRECCIÓN DE ALPHA
 // ************************************************
 
-// Corrige la inversión del canal Alpha en la memoria RAM de la textura (PSMCT32).
+// Corrige la inversión del canal Alpha en la memoria RAM de la textura
+// (PSMCT32).
 void correctAlpha(GSTEXTURE *tex) {
-    if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
-        return;
-    }
+  if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
+    return;
+  }
 
-    u32 num_pixels = tex->Width * tex->Height;
-    u32 *pixels = (u32 *)tex->Mem;
+  u32 num_pixels = tex->Width * tex->Height;
+  u32 *pixels = (u32 *)tex->Mem;
 
-    for (u32 i = 0; i < num_pixels; i++) {
-        u32 pixel_value = pixels[i];
-        u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
-        u8 new_alpha = 0x80 - alpha;
-        pixels[i] = (pixel_value & 0x00FFFFFF) | (new_alpha << 24);
-    }
+  for (u32 i = 0; i < num_pixels; i++) {
+    u32 pixel_value = pixels[i];
+    u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
+    u8 new_alpha = 0x80 - alpha;
+    pixels[i] = (pixel_value & 0x00FFFFFF) | (new_alpha << 24);
+  }
 }
-
 
 void closeUI();
 int uiLoop(TargetList *titles);
 int uiTitleOptionsLoop(Target *title);
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments);
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-                             int maxTitlesPerPage, GSTEXTURE *selectedTitleCover);
+                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover);
 void uiLaunchTitle(Target *target, ArgumentList *arguments);
 void drawGameID(const char *game_id);
 int createSplashThread();
@@ -92,675 +92,689 @@ static int discArtY2;
 
 const int keepoutArea = 20;
 const int headerHeight = 20 + keepoutArea;
-const int footerHeight = 40 + keepoutArea;
+const int footerHeight = 30 + keepoutArea;
 
 void initVMode(GSGLOBAL *gsGlobal) {
-    switch (LAUNCHER_OPTIONS.vmode) {
-    case GS_MODE_NTSC:
-        printf("Forcing NTSC mode\n");
-        gsGlobal->Mode = GS_MODE_NTSC;
-        gsGlobal->Interlace = GS_INTERLACED;
-        gsGlobal->Field = GS_FIELD;
-        gsGlobal->Width = 640;
-        gsGlobal->Height = 448;
-        break;
-    case GS_MODE_PAL:
-        printf("Forcing PAL mode\n");
-        gsGlobal->Mode = GS_MODE_PAL;
-        gsGlobal->Interlace = GS_INTERLACED;
-        gsGlobal->Field = GS_FIELD;
-        gsGlobal->Width = 640;
-        gsGlobal->Height = 512;
-        break;
-    case GS_MODE_DTV_480P:
-        printf("Forcing 480p mode\n");
-        gsGlobal->Mode = GS_MODE_DTV_480P;
-        gsGlobal->Interlace = GS_NONINTERLACED;
-        gsGlobal->Field = GS_FRAME;
-        gsGlobal->Width = 640;
-        gsGlobal->Height = 448;
-        break;
-    default:
-    }
+  switch (LAUNCHER_OPTIONS.vmode) {
+  case GS_MODE_NTSC:
+    printf("Forcing NTSC mode\n");
+    gsGlobal->Mode = GS_MODE_NTSC;
+    gsGlobal->Interlace = GS_INTERLACED;
+    gsGlobal->Field = GS_FIELD;
+    gsGlobal->Width = 640;
+    gsGlobal->Height = 448;
+    break;
+  case GS_MODE_PAL:
+    printf("Forcing PAL mode\n");
+    gsGlobal->Mode = GS_MODE_PAL;
+    gsGlobal->Interlace = GS_INTERLACED;
+    gsGlobal->Field = GS_FIELD;
+    gsGlobal->Width = 640;
+    gsGlobal->Height = 512;
+    break;
+  case GS_MODE_DTV_480P:
+    printf("Forcing 480p mode\n");
+    gsGlobal->Mode = GS_MODE_DTV_480P;
+    gsGlobal->Interlace = GS_NONINTERLACED;
+    gsGlobal->Field = GS_FRAME;
+    gsGlobal->Width = 640;
+    gsGlobal->Height = 448;
+    break;
+  default:
+  }
 }
 
 int uiInit() {
-    setDefaultSkin();
-    if (loadSkin("mc0:/APP_NHDDL/skin.yaml") < 0) {
-        saveSkin("mc0:/APP_NHDDL/skin.yaml");
-    }
-    if (gsGlobal != NULL) {
-        printf("Reinitializing UI\n");
-        closeUI();
-    }
-    gsGlobal = gsKit_init_global();
-    initVMode(gsGlobal);
-    gsGlobal->PSM = GS_PSM_CT24;
-    gsGlobal->PSMZ = GS_PSMZ_16S;
-    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
-    gsGlobal->DoubleBuffering = GS_SETTING_ON;
-    gsGlobal->Test->ATST = 7;
-    gsGlobal->Test->AREF = 0x00;
-    gsGlobal->Test->AFAIL = 0;
+  setDefaultSkin();
+  if (loadSkin("mc0:/APP_NHDDL/skin.yaml") < 0) {
+    saveSkin("mc0:/APP_NHDDL/skin.yaml");
+  }
+  if (gsGlobal != NULL) {
+    printf("Reinitializing UI\n");
+    closeUI();
+  }
+  gsGlobal = gsKit_init_global();
+  initVMode(gsGlobal);
+  gsGlobal->PSM = GS_PSM_CT24;
+  gsGlobal->PSMZ = GS_PSMZ_16S;
+  gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+  gsGlobal->DoubleBuffering = GS_SETTING_ON;
+  gsGlobal->Test->ATST = 7;
+  gsGlobal->Test->AREF = 0x00;
+  gsGlobal->Test->AFAIL = 0;
 
-    dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
-                     D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
+  dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
+              D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
 
-    int res;
-    if ((res = dmaKit_chan_init(DMA_CHANNEL_GIF))) {
-        printf("ERROR: Failed to initlize DMAC: %d\n", res);
-        return res;
-    }
+  int res;
+  if ((res = dmaKit_chan_init(DMA_CHANNEL_GIF))) {
+    printf("ERROR: Failed to initlize DMAC: %d\n", res);
+    return res;
+  }
 
-    gsKit_clear(gsGlobal, currentTheme.background);
+  gsKit_clear(gsGlobal, currentTheme.background);
 
-    gsKit_vram_clear(gsGlobal);
-    gsKit_init_screen(gsGlobal);
-    gsKit_display_buffer(
-            gsGlobal);
-    gsKit_TexManager_init(gsGlobal);
-    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
-    gsKit_set_test(gsGlobal, GS_ATEST_ON);
-    gsKit_mode_switch(gsGlobal, GS_ONESHOT);
-    gsKit_clear(gsGlobal, currentTheme.background);
+  gsKit_vram_clear(gsGlobal);
+  gsKit_init_screen(gsGlobal);
+  gsKit_display_buffer(gsGlobal);
+  gsKit_TexManager_init(gsGlobal);
+  gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+  gsKit_set_test(gsGlobal, GS_ATEST_ON);
+  gsKit_mode_switch(gsGlobal, GS_ONESHOT);
+  gsKit_clear(gsGlobal, currentTheme.background);
 
-    if (initGraphics()) {
-        printf("ERROR: Failed to initialize font\n");
-        return -1;
-    };
+  if (initGraphics()) {
+    printf("ERROR: Failed to initialize font\n");
+    return -1;
+  };
 
-    // Init cover texture
-    coverTexture = calloc(sizeof(GSTEXTURE), 1);
-    coverTexture->PSM = GS_PSM_CT32; 
-    coverTexture->Delayed = 1;
+  // Init cover texture
+  coverTexture = calloc(sizeof(GSTEXTURE), 1);
+  coverTexture->PSM = GS_PSM_CT32;
+  coverTexture->Delayed = 1;
 
-    coverArtX2 = (gsGlobal->Width - keepoutArea - 10);
-    coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
-    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
-    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
-    
-    // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
-    logoTexture = calloc(sizeof(GSTEXTURE), 1);
-    logoTexture->PSM = GS_PSM_CT32;
-    logoTexture->Delayed = 1;
-    
-    logoArtX1 = coverArtX1 + (COVER_ART_RES_W / 2) - (LOGO_ART_RES_W / 2);
-    logoArtX2 = logoArtX1 + LOGO_ART_RES_W;
-    logoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (LOGO_ART_RES_H / 2);
-    logoArtY2 = logoArtY1 + LOGO_ART_RES_H;
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 10);
+  coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
+  coverArtX1 = coverArtX2 - COVER_ART_RES_W;
+  coverArtY1 = coverArtY2 - COVER_ART_RES_H;
 
-    // DISC ART: Inicialización y Coordenadas (Centrado en Cover Area)
-    discTexture = calloc(sizeof(GSTEXTURE), 1);
-    discTexture->PSM = GS_PSM_CT32;
-    discTexture->Delayed = 1;
+  // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
+  logoTexture = calloc(sizeof(GSTEXTURE), 1);
+  logoTexture->PSM = GS_PSM_CT32;
+  logoTexture->Delayed = 1;
 
-    discArtX1 = coverArtX1 + (COVER_ART_RES_W / 2) - (DISC_ART_RES_W / 2);
-    discArtX2 = discArtX1 + DISC_ART_RES_W;
-    discArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (DISC_ART_RES_H / 2);
-    discArtY2 = discArtY1 + DISC_ART_RES_H;
+  logoArtX2 = (gsGlobal->Width - keepoutArea - 10);
+  logoArtY2 = (gsGlobal->Height / 2) - (COVER_ART_RES_H / 2) - 10;
+  logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
+  logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
+  // DISC ART: Inicialización y Coordenadas (Centrado en Cover Area)
+  discTexture = calloc(sizeof(GSTEXTURE), 1);
+  discTexture->PSM = GS_PSM_CT32;
+  discTexture->Delayed = 1;
 
-    return 0;
+  discArtX2 = (gsGlobal->Width - keepoutArea - 20 - COVER_ART_RES_W);
+  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 20;
+  discArtX1 = discArtX2 - DISC_ART_RES_W;
+  discArtY1 = discArtY2 - DISC_ART_RES_H;
+
+  return 0;
 }
 
 // loadArt: Unificada para LOGO, DISC y COVER
 int loadArt(struct DeviceMapEntry *device, char *titleID) {
-    if (device->metadev) {
-        device = device->metadev;
-    }
+  if (device->metadev) {
+    device = device->metadev;
+  }
 
-    // --- 1. LÓGICA DE CARGA DE LOGO ART (*_LGO.png) ---
-    gsKit_TexManager_invalidate(gsGlobal, logoTexture);
-    if (logoTexture->Mem != NULL) { free(logoTexture->Mem); logoTexture->Mem = NULL; }
-    logoTexture->Vram = 0; logoTexture->VramClut = 0;
-    
-    snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
-             titleID);
-    
-    int logoLoaded = 0;
-    if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
-        if (logoTexture->Mem != NULL) {
-            correctAlpha(logoTexture);
-            gsKit_TexManager_bind(gsGlobal, logoTexture);
-            logoLoaded = 1;
-        }
-    }
+  // --- 1. LÓGICA DE CARGA DE LOGO ART (*_LGO.png) ---
+  gsKit_TexManager_invalidate(gsGlobal, logoTexture);
+  if (logoTexture->Mem != NULL) {
+    free(logoTexture->Mem);
+    logoTexture->Mem = NULL;
+  }
+  logoTexture->Vram = 0;
+  logoTexture->VramClut = 0;
 
-    // --- 2. LÓGICA DE CARGA DE DISC ART (*_ICO.png) ---
-    gsKit_TexManager_invalidate(gsGlobal, discTexture);
-    if (discTexture->Mem != NULL) { free(discTexture->Mem); discTexture->Mem = NULL; }
-    discTexture->Vram = 0; discTexture->VramClut = 0;
-    
-    snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-             titleID);
-    
-    int discLoaded = 0;
-    if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
-        if (discTexture->Mem != NULL) {
-            correctAlpha(discTexture);
-            gsKit_TexManager_bind(gsGlobal, discTexture);
-            discLoaded = 1;
-        }
-    }
+  snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
+           titleID);
 
-    // --- 3. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
-    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-    if (coverTexture->Mem != NULL) { free(coverTexture->Mem); coverTexture->Mem = NULL; }
-    coverTexture->Vram = 0; coverTexture->VramClut = 0;
-    
-    snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
-             titleID);
-
-    int coverLoaded = 0;
-    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
-        if (coverTexture->Mem != NULL) {
-            correctAlpha(coverTexture);
-            gsKit_TexManager_bind(gsGlobal, coverTexture);
-            coverLoaded = 1;
-        }
+  int logoLoaded = 0;
+  if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
+    if (logoTexture->Mem != NULL) {
+      correctAlpha(logoTexture);
+      gsKit_TexManager_bind(gsGlobal, logoTexture);
+      logoLoaded = 1;
     }
-    
-    // ************************************************
-    // LIBERACIÓN DE MEMORIA RAM (CLEANUP FINAL)
-    // ************************************************
-    
-    if (logoLoaded) { free(logoTexture->Mem); logoTexture->Mem = NULL; }
-    if (discLoaded) { free(discTexture->Mem); discTexture->Mem = NULL; }
-    if (coverLoaded) { free(coverTexture->Mem); coverTexture->Mem = NULL; }
-    
-    return coverLoaded ? 0 : -1;
+  }
+
+  // --- 2. LÓGICA DE CARGA DE DISC ART (*_ICO.png) ---
+  gsKit_TexManager_invalidate(gsGlobal, discTexture);
+  if (discTexture->Mem != NULL) {
+    free(discTexture->Mem);
+    discTexture->Mem = NULL;
+  }
+  discTexture->Vram = 0;
+  discTexture->VramClut = 0;
+
+  snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
+           titleID);
+
+  int discLoaded = 0;
+  if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
+    if (discTexture->Mem != NULL) {
+      correctAlpha(discTexture);
+      gsKit_TexManager_bind(gsGlobal, discTexture);
+      discLoaded = 1;
+    }
+  }
+
+  // --- 3. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
+  gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+  if (coverTexture->Mem != NULL) {
+    free(coverTexture->Mem);
+    coverTexture->Mem = NULL;
+  }
+  coverTexture->Vram = 0;
+  coverTexture->VramClut = 0;
+
+  snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
+           titleID);
+
+  int coverLoaded = 0;
+  if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
+    if (coverTexture->Mem != NULL) {
+      correctAlpha(coverTexture);
+      gsKit_TexManager_bind(gsGlobal, coverTexture);
+      coverLoaded = 1;
+    }
+  }
+
+  // ************************************************
+  // LIBERACIÓN DE MEMORIA RAM (CLEANUP FINAL)
+  // ************************************************
+
+  if (logoLoaded) {
+    free(logoTexture->Mem);
+    logoTexture->Mem = NULL;
+  }
+  if (discLoaded) {
+    free(discTexture->Mem);
+    discTexture->Mem = NULL;
+  }
+  if (coverLoaded) {
+    free(coverTexture->Mem);
+    coverTexture->Mem = NULL;
+  }
+
+  return coverLoaded ? 0 : -1;
 }
 
 // Frees textures and deinits gsKit
 void closeUI() {
-    gsKit_vram_clear(gsGlobal);
-    closeFont();
-    free(coverTexture);
-    free(logoTexture);
-    free(discTexture); // Liberar DiscTexture
-    gsKit_deinit_global(gsGlobal);
+  gsKit_vram_clear(gsGlobal);
+  closeFont();
+  free(coverTexture);
+  free(logoTexture);
+  free(discTexture); // Liberar DiscTexture
+  gsKit_deinit_global(gsGlobal);
 }
 
 // Main UI loop. Displays the target list.
 int uiLoop(TargetList *titles) {
-    
-    if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
-        (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
-        uiInit();
+
+  if ((LAUNCHER_OPTIONS.vmode != VMODE_NONE) &&
+      (gsGlobal->Mode != LAUNCHER_OPTIONS.vmode)) {
+    uiInit();
+  }
+
+  int res = 0;
+  if ((gsGlobal == NULL) && (res = uiInit())) {
+    printf("ERROR: Failed to init UI: %d\n", res);
+    goto exit;
+  }
+  initPad();
+
+  int isCoverUninitialized = 1;
+  int selectedTitleIdx = 0;
+  int maxTitlesPerPage =
+      (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight() -
+      1;
+  Target *curTarget = titles->first;
+
+  char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
+  if (!getLastLaunchedTitle(lastTitle)) {
+    int mountpointLen;
+    while (curTarget != NULL) {
+      mountpointLen = getRelativePathIdx(curTarget->fullPath);
+      if (mountpointLen == -1)
+        mountpointLen = 0;
+
+      if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
+        selectedTitleIdx = curTarget->idx;
+        break;
+      }
+      curTarget = curTarget->next;
+    }
+    if (curTarget == NULL) {
+      curTarget = titles->first;
+    }
+  }
+  free(lastTitle);
+
+  isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
+
+  int frameCount = 0;
+  int prevInput = 0;
+  int input = 0;
+  int repeatCounter = 0;
+  const int repeatDelay = 20;
+  const int repeatSpeed = 2;
+
+  while (1) {
+    gsKit_clear(gsGlobal, currentTheme.background);
+    gsKit_TexManager_nextFrame(gsGlobal);
+
+    if (curTarget->idx != selectedTitleIdx) {
+      curTarget = getTargetByIdx(titles, selectedTitleIdx);
+      isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
     }
 
-    int res = 0;
-    if ((gsGlobal == NULL) && (res = uiInit())) {
-        printf("ERROR: Failed to init UI: %d\n", res);
-        goto exit;
-    }
-    initPad();
+    if (!isCoverUninitialized)
+      drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
+    else
+      drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL);
 
-    int isCoverUninitialized = 1;
-    int selectedTitleIdx = 0;
-    int maxTitlesPerPage =
-            (gsGlobal->Height - (headerHeight + footerHeight)) / getFontLineHeight() -
-            1;
-    Target *curTarget = titles->first;
+    gsKit_queue_exec(gsGlobal);
+    gsKit_finish();
+    gsKit_sync_flip(gsGlobal);
 
-    char *lastTitle = calloc(sizeof(char), PATH_MAX + 1);
-    if (!getLastLaunchedTitle(lastTitle)) {
-        int mountpointLen;
-        while (curTarget != NULL) {
-            mountpointLen = getRelativePathIdx(curTarget->fullPath);
-            if (mountpointLen == -1)
-                mountpointLen = 0;
+    if (input == -1)
+      input = waitForInput(-1);
+    else
+      input = pollInput();
 
-            if (!strcmp(lastTitle, &curTarget->fullPath[mountpointLen])) {
-                selectedTitleIdx = curTarget->idx;
-                break;
-            }
-            curTarget = curTarget->next;
-        }
-        if (curTarget == NULL) {
-            curTarget = titles->first;
-        }
-    }
-    free(lastTitle);
+    if (gsGlobal->Mode == GS_MODE_PAL)
+      frameCount = (frameCount + 1) % 8;
+    else
+      frameCount = (frameCount + 1) % 10;
 
-    isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
+    if (frameCount && (input == prevInput) && !(input & (PAD_UP | PAD_DOWN)))
+      continue;
 
-    int frameCount = 0;
-    int prevInput = 0;
-    int input = 0;
-    int repeatCounter = 0;
-    const int repeatDelay = 20;
-    const int repeatSpeed = 2;
+    int pressed = input & ~prevInput;
 
-    while (1) {
-        gsKit_clear(gsGlobal, currentTheme.background);
-        gsKit_TexManager_nextFrame(gsGlobal);
+    if (input & (PAD_CROSS | PAD_CIRCLE)) {
+      Target *target = copyTarget(curTarget);
+      freeTargetList(titles);
+      uiLaunchTitle(target, NULL);
+      return -1;
+    } else if (input & (PAD_UP | PAD_DOWN)) {
+      int upEdge = (input & PAD_UP) && !(prevInput & PAD_UP);
+      int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
 
-        if (curTarget->idx != selectedTitleIdx) {
-            curTarget = getTargetByIdx(titles, selectedTitleIdx);
-            isCoverUninitialized = loadArt(curTarget->device, curTarget->id);
-        }
+      if (upEdge) {
+        selectedTitleIdx =
+            ((selectedTitleIdx - 1) + titles->total) % titles->total;
+        repeatCounter = 0;
+      }
+      if (downEdge) {
+        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+        repeatCounter = 0;
+      }
 
-        if (!isCoverUninitialized)
-            drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture);
-        else
-            drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL);
-
-        gsKit_queue_exec(gsGlobal);
-        gsKit_finish();
-        gsKit_sync_flip(gsGlobal);
-
-        if (input == -1) 
-            input = waitForInput(-1);
-        else
-            input = pollInput();
-
-        if (gsGlobal->Mode == GS_MODE_PAL)
-            frameCount = (frameCount + 1) % 8;
-        else
-            frameCount = (frameCount + 1) % 10;
-
-        if (frameCount && (input == prevInput) && !(input & (PAD_UP | PAD_DOWN)))
-            continue;
-
-        int pressed = input & ~prevInput;
-
-        if (input & (PAD_CROSS | PAD_CIRCLE)) {
-            Target *target = copyTarget(curTarget);
-            freeTargetList(titles);
-            uiLaunchTitle(target, NULL);
-            return -1;
-        } else if (input & (PAD_UP | PAD_DOWN)) {
-            int upEdge = (input & PAD_UP) && !(prevInput & PAD_UP);
-            int downEdge = (input & PAD_DOWN) && !(prevInput & PAD_DOWN);
-
-            if (upEdge) {
-                selectedTitleIdx =
-                     ((selectedTitleIdx - 1) + titles->total) % titles->total;
-                repeatCounter = 0;
-            }
-            if (downEdge) {
-                selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-                repeatCounter = 0;
-            }
-
-            if ((input & PAD_UP) || (input & PAD_DOWN)) {
-                if (upEdge || downEdge) {
-                    repeatCounter = 0;
-                } else {
-                    repeatCounter++;
-                }
-
-                if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
-                    if (input & PAD_UP) {
-                        selectedTitleIdx =
-                             ((selectedTitleIdx - 1) + titles->total) % titles->total;
-                    }
-                    if (input & PAD_DOWN) {
-                        selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
-                    }
-                }
-            } else {
-                repeatCounter = 0;
-            }
-        } else if (pressed & PAD_R1) {
-            if (selectedTitleIdx == titles->total - 1) {
-                selectedTitleIdx = 0;
-            } else {
-                selectedTitleIdx += maxTitlesPerPage;
-                if (selectedTitleIdx >= titles->total)
-                    selectedTitleIdx = titles->total - 1;
-            }
-            repeatCounter = 0;
-        } else if (pressed & PAD_L1) {
-            if (selectedTitleIdx == 0) {
-                selectedTitleIdx = titles->total - 1;
-            } else {
-                selectedTitleIdx -= maxTitlesPerPage;
-                if (selectedTitleIdx < 0)
-                    selectedTitleIdx = 0;
-            }
-            repeatCounter = 0;
-        } else if (input & PAD_TRIANGLE) {
-            input = -1;
-            prevInput = 0;
-            repeatCounter = 0;
-            if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
-                return -1;
-            }
-        } else if (input & PAD_START) {
-            repeatCounter = 0;
-            break;
-        } else if (input & PAD_SELECT) {
-            ExitCode skinExit = uiSkinOptionsLoop();
-            input = -1;
-            prevInput = 0;
-            repeatCounter = 0;
-            continue;
+      if ((input & PAD_UP) || (input & PAD_DOWN)) {
+        if (upEdge || downEdge) {
+          repeatCounter = 0;
         } else {
-            repeatCounter = 0;
+          repeatCounter++;
         }
 
-        frameCount = 0;
-        prevInput = input;
+        if (repeatCounter > repeatDelay && (repeatCounter % repeatSpeed == 0)) {
+          if (input & PAD_UP) {
+            selectedTitleIdx =
+                ((selectedTitleIdx - 1) + titles->total) % titles->total;
+          }
+          if (input & PAD_DOWN) {
+            selectedTitleIdx = (selectedTitleIdx + 1) % titles->total;
+          }
+        }
+      } else {
+        repeatCounter = 0;
+      }
+    } else if (pressed & PAD_R1) {
+      if (selectedTitleIdx == titles->total - 1) {
+        selectedTitleIdx = 0;
+      } else {
+        selectedTitleIdx += maxTitlesPerPage;
+        if (selectedTitleIdx >= titles->total)
+          selectedTitleIdx = titles->total - 1;
+      }
+      repeatCounter = 0;
+    } else if (pressed & PAD_L1) {
+      if (selectedTitleIdx == 0) {
+        selectedTitleIdx = titles->total - 1;
+      } else {
+        selectedTitleIdx -= maxTitlesPerPage;
+        if (selectedTitleIdx < 0)
+          selectedTitleIdx = 0;
+      }
+      repeatCounter = 0;
+    } else if (input & PAD_TRIANGLE) {
+      input = -1;
+      prevInput = 0;
+      repeatCounter = 0;
+      if ((res = uiTitleOptionsLoop(curTarget)) < 0) {
+        return -1;
+      }
+    } else if (input & PAD_START) {
+      repeatCounter = 0;
+      break;
+    } else if (input & PAD_SELECT) {
+      ExitCode skinExit = uiSkinOptionsLoop();
+      input = -1;
+      prevInput = 0;
+      repeatCounter = 0;
+      continue;
+    } else {
+      repeatCounter = 0;
     }
+
+    frameCount = 0;
+    prevInput = input;
+  }
 
 exit:
-    closePad();
-    closeUI();
-    return res;
+  closePad();
+  closeUI();
+  return res;
 }
 
 void drawTitleListFooter(int baseX) {
-    int baseY = gsGlobal->Height - footerHeight;
-    int curX = baseX;
+  int baseY = gsGlobal->Height - footerHeight;
+  int curX = baseX;
 
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle,
-                             ALIGN_CENTER, ICON_CIRCLE);
-    curX += getIconWidth(ICON_CIRCLE);
-    drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross,
-                             ALIGN_CENTER, ICON_CROSS);
-    curX += getIconWidth(ICON_CROSS) + 5;
-    drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
-                             currentTheme.headerText, ALIGN_VCENTER, "Launch title");
+  drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCircle,
+                 ALIGN_CENTER, ICON_CIRCLE);
+  curX += getIconWidth(ICON_CIRCLE);
+  drawIconWindow(curX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconCross,
+                 ALIGN_CENTER, ICON_CROSS);
+  curX += getIconWidth(ICON_CROSS) + 5;
+  drawTextWindow(curX, baseY, 0, gsGlobal->Height - 1, 0,
+                 currentTheme.headerText, ALIGN_VCENTER, "Launch title");
 
-    int centerTotal = getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40 +
-                              getIconWidth(ICON_START) + getLineWidth("Exit") + 40 +
-                              getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
-    int centerX = (gsGlobal->Width - centerTotal) / 2;
+  int centerTotal = getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40 +
+                    getIconWidth(ICON_START) + getLineWidth("Exit") + 40 +
+                    getIconWidth(ICON_UPDOWN) + getLineWidth("Navigate");
+  int centerX = (gsGlobal->Width - centerTotal) / 2;
 
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
-                             ALIGN_CENTER, ICON_SELECT);
-    drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY, 0,
-                             gsGlobal->Height - 1, 0, currentTheme.headerText,
-                             ALIGN_VCENTER, "Skin");
-    centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
+                 ALIGN_CENTER, ICON_SELECT);
+  drawTextWindow(centerX + getIconWidth(ICON_SELECT) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Skin");
+  centerX += getIconWidth(ICON_SELECT) + getLineWidth("Skin") + 40;
 
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
-                             ALIGN_CENTER, ICON_START);
-    drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
-                             gsGlobal->Height - 1, 0, currentTheme.headerText,
-                             ALIGN_VCENTER, "Exit");
-    centerX += getIconWidth(ICON_START) + getLineWidth("Exit") + 40;
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconStart,
+                 ALIGN_CENTER, ICON_START);
+  drawTextWindow(centerX + getIconWidth(ICON_START) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Exit");
+  centerX += getIconWidth(ICON_START) + getLineWidth("Exit") + 40;
 
-    drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
-                             ALIGN_CENTER, ICON_UPDOWN);
-    drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
-                             gsGlobal->Height - 1, 0, currentTheme.headerText,
-                             ALIGN_VCENTER, "Navigate");
+  drawIconWindow(centerX, baseY, 0, gsGlobal->Height, 0, currentTheme.iconPad,
+                 ALIGN_CENTER, ICON_UPDOWN);
+  drawTextWindow(centerX + getIconWidth(ICON_UPDOWN) + 5, baseY, 0,
+                 gsGlobal->Height - 1, 0, currentTheme.headerText,
+                 ALIGN_VCENTER, "Navigate");
 
-    int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) -
-                         getLineWidth("Title options");
-    drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
-                             currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
-    drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
-                             gsGlobal->Width - baseX, gsGlobal->Height, 0,
-                             currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
-                             "Title options");
+  int rightX = gsGlobal->Width - baseX - 5 - getIconWidth(ICON_TRIANGLE) -
+               getLineWidth("Title options");
+  drawIconWindow(rightX, baseY, 0, gsGlobal->Height, 0,
+                 currentTheme.iconTriangle, ALIGN_CENTER, ICON_TRIANGLE);
+  drawTextWindow(0, gsGlobal->Height - 1 - footerHeight,
+                 gsGlobal->Width - baseX, gsGlobal->Height, 0,
+                 currentTheme.headerText, ALIGN_VCENTER | ALIGN_RIGHT,
+                 "Title options");
 }
 
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-                             int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
-    int curPage = selectedTitleIdx / maxTitlesPerPage;
+                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover) {
+  int curPage = selectedTitleIdx / maxTitlesPerPage;
 
-    int baseX = keepoutArea + 10;
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(),
-                             gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
-                             ALIGN_HCENTER, "Title List");
-    snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1,
-                 DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1,
-                 titles->total);
-    drawTextWindow(baseX, headerHeight - getFontLineHeight(),
-                             gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
-                             ALIGN_RIGHT, lineBuffer);
+  int baseX = keepoutArea + 10;
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                 gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                 ALIGN_HCENTER, "Title List");
+  snprintf(lineBuffer, 255, "Page %d/%d\nTitle %d/%d", curPage + 1,
+           DIV_ROUND(titles->total, maxTitlesPerPage), selectedTitleIdx + 1,
+           titles->total);
+  drawTextWindow(baseX, headerHeight - getFontLineHeight(),
+                 gsGlobal->Width - baseX, 0, 0, currentTheme.headerText,
+                 ALIGN_RIGHT, lineBuffer);
 
-    drawTitleListFooter(baseX);
+  drawTitleListFooter(baseX);
 
-    int blockHeight = maxTitlesPerPage * getFontLineHeight();
+  int blockHeight = maxTitlesPerPage * getFontLineHeight();
 
-    int offsetLeft = -4;
-    int offsetRight = -190;
-    int offsetTop = +2;
-    int offsetBottom = +14;
+  int offsetLeft = -4;
+  int offsetRight = -190;
+  int offsetTop = +2;
+  int offsetBottom = +14;
 
-    int listX1 = keepoutArea + offsetLeft;
-    int listX2 = coverArtX1 + offsetRight;
-    int listY1 = headerHeight + getFontLineHeight() / 2 + offsetTop;
-    int listY2 = listY1 + blockHeight + offsetBottom;
+  int listX1 = keepoutArea + offsetLeft;
+  int listX2 = coverArtX1 + offsetRight;
+  int listY1 = headerHeight + getFontLineHeight() / 2 + offsetTop;
+  int listY2 = listY1 + blockHeight + offsetBottom;
 
-    drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
+  drawRoundedFrame(listX1, listY1, listX2, listY2, 1);
 
-    Target *curTitle = titles->first;
+  Target *curTitle = titles->first;
 
-    int marginLeft = 0;
-    int marginRight = 0;
-    int marginTop = 8;
-    int marginBottom = 8;
+  int marginLeft = 0;
+  int marginRight = 0;
+  int marginTop = 8;
+  int marginBottom = 8;
 
-    int titleY = listY1 + marginTop;
+  int titleY = listY1 + marginTop;
 
-    while (curTitle != NULL) {
-        if (curTitle->idx < maxTitlesPerPage * curPage)
-            goto next;
-        if (curTitle->idx >= maxTitlesPerPage * (curPage + 1))
-            break;
-        if (titleY >= listY2 - marginBottom)
-            break;
+  while (curTitle != NULL) {
+    if (curTitle->idx < maxTitlesPerPage * curPage)
+      goto next;
+    if (curTitle->idx >= maxTitlesPerPage * (curPage + 1))
+      break;
+    if (titleY >= listY2 - marginBottom)
+      break;
 
-        if (selectedTitleIdx == curTitle->idx) {
-            drawTextWindow(coverArtX1,
-                                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0,
-                                                                 0, currentTheme.listText, ALIGN_HCENTER,
-                                                                 curTitle->id),
-                                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-                                     modeToString(curTitle->device->mode));
+    if (selectedTitleIdx == curTitle->idx) {
+      drawTextWindow(coverArtX1,
+                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0,
+                                    0, currentTheme.listText, ALIGN_HCENTER,
+                                    curTitle->id),
+                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+                     modeToString(curTitle->device->mode));
+    }
+
+    int textX1 = listX1 + marginLeft;
+    int textX2 = listX2 + marginRight;
+    int textWidth = getLineWidth(curTitle->name);
+
+    int cutLeft = textX1 + 11;
+    int cutRight = textX2 - 20;
+
+    static float scrollOffset = 0.0f;
+    static int scrollState = 0;
+    static int pauseCounter = 0;
+    static int lastTitleIdx = -1;
+    static int scrollFinished = 0;
+    static int holdCounter = 0;
+
+    const int HOLD_FRAMES = 45;
+    const float SCROLL_SPEED = 0.5f;
+    const int PAUSE_FRAMES = 60;
+
+    if (selectedTitleIdx != lastTitleIdx) {
+      scrollOffset = 0.0f;
+      scrollState = 0;
+      pauseCounter = 0;
+      holdCounter = 0;
+      scrollFinished = 0;
+      lastTitleIdx = selectedTitleIdx;
+    }
+
+    int drawStartX = cutLeft;
+
+    if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
+        !scrollFinished) {
+
+      switch (scrollState) {
+      case 0:
+        holdCounter++;
+        drawStartX = cutLeft;
+        if (holdCounter >= HOLD_FRAMES) {
+          scrollState = 1;
+          scrollOffset = 0.0f;
         }
+        break;
 
-        int textX1 = listX1 + marginLeft;
-        int textX2 = listX2 + marginRight;
-        int textWidth = getLineWidth(curTitle->name);
+      case 1: {
+        float speed = SCROLL_SPEED + (scrollOffset * 0.01f);
+        scrollOffset += speed;
 
-        int cutLeft = textX1 + 11;
-        int cutRight = textX2 - 20;
+        drawStartX = cutLeft - (int)scrollOffset;
 
-        static float scrollOffset = 0.0f;
-        static int scrollState = 0;
-        static int pauseCounter = 0;
-        static int lastTitleIdx = -1;
-        static int scrollFinished = 0;
-        static int holdCounter = 0;
-
-        const int HOLD_FRAMES = 45;
-        const float SCROLL_SPEED = 0.5f;
-        const int PAUSE_FRAMES = 60;
-
-        if (selectedTitleIdx != lastTitleIdx) {
-            scrollOffset = 0.0f;
-            scrollState = 0;
-            pauseCounter = 0;
-            holdCounter = 0;
-            scrollFinished = 0;
-            lastTitleIdx = selectedTitleIdx;
+        if (drawStartX + textWidth <= cutRight) {
+          drawStartX = cutRight - textWidth;
+          scrollState = 2;
+          pauseCounter = 0;
         }
+      } break;
 
-        int drawStartX = cutLeft;
-
-        if (textWidth > (cutRight - cutLeft) && selectedTitleIdx == curTitle->idx &&
-             !scrollFinished) {
-
-            switch (scrollState) {
-            case 0:
-                holdCounter++;
-                drawStartX = cutLeft;
-                if (holdCounter >= HOLD_FRAMES) {
-                    scrollState = 1;
-                    scrollOffset = 0.0f;
-                }
-                break;
-
-            case 1:
-            {
-                float speed = SCROLL_SPEED + (scrollOffset * 0.01f);
-                scrollOffset += speed;
-
-                drawStartX = cutLeft - (int)scrollOffset;
-
-                if (drawStartX + textWidth <= cutRight) {
-                    drawStartX = cutRight - textWidth;
-                    scrollState = 2;
-                    pauseCounter = 0;
-                }
-            } break;
-
-            case 2:
-                pauseCounter++;
-                if (pauseCounter >= PAUSE_FRAMES) {
-                    scrollState = 3;
-                }
-                drawStartX = cutLeft - (int)scrollOffset;
-                break;
-
-            case 3:
-            {
-                float speed = SCROLL_SPEED + ((textWidth - scrollOffset) * 0.01f);
-                scrollOffset -= speed;
-
-                drawStartX = cutLeft - (int)scrollOffset;
-
-                if (drawStartX >= cutLeft) {
-                    drawStartX = cutLeft;
-                    scrollOffset = 0.0f;
-                    scrollState = 0;
-                    holdCounter = 0;
-                    scrollFinished = 1;
-                }
-            } break;
-            }
-        } else {
-            if (selectedTitleIdx == curTitle->idx) {
-                holdCounter = 0;
-            }
-            drawStartX = cutLeft;
+      case 2:
+        pauseCounter++;
+        if (pauseCounter >= PAUSE_FRAMES) {
+          scrollState = 3;
         }
+        drawStartX = cutLeft - (int)scrollOffset;
+        break;
 
-        int minStartX = cutRight - textWidth;
-        int maxStartX = cutLeft;
-        if (drawStartX < minStartX)
-            drawStartX = minStartX;
-        if (drawStartX > maxStartX)
-            drawStartX = maxStartX;
+      case 3: {
+        float speed = SCROLL_SPEED + ((textWidth - scrollOffset) * 0.01f);
+        scrollOffset -= speed;
 
-        titleY = drawTextClipped(drawStartX, titleY, cutLeft, cutRight, 0,
-                                         ((selectedTitleIdx == curTitle->idx)
-                                                 ? currentTheme.selectedText
-                                                 : currentTheme.listText),
-                                         curTitle->name);
+        drawStartX = cutLeft - (int)scrollOffset;
 
-    next:
-        curTitle = curTitle->next;
-    }
-
-    // --- Dibujar íconos de scroll ---
-    
-    int scrollMargin = 1;
-    int iconWidth = 16;
-    int iconHeight = 16;
-
-    int offsetScrollX = +3;
-    int offsetScrollY = 0;
-
-    int offsetBarX = +2;
-    int offsetBarY = -4;
-
-    int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-    int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
-
-    int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
-    int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
-
-    int scrollRangeTop = scrollUpY + iconHeight;
-    int scrollRangeBottom = scrollDownY - iconHeight;
-    int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
-
-    int totalTitles = titles->total;
-    int firstIdx = 0;
-    int lastIdx = totalTitles - 1;
-
-    if (selectedTitleIdx > lastIdx) {
-        selectedTitleIdx = firstIdx;
-    } else if (selectedTitleIdx < firstIdx) {
-        selectedTitleIdx = lastIdx;
-    }
-
-    float ratio = 0.0f;
-    if (lastIdx > firstIdx) {
-        ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
-    }
-
-    int scrollBarX =
-            listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
-    int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
-                             offsetScrollY + offsetBarY;
-
-    struct padButtonStatus buttons;
-    padRead(0, 0, &buttons);
-    u32 btns = ~buttons.btns;
-
-    bool padUpPressed = (btns & PAD_UP);
-    bool padDownPressed = (btns & PAD_DOWN);
-
-    u64 colorUp =
-            padUpPressed ? currentTheme.iconEnabled : currentTheme.listText;
-    u64 colorDown =
-            padDownPressed ? currentTheme.iconEnabled : currentTheme.listText;
-    u64 colorBar = currentTheme.iconEnabled;
-
-    drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
-    drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
-                 ICON_SCROLLDOWN);
-    drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
-
-    // Draw cover art placeholder/frame
-    gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
-                              coverArtY2 + 2, 1, currentTheme.coverFrame);
-
-    // ************************************************
-    // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
-    // ************************************************
-    if (logoTexture != NULL && logoTexture->Mem == NULL) {
-        gsKit_prim_sprite_texture(gsGlobal, logoTexture, (float)logoArtX1,
-                                  (float)logoArtY1, 0.0f, 0.0f,
-                                  (float)logoArtX2, (float)logoArtY2,
-                                  (float)logoTexture->Width,
-                                  (float)logoTexture->Height, 3, FontMainColor);
-    }
-    
-    // ************************************************
-    // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
-    // ************************************************
-    if (discTexture != NULL && discTexture->Mem == NULL) {
-        gsKit_prim_sprite_texture(gsGlobal, discTexture, (float)discArtX1,
-                                  (float)discArtY1, 0.0f, 0.0f,
-                                  (float)discArtX2, (float)discArtY2,
-                                  (float)discTexture->Width,
-                                  (float)discTexture->Height, 3, FontMainColor);
-    }
-
-    // ************************************************
-    // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
-    // ************************************************
-    if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
-        gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
-                                  coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
-                                  (float)selectedTitleCover->Width,
-                                  (float)selectedTitleCover->Height, 2, FontMainColor);
+        if (drawStartX >= cutLeft) {
+          drawStartX = cutLeft;
+          scrollOffset = 0.0f;
+          scrollState = 0;
+          holdCounter = 0;
+          scrollFinished = 1;
+        }
+      } break;
+      }
     } else {
-        gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
-                          1, currentTheme.background);
-        drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
-                       currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+      if (selectedTitleIdx == curTitle->idx) {
+        holdCounter = 0;
+      }
+      drawStartX = cutLeft;
     }
+
+    int minStartX = cutRight - textWidth;
+    int maxStartX = cutLeft;
+    if (drawStartX < minStartX)
+      drawStartX = minStartX;
+    if (drawStartX > maxStartX)
+      drawStartX = maxStartX;
+
+    titleY = drawTextClipped(drawStartX, titleY, cutLeft, cutRight, 0,
+                             ((selectedTitleIdx == curTitle->idx)
+                                  ? currentTheme.selectedText
+                                  : currentTheme.listText),
+                             curTitle->name);
+
+  next:
+    curTitle = curTitle->next;
+  }
+
+  // --- Dibujar íconos de scroll ---
+
+  int scrollMargin = 1;
+  int iconWidth = 16;
+  int iconHeight = 16;
+
+  int offsetScrollX = +3;
+  int offsetScrollY = 0;
+
+  int offsetBarX = +2;
+  int offsetBarY = -4;
+
+  int scrollUpX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+  int scrollUpY = listY1 + scrollMargin + 9 + offsetScrollY;
+
+  int scrollDownX = listX2 - iconWidth - scrollMargin + 1 + offsetScrollX;
+  int scrollDownY = listY2 - iconHeight - scrollMargin + 3 + offsetScrollY;
+
+  int scrollRangeTop = scrollUpY + iconHeight;
+  int scrollRangeBottom = scrollDownY - iconHeight;
+  int scrollRangeHeight = scrollRangeBottom - scrollRangeTop;
+
+  int totalTitles = titles->total;
+  int firstIdx = 0;
+  int lastIdx = totalTitles - 1;
+
+  if (selectedTitleIdx > lastIdx) {
+    selectedTitleIdx = firstIdx;
+  } else if (selectedTitleIdx < firstIdx) {
+    selectedTitleIdx = lastIdx;
+  }
+
+  float ratio = 0.0f;
+  if (lastIdx > firstIdx) {
+    ratio = (float)(selectedTitleIdx - firstIdx) / (float)(lastIdx - firstIdx);
+  }
+
+  int scrollBarX =
+      listX2 - iconWidth - scrollMargin + offsetScrollX + offsetBarX;
+  int scrollBarY = scrollRangeTop + (int)(ratio * scrollRangeHeight) +
+                   offsetScrollY + offsetBarY;
+
+  struct padButtonStatus buttons;
+  padRead(0, 0, &buttons);
+  u32 btns = ~buttons.btns;
+
+  bool padUpPressed = (btns & PAD_UP);
+  bool padDownPressed = (btns & PAD_DOWN);
+
+  u64 colorUp = padUpPressed ? currentTheme.iconEnabled : currentTheme.listText;
+  u64 colorDown =
+      padDownPressed ? currentTheme.iconEnabled : currentTheme.listText;
+  u64 colorBar = currentTheme.iconEnabled;
+
+  drawIcon((float)scrollUpX, (float)scrollUpY, 0, colorUp, ICON_SCROLLUP);
+  drawIcon((float)scrollDownX, (float)scrollDownY, 0, colorDown,
+           ICON_SCROLLDOWN);
+  drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
+
+  // Draw cover art placeholder/frame
+  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
+                    coverArtY2 + 2, 1, currentTheme.coverFrame);
+
+  // ************************************************
+  // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
+  // ************************************************
+  if (logoTexture != NULL && logoTexture->Mem == NULL) {
+    gsKit_prim_sprite_texture(gsGlobal, logoTexture, (float)logoArtX1,
+                              (float)logoArtY1, 0.0f, 0.0f, (float)logoArtX2,
+                              (float)logoArtY2, (float)logoTexture->Width,
+                              (float)logoTexture->Height, 3, FontMainColor);
+  }
+
+  // ************************************************
+  // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
+  // ************************************************
+  if (discTexture != NULL && discTexture->Mem == NULL) {
+    gsKit_prim_sprite_texture(gsGlobal, discTexture, (float)discArtX1,
+                              (float)discArtY1, 0.0f, 0.0f, (float)discArtX2,
+                              (float)discArtY2, (float)discTexture->Width,
+                              (float)discTexture->Height, 3, FontMainColor);
+  }
+
+  // ************************************************
+  // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+  // ************************************************
+  if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
+    gsKit_prim_sprite_texture(
+        gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f,
+        coverArtX2, coverArtY2, (float)selectedTitleCover->Width,
+        (float)selectedTitleCover->Height, 2, FontMainColor);
+  } else {
+    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
+                      1, currentTheme.background);
+    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
+                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+  }
 }
 
 void drawTitleOptionsFooter(int baseX) {
@@ -823,8 +837,8 @@ void drawTitleOptionsFooter(int baseX) {
                  ALIGN_TOP | ALIGN_HCENTER, "Switch views");
   drawIconWindow(0, gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
                  (gsGlobal->Width - getLineWidth("Switch views")) / 2 - 5,
-                 gsGlobal->Height, 0, currentTheme.iconStart, ALIGN_TOP | ALIGN_RIGHT,
-                 ICON_L1);
+                 gsGlobal->Height, 0, currentTheme.iconStart,
+                 ALIGN_TOP | ALIGN_RIGHT, ICON_L1);
   drawIconWindow((gsGlobal->Width + getLineWidth("Switch views")) / 2 + 5,
                  gsGlobal->Height - footerHeight - getFontLineHeight() / 2,
                  gsGlobal->Width, gsGlobal->Height, 0, currentTheme.iconStart,
