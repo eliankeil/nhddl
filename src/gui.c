@@ -183,8 +183,8 @@ int uiInit() {
   logoTexture->PSM = GS_PSM_CT32;
   logoTexture->Delayed = 1;
 
-  logoArtX2 = (gsGlobal->Width - keepoutArea - 10);
-  logoArtY2 = (gsGlobal->Height / 2) - (COVER_ART_RES_H / 2) - 10;
+  logoArtX2 = (gsGlobal->Width - 15);
+  logoArtY2 = coverArtY1 - 2;
   logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
   logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
