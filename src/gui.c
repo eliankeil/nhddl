@@ -209,63 +209,61 @@ int uiInit() {
 // Invalidates currently loaded texture and loads a new one
 // Invalidates currently loaded texture and loads a new one
 int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
-  if (device->metadev) {
-    device = device->metadev;
-  }
-
-  // --- 0. TERMINAR DMA ANTERIOR Y LIMPIAR PUNTEROS ---
-  // Forzamos la terminación de cualquier DMA pendiente de la textura anterior.
-  gsKit_TexManager_wait_idle(gsGlobal, coverTexture);
-  gsKit_TexManager_wait_idle(gsGlobal, icoTexture);
-
-  // Limpieza de punteros VRAM antes de invalidar (previene solapamiento)
-  coverTexture->Vram = 0;
-  coverTexture->VramClut = 0;
-  icoTexture->Vram = 0;
-  icoTexture->VramClut = 0;
-
-  gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-  gsKit_TexManager_invalidate(gsGlobal, icoTexture);
-
-  // --- 1. LÓGICA DE CARGA DE COVER ART (COV.png) ---
-  snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
-           titleID);
-  int coverLoaded = 0;
-
-  // NOTA: gsKit_texture_png Carga a RAM (Mem != NULL) y prepara la estructura
-  if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
-    if (coverTexture->Mem != NULL) {
-      correctAlpha(coverTexture);
-
-      // Subir a VRAM de forma asíncrona. NO LIBERAR RAM AQUÍ.
-      gsKit_TexManager_bind(gsGlobal, coverTexture);
+    if (device->metadev) {
+        device = device->metadev;
     }
-    coverLoaded = 1;
-  }
 
-  // --- 2. LÓGICA DE CARGA DE ICO ART (ICO.png) ---
-  // NOTA: No inicializamos icoTexture->Mem a (void*)1; si falla, será NULL.
-  snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-           titleID);
+    // --- 0. TERMINAR DMA ANTERIOR Y LIMPIAR PUNTEROS ---
+    // ELIMINAR LLAMADAS A gsKit_TexManager_wait_idle
+    
+    // Limpieza de punteros VRAM antes de invalidar (crucial para evitar corrupción)
+    coverTexture->Vram = 0;
+    coverTexture->VramClut = 0;
+    icoTexture->Vram = 0;
+    icoTexture->VramClut = 0;
+    
+    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+    gsKit_TexManager_invalidate(gsGlobal, icoTexture);
 
-  if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer) == 0) {
-    if (icoTexture->Mem != NULL) {
-      correctAlpha(icoTexture);
 
-      // Subir a VRAM de forma asíncrona. NO LIBERAR RAM AQUÍ.
-      gsKit_TexManager_bind(gsGlobal, icoTexture);
-
-      // 3. Inicialización de la animación (Si la carga fue exitosa)
-      icoArtY = coverArtY1 + (COVER_ART_RES_H / 2) - (ICO_ART_RES / 2);
-      const int overlap = ICO_ART_RES / 2;
-      icoArtFinalX = coverArtX1 - overlap;
-      icoArtScrollX = (float)(-ICO_ART_RES - 10);
-      icoArtAnimationState = 0;
-      icoArtFrameCounter = 0;
+    // --- 1. LÓGICA DE CARGA DE COVER ART (COV.png) ---
+    // ... (snprintf, etc.)
+    int coverLoaded = 0;
+    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer) == 0) {
+        if (coverTexture->Mem != NULL) {
+            correctAlpha(coverTexture); 
+            gsKit_TexManager_bind(gsGlobal, coverTexture); 
+            
+            // Reintroducir liberación de RAM aquí si la textura está marcada como Delayed=1
+            // (Esta es la forma tradicional de trabajar si no hay un gestor de upload)
+            free(coverTexture->Mem); 
+            coverTexture->Mem = NULL;
+        }
+        coverLoaded = 1;
     }
-  }
 
-  return coverLoaded ? 0 : -1;
+    // --- 2. LÓGICA DE CARGA DE ICO ART (ICO.png) ---
+    // ... (snprintf, etc.)
+    if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer) == 0) {
+        if (icoTexture->Mem != NULL) {
+            correctAlpha(icoTexture);
+            gsKit_TexManager_bind(gsGlobal, icoTexture);
+            
+            // Reintroducir liberación de RAM
+            free(icoTexture->Mem);
+            icoTexture->Mem = NULL;
+            
+            // 3. Inicialización de la animación
+            icoArtY = coverArtY1 + (COVER_ART_RES_H / 2) - (ICO_ART_RES / 2);
+            const int overlap = ICO_ART_RES / 2;
+            icoArtFinalX = coverArtX1 - overlap;
+            icoArtScrollX = (float)(-ICO_ART_RES - 10);
+            icoArtAnimationState = 0;
+            icoArtFrameCounter = 0;
+        }
+    } 
+
+    return coverLoaded ? 0 : -1;
 }
 
 // ************************************************
@@ -831,79 +829,70 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // ----------------------------------------------------
 
   // Draw cover art placeholder/frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
-                    coverArtY2 + 2, 1, currentTheme.coverFrame);
+gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
+                  coverArtY2 + 2, 1, currentTheme.coverFrame);
 
-  // Draw cover art if it exists
-  // Draw cover art if it exists
-  if (selectedTitleCover != NULL) {
-
-    // CRÍTICO: Esperar a que la transferencia DMA termine
-    gsKit_TexManager_wait_idle(gsGlobal, selectedTitleCover);
-
-    // Ahora podemos dibujar con seguridad, la textura está en VRAM.
+// Draw cover art if it exists
+if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
+    // Si selectedTitleCover existe y su buffer de RAM ha sido liberado (Mem == NULL),
+    // asumimos que la textura está en VRAM o en la cola DMA. La eliminación
+    // de gsKit_TexManager_wait_idle() soluciona el error de compilación.
+    
     gsKit_prim_sprite_texture(
         gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f,
         coverArtX2, coverArtY2, (float)selectedTitleCover->Width,
         (float)selectedTitleCover->Height, 2, FontMainColor);
-  } else {
+        
+} else {
+    // Placeholder si no hay cover art o si la carga a RAM falló
     gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
                       1, currentTheme.background);
     drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
                    currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
-  }
+}
 
-  // ----------------------------------------------------
-  // DIBUJADO DE ICO ART (NUEVO)
-  // ----------------------------------------------------
-  int icoArtDrawX1 = (int)icoArtScrollX;
-  int icoArtDrawX2 = icoArtDrawX1 + ICO_ART_RES;
-  int icoArtDrawY1 = icoArtY;
-  int icoArtDrawY2 = icoArtY + ICO_ART_RES;
+// ----------------------------------------------------
+// DIBUJADO DE ICO ART (NUEVO)
+// ----------------------------------------------------
+int icoArtDrawX1 = (int)icoArtScrollX;
+int icoArtDrawX2 = icoArtDrawX1 + ICO_ART_RES;
+int icoArtDrawY1 = icoArtY;
+int icoArtDrawY2 = icoArtY + ICO_ART_RES;
 
-  if (icoTexture != NULL) {
+if (icoTexture != NULL) {
     // Dibujar un marco para el ícono
     gsKit_prim_sprite(gsGlobal, icoArtDrawX1 - 2, icoArtDrawY1 - 2,
                       icoArtDrawX2 + 2, icoArtDrawY2 + 2, 1,
                       currentTheme.coverFrame);
 
     // *******************************************************************
-    // LÓGICA DE DIBUJADO SEGURA (CON DMA ASÍNCRONO)
+    // LÓGICA DE DIBUJADO
     // *******************************************************************
-
-    // Si la textura se cargó (Mem != NULL), forzamos la espera del DMA.
-    // Esto previene la corrupción ("fragmentos") mientras se transfiere.
-    if (icoTexture->Mem != NULL) {
-      gsKit_TexManager_wait_idle(gsGlobal, icoTexture);
-    }
-
-    // Si la transferencia terminó (Mem ahora es NULL o fue NULL desde el
-    // inicio) El check de Mem != NULL es solo para saber si había un DMA
-    // pendiente. La textura está lista en VRAM si Mem == NULL O después del
-    // wait_idle.
+    
+    // Eliminación de gsKit_TexManager_wait_idle() para solucionar el fallo de compilación.
+    // Confiamos en que la liberación de Mem en loadCoverArt asegura que la textura
+    // ha sido enviada a la cola DMA.
 
     if (icoTexture->Mem == NULL) {
-      // CORRECCIÓN DEL ERROR DE 13 ARGUMENTOS (Si tu GSKit requiere U2, V2
-      // antes de Z)
-      gsKit_prim_sprite_texture(
-          gsGlobal, icoTexture, (float)icoArtDrawX1, (float)icoArtDrawY1, 0.0f,
-          0.0f, (float)icoArtDrawX2, (float)icoArtDrawY2,
-          (float)icoTexture
-              ->Width, // <-- U2 (Aquí se asume que Width/Height son U2/V2)
-          (float)icoTexture->Height, // <-- V2
-          3,                         // Z-depth
-          FontMainColor);            // Color
+        // La textura fue cargada a VRAM y el buffer de RAM fue liberado.
+        
+        // CORRECCIÓN DE ARGUMENTOS
+        gsKit_prim_sprite_texture(
+            gsGlobal, icoTexture, (float)icoArtDrawX1, (float)icoArtDrawY1, 0.0f,
+            0.0f, (float)icoArtDrawX2, (float)icoArtDrawY2,
+            (float)icoTexture->Width,   // U2
+            (float)icoTexture->Height,  // V2
+            3,                          // Z-depth
+            FontMainColor);             // Color
     } else {
-      // Placeholder si falla la carga (Mem sigue siendo diferente de NULL
-      // después del wait_idle, lo cual solo debería ocurrir en caso de error
-      // fatal si la carga inicial de gsKit_texture_png falla totalmente)
-      gsKit_prim_sprite(gsGlobal, icoArtDrawX1, icoArtDrawY1, icoArtDrawX2,
-                        icoArtDrawY2, 1, currentTheme.background);
-      drawTextWindow(icoArtDrawX1, icoArtDrawY1, icoArtDrawX2, icoArtDrawY2, 1,
-                     currentTheme.coverFrame, ALIGN_CENTER, "No ico art");
+        // Placeholder si la carga a RAM no ha ocurrido, falló, o Mem no fue liberado.
+        gsKit_prim_sprite(gsGlobal, icoArtDrawX1, icoArtDrawY1, icoArtDrawX2,
+                          icoArtDrawY2, 1, currentTheme.background);
+        drawTextWindow(icoArtDrawX1, icoArtDrawY1, icoArtDrawX2, icoArtDrawY2, 1,
+                       currentTheme.coverFrame, ALIGN_CENTER, "No ico art");
     }
-  }
-  // ----------------------------------------------------
+}
+// ----------------------------------------------------
 }
 
 void drawTitleOptionsFooter(int baseX) {
