@@ -44,7 +44,7 @@ void correctAlpha(GSTEXTURE *tex) {
         u32 pixel_value = pixels[i];
         
         // Extraer el Alpha (bits 24-31, asumiendo AARRGGBB o similar)
-        u8 alpha = (u8)((pixel_value >> 24) & 0xFF);
+        u8 alpha = (u8)((pixel_value >> 24) & 0x80);
         
         // Invertir el canal Alpha: Alpha_Nuevo = 255 - Alpha_Original
         u8 new_alpha = 0x80 - alpha;
