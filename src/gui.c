@@ -137,7 +137,9 @@ int uiInit() {
    gsKit_init_screen(gsGlobal);
    gsKit_display_buffer(
          gsGlobal); 
-   gsKit_TexManager_init(gsGlobal);
+   // El TexManager debe inicializarse una sola vez aquí para gestionar TODAS las texturas,
+   // incluidas las fuentes y los iconos del skin.
+   gsKit_TexManager_init(gsGlobal); 
    // Set alpha and mode, clear active buffer
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
    gsKit_set_test(gsGlobal, GS_ATEST_ON);
@@ -145,7 +147,8 @@ int uiInit() {
    gsKit_clear(gsGlobal, currentTheme.background);
 
    // Initialize resources
-   if (initGraphics()) {
+   // La carga de fuentes/gráficos del skin aquí usa el TexManager
+   if (initGraphics()) { 
       printf("ERROR: Failed to initialize font\n");
       return -1;
    };
@@ -157,7 +160,7 @@ int uiInit() {
    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
    coverTexture->Delayed = 1;
-   coverTexture->PSM = GS_PSM_CT24; // Forzar para Cover Art
+   coverTexture->PSM = GS_PSM_CT24; 
 
    // NUEVO: Init icon texture
   icoTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -166,32 +169,29 @@ int uiInit() {
   icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); 
   icoArtY2 = icoArtY1 + ICON_ART_RES_H;
   icoTexture->Delayed = 1;
-  icoTexture->PSM = GS_PSM_CT32; // Forzar para Icon Art con Alpha
+  // Aseguramos PSM de 32 bits para transparencia robusta
+  icoTexture->PSM = GS_PSM_CT32; 
 
    return 0;
 }
 
 // Invalidates currently loaded texture and loads a new one
 int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
-  if (device->metadev) { // Fallback to metadata device
+  if (device->metadev) { 
    device = device->metadev;
   }
 
-// --- CLAVE: Reiniciar el TexManager para prevenir fragmentación VRAM ---
-// Esto libera todas las texturas anteriores y fuerza una asignación contigua
-// (o al menos limpia) para las nuevas texturas.
-  gsKit_TexManager_init(gsGlobal); 
+// --- CLAVE: ELIMINAMOS gsKit_TexManager_init(gsGlobal) de aquí ---
+// Su presencia estaba rompiendo las texturas de la UI/fuentes.
+// Confiamos en que invalidate y bind reutilizarán las áreas de VRAM.
 
   // --- 1. Carga y subida de COVER ART ---
-  // Reuse line buffer for building texture path
   snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
         titleID);
   
-  // Upload new texture (COV)
-  // No es necesario invalidar si reiniciamos el TexManager, pero se mantiene la llamada por seguridad
+  // Invalida la textura anterior para que el TexManager pueda liberar o reutilizar el espacio.
   gsKit_TexManager_invalidate(gsGlobal, coverTexture); 
 
-  // Intentamos cargar PNG. Si tiene canal alfa, gsKit lo cargará en CT32 aunque pidamos CT24.
   if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
    coverTexture->Mem = NULL;
    coverArtLoadFrames = 0; 
@@ -199,10 +199,9 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
   }
 
   gsKit_TexManager_bind(gsGlobal, coverTexture);
-  // Free memory after the texture has been uploaded (COV)
   free(coverTexture->Mem);
   coverTexture->Mem = NULL;
-  coverArtLoadFrames = 1; // Inicia el contador de frames para el delay
+  coverArtLoadFrames = 1; 
 
 // --- 2. Carga y subida de ICO ART ---
 load_ico:
@@ -213,7 +212,6 @@ load_ico:
   // Upload new texture (ICO)
   gsKit_TexManager_invalidate(gsGlobal, icoTexture);
   
-  // Cargamos el ICO. Si el PNG es de 32 bits (RGB+Alpha), se cargará en CT32.
   if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
    // Si falla, establecemos el puntero a NULL
    icoTexture->Mem = NULL;
@@ -221,7 +219,6 @@ load_ico:
   }
   gsKit_TexManager_bind(gsGlobal, icoTexture);
   
-  // Free memory after the texture has been uploaded (ICO)
   free(icoTexture->Mem);
   icoTexture->Mem = NULL;
 
@@ -726,11 +723,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Draw cover art if it exists
   if (selectedTitleCover != NULL) {
-   // Desactivamos Alpha Blending para la carátula principal
+   // Desactivamos Alpha Blending y Alpha Test para la carátula principal
    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-   gsKit_set_test(gsGlobal, GS_ATEST_OFF); // Desactivar Alpha Test
+   gsKit_set_test(gsGlobal, GS_ATEST_OFF); 
    
-   // USANDO Width/Height como UV2 (CORRECCIÓN VRAM)
    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, 
                        coverArtX1, coverArtY1, 
                        0.0f, 0.0f, 
@@ -739,7 +735,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                        (float)selectedTitleCover->Height, 
                        2, FontMainColor);
    
-   // Activamos el blending y el test de nuevo
+   // Activamos el blending y el test de nuevo para el resto de la UI
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON; 
    gsKit_set_test(gsGlobal, GS_ATEST_ON); 
 
@@ -751,10 +747,16 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
    
   // --- DIBUJAR ICON ART ---
+  // Mantenemos el retraso de 30 frames para evitar errores de renderizado
   if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
-   // CLAVE DE TRANSPARENCIA: Forzar la configuración de blending y alpha test
-   // antes de dibujar el ícono, asegurando que los píxeles Alpha=0 no pasen.
-   // Esto debería resolver el problema de las áreas transparentes con color sólido.
+   
+   // REFUERZO DE LA TRANSPARENCIA: Aseguramos que el Alpha Blending esté activo
+   // y que el Alpha Test esté configurado para CT32 para ignorar el fondo transparente.
+   // Esta configuración (ATST=7, AREF=0x00) se debe mantener desde uiInit.
+
+   // Nota: gsKit_set_primalpha y gsKit_set_test ya se llamaron en uiInit,
+   // pero las restablecemos por si otra función de dibujo (como drawText)
+   // las modificó temporalmente y no las restauró correctamente.
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
    gsKit_set_test(gsGlobal, GS_ATEST_ON); 
@@ -768,7 +770,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                        (float)selectedTitleIcon->Height, 
                        2, currentTheme.iconEnabled); 
   } else if (selectedTitleCover != NULL) {
-      // Dibuja placeholder
+      // Dibuja placeholder, asegurando que el blending esté activado
+   gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
    gsKit_prim_sprite(gsGlobal, icoArtX1, icoArtY1, icoArtX2, icoArtY2,
                  1, currentTheme.coverFrame & 0xFFFFFF80); 
   }
