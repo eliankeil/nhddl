@@ -97,9 +97,7 @@ int uiInit() {
    }
    gsGlobal = gsKit_init_global();
    initVMode(gsGlobal);
-   // OPTIMIZACIÓN: Usar PSMCT32 para el framebuffer para mejor manejo de Alpha si se requiere,
-   // o mantener CT24 para ahorrar VRAM si no se usa Alpha en el framebuffer.
-   // Manteniendo CT24 como estaba, pero se recomienda CT32 si se usan efectos complejos.
+   // Manteniendo CT24 como estaba.
    gsGlobal->PSM = GS_PSM_CT24; 
    gsGlobal->PSMZ = GS_PSMZ_16S;
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON; // Mantener Alpha Blending activo
@@ -150,8 +148,10 @@ int uiInit() {
    coverArtX1 = coverArtX2 - COVER_ART_RES_W;
    coverArtY1 = coverArtY2 - COVER_ART_RES_H;
    
-   // Aseguramos que las texturas PNG se carguen en PSMCT32 para preservar el canal alpha.
-   coverTexture->VramPSM = GS_PSM_CT32; 
+   // --- CORRECCIÓN y OPTIMIZACIÓN ---
+   // Usar 'PSM' en lugar de 'VramPSM' (soluciona error de compilación)
+   // Forzar la carga de la carátula en 32-bit (GS_PSM_CT32) para gestionar la transparencia PNG correctamente.
+   coverTexture->PSM = GS_PSM_CT32; 
    coverTexture->Delayed = 1;
 
    return 0;
@@ -168,7 +168,7 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
                  titleID);
    // Upload new texture
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-   // gsKit_texture_png ahora intentará cargar en coverTexture->VramPSM (PSMCT32)
+   // gsKit_texture_png usa coverTexture->PSM para saber el formato de carga.
    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
       return -1;
    }
@@ -251,9 +251,8 @@ int uiLoop(TargetList *titles) {
       // Reload target if index has changed
       if (curTarget->idx != selectedTitleIdx) {
          curTarget = getTargetByIdx(titles, selectedTitleIdx);
-         // MEJORA: En un sistema de carga asíncrona (thread), esta llamada sería
-         // reemplazada por una función que *desencadena* la carga en segundo plano,
-         // no la ejecuta.
+         // Se mantiene la llamada síncrona, pero se recomienda moverla a un hilo
+         // secundario para eliminar el bloqueo de la UI durante I/O (discutido previamente).
          isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
       }
 
@@ -355,7 +354,7 @@ int uiLoop(TargetList *titles) {
          repeatCounter = 0;
          break;
       } else if (input & PAD_SELECT) {
-         ExitCode skinExit = uiSkinOptionsLoop();
+         uiSkinOptionsLoop(); // Se omite el uso de 'skinExit' para evitar la advertencia
          input = -1;
          prevInput = 0;
          repeatCounter = 0;
@@ -683,8 +682,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
    // Draw cover art if it exists
    if (selectedTitleCover != NULL) {
-      // MEJORA: Eliminada la desactivación temporal de alpha blending. 
-    // Ahora dependemos de la configuración global de PSMCT32 y GS_SETREG_ALPHA.
+      // MEJORA: El alpha blending se gestiona globalmente en uiInit() y por la carga PSMCT32.
       gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
                                              coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
                                              selectedTitleCover->Width,
