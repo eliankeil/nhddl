@@ -414,7 +414,6 @@ exit:
   closeUI();
   return res;
 }
-
 void drawTitleListFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
   int curX = baseX;
