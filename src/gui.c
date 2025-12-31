@@ -18,7 +18,7 @@
 #include <ps2sdkapi.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h> // Necesario para strcmp
+#include <string.h>
 
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
@@ -62,6 +62,45 @@ static int coverArtY1;
 const int keepoutArea = 20;
 const int headerHeight = 20 + keepoutArea;
 const int footerHeight = 40 + keepoutArea;
+
+// *************************************************************
+// FUNCIÓN DE DETECCIÓN DE ALPHA INVERTIDO (NUEVO)
+// No modifica los píxeles, solo devuelve si la textura parece tener Alpha problemático.
+static int checkAlphaInversion(GSTEXTURE *tex) {
+    // Solo chequea texturas de 32 bits que tienen datos en Mem
+    if (tex->PSM != GS_PSM_CT32 || tex->Mem == NULL) {
+        return 0;
+    }
+
+    u32 *pixels = (u32 *)tex->Mem;
+    int inverted_count = 0;
+    
+    // Chequear los primeros 100 píxeles, que probablemente sean bordes/esquinas
+    // donde la transparencia es común si el Alpha no está invertido.
+    int test_limit = 100;
+    u32 num_pixels = tex->Width * tex->Height;
+    if (num_pixels < test_limit) test_limit = num_pixels;
+
+    for (int i = 0; i < test_limit; i++) {
+        // Extraer el Alpha (asumiendo formato ARGB, Byte 4)
+        u8 alpha = (u8)((pixels[i] >> 24) & 0xFF);
+        
+        // Si el Alpha es muy opaco (>= 0xFA, cerca de 255)
+        if (alpha >= 0xFA) { 
+            inverted_count++;
+        }
+    }
+    
+    // Si más del 20% (ajustable) de los píxeles de prueba son opacos,
+    // asumimos que un PNG con transparencia debería ser parcialmente transparente
+    // en los bordes, e invertimos el comportamiento de blending.
+    if (inverted_count > (test_limit / 5)) { 
+        return 1; 
+    }
+    return 0; 
+}
+// *************************************************************
+
 
 void initVMode(GSGLOBAL *gsGlobal) {
    switch (LAUNCHER_OPTIONS.vmode) {
@@ -171,27 +210,24 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
    gsKit_TexManager_invalidate(gsGlobal, coverTexture);
    
   // *************************************************************
-  // Lógica de Marcado: Asume que las que no se dibujaban tienen Alpha invertido.
-  // Esas son las que deben usar el Hack (Alpha Blending OFF).
-  // **REEMPLAZA ESTOS IDs CON LOS REALES QUE TE ESTÁN DANDO PROBLEMAS DE COLOR**
-  coverNeedsAlphaHack = 0; // Reset por defecto
-  
-  // Ejemplos de IDs problemáticos (¡Ajusta estos!)
-  if (strcmp(titleID, "SLUS-20000") == 0 || 
-      strcmp(titleID, "SCES-50000") == 0 ||
-      strcmp(titleID, "SLES-51234") == 0 ||
-      strcmp(titleID, "PBPX-95000") == 0) {
-      // Las 3 o 4 carátulas problemáticas que antes no se dibujaban
-      // y ahora se dibujan brillantes/azules, deben tener este flag en 1.
-      coverNeedsAlphaHack = 1; 
-  }
-  // *************************************************************
+  // PASO 1: Cargar la textura y resetear el flag
+  coverNeedsAlphaHack = 0;
   
    if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
       // Si la carga falló, no hay carátula, no hay hack.
     coverNeedsAlphaHack = 0; 
       return -1;
    }
+  
+  // *************************************************************
+  // PASO 2: Chequear si la textura cargada tiene Alpha Invertido/Problemático
+  if (checkAlphaInversion(coverTexture)) {
+      // Si detectamos Alpha problemático, activamos el hack de Blending.
+      // Esto arregla el brillo/azul sin modificar los datos de los píxeles.
+      coverNeedsAlphaHack = 1;
+  }
+  // *************************************************************
+  
    gsKit_TexManager_bind(gsGlobal, coverTexture);
    // Free memory after the texture has been uploaded
    free(coverTexture->Mem);
@@ -703,10 +739,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     
     // *************************************************************
     // CORRECCIÓN CLAVE: Aplicación Condicional del Hack de Alpha
+    // Solo si checkAlphaInversion devolvió 1 durante loadCoverArt.
     // *************************************************************
     if (coverNeedsAlphaHack) {
         // Desactivar Alpha Blending para arreglar el problema de color/brillo
-        // en las carátulas que tenían Alpha invertido/problemas de color.
+        // causado por la mala interpretación del Alpha en esas 3-4 texturas.
         gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     }
     
