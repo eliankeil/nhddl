@@ -158,67 +158,67 @@ int uiInit() {
   coverTexture->Delayed = 1;
 
   // NUEVO: Init icon texture (a la izquierda de cover art, centrado verticalmente)
-  icoTexture = calloc(sizeof(GSTEXTURE), 1);
-  icoArtX2 = coverArtX1 - 20; // 20 pixeles de separación
-  icoArtX1 = icoArtX2 - ICON_ART_RES_W;
-  icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); // Centrado con coverArt
-  icoArtY2 = icoArtY1 + ICON_ART_RES_H;
-  icoTexture->Delayed = 1;
+ icoTexture = calloc(sizeof(GSTEXTURE), 1);
+ icoArtX2 = coverArtX1 - 20; // 20 pixeles de separación
+ icoArtX1 = icoArtX2 - ICON_ART_RES_W;
+ icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); // Centrado con coverArt
+ icoArtY2 = icoArtY1 + ICON_ART_RES_H;
+ icoTexture->Delayed = 1;
 
   return 0;
 }
 
 // Invalidates currently loaded texture and loads a new one
 int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
-  if (device->metadev) { // Fallback to metadata device
-    device = device->metadev;
-  }
-  // --- 1. Carga y subida de COVER ART ---
-  // Reuse line buffer for building texture path
-  // Append cover art path to the mountpoint
-  snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
-           titleID);
-  // Upload new texture (COV)
-  gsKit_TexManager_invalidate(gsGlobal, coverTexture);
-  if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
-    // Si falla, establecemos el puntero a NULL para que drawTitleList sepa que no hay cover
-    coverTexture->Mem = NULL;
-    coverArtLoadFrames = 0; // Si falla, no hay delay
-    goto load_ico; // Continuamos al ICO incluso si el COV falla
-  }
-  gsKit_TexManager_bind(gsGlobal, coverTexture);
-  // Free memory after the texture has been uploaded (COV)
-  free(coverTexture->Mem);
-  coverTexture->Mem = NULL;
-  coverArtLoadFrames = 1; // Inicia el contador de frames para el delay
+ if (device->metadev) { // Fallback to metadata device
+  device = device->metadev;
+ }
+ // --- 1. Carga y subida de COVER ART ---
+ // Reuse line buffer for building texture path
+ // Append cover art path to the mountpoint
+ snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
+     titleID);
+ // Upload new texture (COV)
+ gsKit_TexManager_invalidate(gsGlobal, coverTexture);
+ if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
+  // Si falla, establecemos el puntero a NULL para que drawTitleList sepa que no hay cover
+  coverTexture->Mem = NULL;
+  coverArtLoadFrames = 0; // Si falla, no hay delay
+  goto load_ico; // Continuamos al ICO incluso si el COV falla
+ }
+ gsKit_TexManager_bind(gsGlobal, coverTexture);
+ // Free memory after the texture has been uploaded (COV)
+ free(coverTexture->Mem);
+ coverTexture->Mem = NULL;
+ coverArtLoadFrames = 1; // Inicia el contador de frames para el delay
 
 // --- 2. Carga y subida de ICO ART ---
 load_ico:
-  // Construimos la ruta para icoArt
-  snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-           titleID);
-  // Upload new texture (ICO)
-  gsKit_TexManager_invalidate(gsGlobal, icoTexture);
-  if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
-    // Si falla, establecemos el puntero a NULL
-    icoTexture->Mem = NULL;
-    return -1; // Retornar error si ambos fallaron o solo el ICO
-  }
-  gsKit_TexManager_bind(gsGlobal, icoTexture);
-  // Free memory after the texture has been uploaded (ICO)
-  free(icoTexture->Mem);
-  icoTexture->Mem = NULL;
+ // Construimos la ruta para icoArt
+ snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
+     titleID);
+ // Upload new texture (ICO)
+ gsKit_TexManager_invalidate(gsGlobal, icoTexture);
+ if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
+  // Si falla, establecemos el puntero a NULL
+  icoTexture->Mem = NULL;
+  return -1; // Retornar error si ambos fallaron o solo el ICO
+ }
+ gsKit_TexManager_bind(gsGlobal, icoTexture);
+ // Free memory after the texture has been uploaded (ICO)
+ free(icoTexture->Mem);
+ icoTexture->Mem = NULL;
 
-  return 0;
+ return 0;
 }
 
 // Frees textures and deinits gsKit
 void closeUI() {
-  gsKit_vram_clear(gsGlobal);
-  closeFont();
-  free(coverTexture);
-  free(icoTexture); // <--- NUEVO: Liberar la estructura icoTexture
-  gsKit_deinit_global(gsGlobal);
+ gsKit_vram_clear(gsGlobal);
+ closeFont();
+ free(coverTexture);
+ free(icoTexture); // <--- NUEVO: Liberar la estructura icoTexture
+ gsKit_deinit_global(gsGlobal);
 }
 
 // Main UI loop. Displays the target list.
@@ -268,11 +268,11 @@ int uiLoop(TargetList *titles) {
   free(lastTitle);
 
 // Load cover art
-  isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
-  coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // <--- Inicializar/resetear el contador
+ isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
+ coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // <--- Inicializar/resetear el contador
 
-  // Main UI loop
-  int frameCount = 0;
+ // Main UI loop
+ int frameCount = 0;
   int frameCount = 0;
   int prevInput = 0;
   int input = 0;
@@ -281,21 +281,21 @@ int uiLoop(TargetList *titles) {
   const int repeatSpeed = 2;  // cada 2 frames después del delay
 
   while (1) {
-    gsKit_clear(gsGlobal, currentTheme.background);
-    gsKit_TexManager_nextFrame(gsGlobal);
+  gsKit_clear(gsGlobal, currentTheme.background);
+  gsKit_TexManager_nextFrame(gsGlobal);
 
-    // Reload target if index has changed
-    if (curTarget->idx != selectedTitleIdx) {
-      curTarget = getTargetByIdx(titles, selectedTitleIdx);
-      isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
-      coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // <--- Resetear en cambio de título
-    }
+  // Reload target if index has changed
+  if (curTarget->idx != selectedTitleIdx) {
+   curTarget = getTargetByIdx(titles, selectedTitleIdx);
+   isCoverUninitialized = loadCoverArt(curTarget->device, curTarget->id);
+   coverArtLoadFrames = (isCoverUninitialized) ? 0 : 1; // <--- Resetear en cambio de título
+  }
 
-    // Draw title list
-    if (!isCoverUninitialized)
-      drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture, icoTexture); // <--- Pasar icoTexture
-    else
-      drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL, NULL); // <--- Pasar NULL
+  // Draw title list
+  if (!isCoverUninitialized)
+   drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, coverTexture, icoTexture); // <--- Pasar icoTexture
+  else
+   drawTitleList(titles, selectedTitleIdx, maxTitlesPerPage, NULL, NULL); // <--- Pasar NULL
 
     // NUEVO: Incrementar el contador de delay
     if (coverArtLoadFrames > 0 && coverArtLoadFrames <= COVER_ART_DELAY_FRAMES) {
@@ -470,8 +470,8 @@ void drawTitleListFooter(int baseX) {
 
 // Draws title list
 void drawTitleList(TargetList *titles, int selectedTitleIdx,
-                   int maxTitlesPerPage, GSTEXTURE *selectedTitleCover, 
-                   GSTEXTURE *selectedTitleIcon) { // <--- NUEVO: Recibe el icono
+         int maxTitlesPerPage, GSTEXTURE *selectedTitleCover, 
+         GSTEXTURE *selectedTitleIcon) { // <--- NUEVO: Recibe el icono
 
   // Draw header and footer
   int baseX = keepoutArea + 10;
@@ -717,41 +717,41 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   drawIcon((float)scrollBarX, (float)scrollBarY, 0, colorBar, ICON_SCROLLBAR);
 
   // Draw cover art placeholder/frame
-  gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
-                    coverArtY2 + 2, 1, currentTheme.coverFrame);
+ gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
+          coverArtY2 + 2, 1, currentTheme.coverFrame);
 
-  // Draw cover art if it exists
-  if (selectedTitleCover != NULL) {
-    // Temporaily disable alpha blending
-    // Some PNGs require inverted alpha channel value to display properly
-    // Since cover art has nothing to blend, we can bypass the issue altogether
-    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
-                              coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
-                              selectedTitleCover->Width,
-                              selectedTitleCover->Height, 2, FontMainColor);
-    gsGlobal->PrimAlphaEnable = GS_SETTING_ON; // Se vuelve a encender el blending
-  } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
-                      1, currentTheme.background);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
-                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
-  }
+ // Draw cover art if it exists
+ if (selectedTitleCover != NULL) {
+  // Temporaily disable alpha blending
+  // Some PNGs require inverted alpha channel value to display properly
+  // Since cover art has nothing to blend, we can bypass the issue altogether
+  gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+  gsKit_prim_sprite_texture(gsGlobal, selectedTitleCover, coverArtX1,
+               coverArtY1, 0.0f, 0.0f, coverArtX2, coverArtY2,
+               selectedTitleCover->Width,
+               selectedTitleCover->Height, 2, FontMainColor);
+  gsGlobal->PrimAlphaEnable = GS_SETTING_ON; // Se vuelve a encender el blending
+ } else {
+  gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
+           1, currentTheme.background);
+  drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
+         currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+ }
   
-  // --- NUEVO: Dibujar Icon Art si coverArt ya terminó el delay ---
-  if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
-    // icoArt tiene transparencias, por lo que el blending DEBE estar encendido.
-    // No necesitamos apagarlo/encenderlo como con coverArt
-    gsKit_prim_sprite_texture(gsGlobal, selectedTitleIcon, icoArtX1,
-                              icoArtY1, 0.0f, 0.0f, icoArtX2, icoArtY2,
-                              selectedTitleIcon->Width,
-                              selectedTitleIcon->Height, 2, currentTheme.iconEnabled); // Usar un color base si es necesario
-  } else if (selectedTitleCover != NULL) {
+ // --- NUEVO: Dibujar Icon Art si coverArt ya terminó el delay ---
+ if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
+  // icoArt tiene transparencias, por lo que el blending DEBE estar encendido.
+  // No necesitamos apagarlo/encenderlo como con coverArt
+  gsKit_prim_sprite_texture(gsGlobal, selectedTitleIcon, icoArtX1,
+               icoArtY1, 0.0f, 0.0f, icoArtX2, icoArtY2,
+               selectedTitleIcon->Width,
+               selectedTitleIcon->Height, 2, currentTheme.iconEnabled); // Usar un color base si es necesario
+ } else if (selectedTitleCover != NULL) {
     // NUEVO: Dibujar un placeholder para icoArt mientras esperamos el delay, solo si hay cover.
     // Esto asegura que el espacio esté ocupado y el ojo se acostumbre.
-    gsKit_prim_sprite(gsGlobal, icoArtX1, icoArtY1, icoArtX2, icoArtY2,
-                      1, currentTheme.coverFrame & 0xFFFFFF80); // Marco con transparencia reducida
-  }
+  gsKit_prim_sprite(gsGlobal, icoArtX1, icoArtY1, icoArtX2, icoArtY2,
+           1, currentTheme.coverFrame & 0xFFFFFF80); // Marco con transparencia reducida
+ }
 }
 
 
