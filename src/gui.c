@@ -137,8 +137,7 @@ int uiInit() {
    gsKit_init_screen(gsGlobal);
    gsKit_display_buffer(
          gsGlobal); 
-   // El TexManager debe inicializarse una sola vez aquí para gestionar TODAS las texturas,
-   // incluidas las fuentes y los iconos del skin.
+   // El TexManager debe inicializarse una sola vez aquí
    gsKit_TexManager_init(gsGlobal); 
    // Set alpha and mode, clear active buffer
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
@@ -147,7 +146,6 @@ int uiInit() {
    gsKit_clear(gsGlobal, currentTheme.background);
 
    // Initialize resources
-   // La carga de fuentes/gráficos del skin aquí usa el TexManager
    if (initGraphics()) { 
       printf("ERROR: Failed to initialize font\n");
       return -1;
@@ -168,8 +166,8 @@ int uiInit() {
   icoArtX1 = icoArtX2 - ICON_ART_RES_W;
   icoArtY1 = coverArtY1 + (COVER_ART_RES_H / 2) - (ICON_ART_RES_H / 2); 
   icoArtY2 = icoArtY1 + ICON_ART_RES_H;
-  icoTexture->Delayed = 1;
   // Aseguramos PSM de 32 bits para transparencia robusta
+  icoTexture->Delayed = 1;
   icoTexture->PSM = GS_PSM_CT32; 
 
    return 0;
@@ -181,16 +179,14 @@ int loadCoverArt(struct DeviceMapEntry *device, char *titleID) {
    device = device->metadev;
   }
 
-// --- CLAVE: ELIMINAMOS gsKit_TexManager_init(gsGlobal) de aquí ---
-// Su presencia estaba rompiendo las texturas de la UI/fuentes.
-// Confiamos en que invalidate y bind reutilizarán las áreas de VRAM.
-
-  // --- 1. Carga y subida de COVER ART ---
+// --- 1. Carga y subida de COVER ART ---
   snprintf(lineBuffer, 255, "%s%s/%s_COV.png", device->mountpoint, artPath,
         titleID);
   
   // Invalida la textura anterior para que el TexManager pueda liberar o reutilizar el espacio.
+  // Mantenemos VifPtr a NULL para que el TexManager elija la mejor ubicación.
   gsKit_TexManager_invalidate(gsGlobal, coverTexture); 
+  coverTexture->VifPtr = NULL;
 
   if (gsKit_texture_png(gsGlobal, coverTexture, lineBuffer)) {
    coverTexture->Mem = NULL;
@@ -211,6 +207,11 @@ load_ico:
   
   // Upload new texture (ICO)
   gsKit_TexManager_invalidate(gsGlobal, icoTexture);
+  
+  // *** CLAVE: Forzar una reasignación de VRAM específica para icoArt ***
+  // Al invalidar y establecer VifPtr a NULL, obligamos al TexManager a 
+  // reasignar la textura, aislándola de posibles corrupciones de la carga anterior.
+  icoTexture->VifPtr = NULL; 
   
   if (gsKit_texture_png(gsGlobal, icoTexture, lineBuffer)) {
    // Si falla, establecemos el puntero a NULL
@@ -747,19 +748,22 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
    
   // --- DIBUJAR ICON ART ---
-  // Mantenemos el retraso de 30 frames para evitar errores de renderizado
   if (selectedTitleIcon != NULL && coverArtLoadFrames > COVER_ART_DELAY_FRAMES) {
    
-   // REFUERZO DE LA TRANSPARENCIA: Aseguramos que el Alpha Blending esté activo
-   // y que el Alpha Test esté configurado para CT32 para ignorar el fondo transparente.
-   // Esta configuración (ATST=7, AREF=0x00) se debe mantener desde uiInit.
-
-   // Nota: gsKit_set_primalpha y gsKit_set_test ya se llamaron en uiInit,
-   // pero las restablecemos por si otra función de dibujo (como drawText)
-   // las modificó temporalmente y no las restauró correctamente.
+   // *** CLAVE: Restaurar explícitamente el estado de transparencia ANTES de dibujar el icono ***
+   // El uso de drawText o drawIcon previo pudo haber modificado la configuración de PrimAlphaEnable o el Alpha Test.
+   
+   // 1. Alpha Blending: Activo para permitir transparencia
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+   
+   // 2. Alpha Blending Mode: Configuración estándar de gsKit para mezcla de texturas
+   // (Fuente = Textura; Destino = Marco)
    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+   
+   // 3. Alpha Test: Activo para descartar píxeles completamente transparentes (los que se veían sólidos)
+   // La configuración global (ATST=7, AREF=0x00) debe estar vigente desde uiInit.
    gsKit_set_test(gsGlobal, GS_ATEST_ON); 
+   
 
    // DIBUJO DEL ICONO: Con la configuración de transparencia activa y UV correctos
    gsKit_prim_sprite_texture(gsGlobal, selectedTitleIcon, 
@@ -769,6 +773,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                        (float)selectedTitleIcon->Width,
                        (float)selectedTitleIcon->Height, 
                        2, currentTheme.iconEnabled); 
+   
+   // Desactivar el test o el blending si el próximo elemento (drawText, drawIcon, etc.) 
+   // espera el estado por defecto. En este caso, lo mantenemos activo ya que la UI restante lo usa.
+   // (Si se rompe la próxima línea de texto, aquí es donde debemos restaurar el estado inicial).
+   
   } else if (selectedTitleCover != NULL) {
       // Dibuja placeholder, asegurando que el blending esté activado
    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
