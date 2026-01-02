@@ -7,7 +7,7 @@
 extern GSTEXTURE *icons;
 extern GSTEXTURE *logo;
 extern GSTEXTURE *box3d;
-extern GSTEXTURE *screen;
+extern GSTEXTURE *crt;
 
 // además de las demás funciones que ya declarás ahí
 
@@ -107,12 +107,12 @@ void drawBox3d(float x, float y, int z, uint64_t color);
 int getBox3dWidth();
 int getBox3dHeight();
 
-//Draws the screen
-void drawScreen(float x, float y, int z, uint64_t color);
+//Draws the crt
+void drawCrt(float x, float y, int z, uint64_t color);
 
-// NUEVO: Declaraciones de funciones para Screen
-int getScreenWidth();
-int getScreenHeight();
+// NUEVO: Declaraciones de funciones para Crt
+int getCrtWidth();
+int getCrtHeight();
 
 // Draws the logo at specified coordinates
 void drawLogo(float x, float y, int z);

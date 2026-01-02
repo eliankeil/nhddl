@@ -30,6 +30,8 @@
 #define DISC_ART_RES_H 128
 #define SPINE_ART_RES_W 10.8
 #define SPINE_ART_RES_H 200
+#define SCREEN_ART_RES_W 141
+#define SCREEN_ART_RES_H 106
 
 // ************************************************
 // FUNCIÓN DE CORRECCIÓN DE ALPHA
@@ -70,9 +72,12 @@ static GSTEXTURE *coverTexture;
 static GSTEXTURE *logoTexture;
 static GSTEXTURE *discTexture; // Nuevo: Disc Texture
 static GSTEXTURE *spineTexture;
+static GSTEXTURE *screenTexture1;
+static GSTEXTURE *screenTexture2;
 static char lineBuffer[255];
 static int lastTitleIdx = -1;
 static int frameCounter = 0;
+static int screenCycleFrame = 0;
 
 // Estructura para manejar el estado de una animación de un solo eje (X)
 typedef struct {
@@ -119,6 +124,12 @@ static int box3dArtX2;
 static int box3dArtY2;
 
 // NUEVO: Coordenadas de Screen Art (Overlay)
+static int crtArtX1;
+static int crtArtY1;
+static int crtArtX2;
+static int crtArtY2;
+
+// NUEVO: Coordenadas de Screen Art (Capturas de Pantalla)
 static int screenArtX1;
 static int screenArtY1;
 static int screenArtX2;
@@ -231,16 +242,16 @@ int uiInit() {
   box3dArtY1 = (gsGlobal->Height / 2) - (box3dHeight / 2);
   box3dArtY2 = box3dArtY1 + box3dHeight;
 
-    // Init screen overlay
-  int screenWidth = getScreenWidth();
-  int screenHeight = getScreenHeight();
-  const int screenMargin = 50;
+  // Init crt overlay
+  int crtWidth = getCrtWidth();
+  int crtHeight = getCrtHeight();
+  const int crtMargin = 50;
 
-  screenArtX2 = box3dArtX1 + screenMargin;
-  screenArtX1 = screenArtX2 - screenWidth;
-  // Centrado vertical: Y1 = (H / 2) - (screen_H / 2)
-  screenArtY1 = (gsGlobal->Height / 2) - (screenHeight / 2);
-  screenArtY2 = screenArtY1 + screenHeight;
+  crtArtX2 = box3dArtX1 + crtMargin;
+  crtArtX1 = crtArtX2 - crtWidth;
+  // Centrado vertical: Y1 = (H / 2) - (crt_H / 2)
+  crtArtY1 = (gsGlobal->Height / 2) - (crtHeight / 2);
+  crtArtY2 = crtArtY1 + crtHeight;
 
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -289,6 +300,16 @@ int uiInit() {
   discArtX1 = discArtX2 - DISC_ART_RES_W;
   discArtY1 = discArtY2 - DISC_ART_RES_H;
 
+  // Init screen texture 1
+  screenTexture1 = calloc(sizeof(GSTEXTURE), 1);
+  screenTexture1->PSM = GS_PSM_CT32;
+  screenTexture1->Delayed = 1;
+
+  // Init screen texture 2
+  screenTexture2 = calloc(sizeof(GSTEXTURE), 1);
+  screenTexture2->PSM = GS_PSM_CT32;
+  screenTexture2->Delayed = 1;
+
   // Init spineArt
   spineTexture = calloc(sizeof(GSTEXTURE), 1);
   spineTexture->PSM = GS_PSM_CT32;
@@ -308,16 +329,20 @@ int uiInit() {
   // para que el lomo parezca conectarse correctamente a la caja.
 
   spineArtQuad.xTL = (float)spineArtX1;
-  spineArtQuad.yTL = (float)spineArtY1 + 0.4f; // TL (Sesgo arriba, menos intenso)
+  spineArtQuad.yTL =
+      (float)spineArtY1 + 0.4f; // TL (Sesgo arriba, menos intenso)
 
   spineArtQuad.xTR = (float)spineArtX2;
-  spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
+  spineArtQuad.yTR =
+      (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
 
   spineArtQuad.xBR = (float)spineArtX2;
-  spineArtQuad.yBR = (float)coverArtY2; // BR (Se conecta al BL del Cover, sin sesgo)
+  spineArtQuad.yBR =
+      (float)coverArtY2; // BR (Se conecta al BL del Cover, sin sesgo)
 
   spineArtQuad.xBL = (float)spineArtX1;
-  spineArtQuad.yBL = (float)spineArtY2 - 3.0f; // BL (Sesgo abajo, menos intenso)
+  spineArtQuad.yBL =
+      (float)spineArtY2 - 3.0f; // BL (Sesgo abajo, menos intenso)
 
   return 0;
 }
@@ -397,6 +422,54 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     }
   }
 
+  // ************************************************
+  // NUEVO: 4. LÓGICA DE CARGA DE SCREEN ART 1 (*_SCR.png)
+  // ************************************************
+  gsKit_TexManager_invalidate(gsGlobal, screenTexture1);
+  if (screenTexture1->Mem != NULL) {
+    free(screenTexture1->Mem);
+    screenTexture1->Mem = NULL;
+  }
+  screenTexture1->Vram = 0;
+  screenTexture1->VramClut = 0;
+
+  snprintf(lineBuffer, 255, "%s%s/%s_SCR.png", device->mountpoint, artPath,
+           titleID);
+
+  int screen1Loaded = 0;
+  if (gsKit_texture_png(gsGlobal, screenTexture1, lineBuffer) == 0) {
+    if (screenTexture1->Mem != NULL) {
+      correctAlpha(screenTexture1);
+      gsKit_TexManager_bind(gsGlobal, screenTexture1);
+      screenTexture1->Filter = GS_FILTER_LINEAR;
+      screen1Loaded = 1;
+    }
+  }
+
+  // ************************************************
+  // NUEVO: 5. LÓGICA DE CARGA DE SCREEN ART 2 (*_SCR2.png)
+  // ************************************************
+  gsKit_TexManager_invalidate(gsGlobal, screenTexture2);
+  if (screenTexture2->Mem != NULL) {
+    free(screenTexture2->Mem);
+    screenTexture2->Mem = NULL;
+  }
+  screenTexture2->Vram = 0;
+  screenTexture2->VramClut = 0;
+
+  snprintf(lineBuffer, 255, "%s%s/%s_SCR2.png", device->mountpoint, artPath,
+           titleID);
+
+  int screen2Loaded = 0;
+  if (gsKit_texture_png(gsGlobal, screenTexture2, lineBuffer) == 0) {
+    if (screenTexture2->Mem != NULL) {
+      correctAlpha(screenTexture2);
+      gsKit_TexManager_bind(gsGlobal, screenTexture2);
+      screenTexture2->Filter = GS_FILTER_LINEAR;
+      screen2Loaded = 1;
+    }
+  }
+
   // --- 3. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
   gsKit_TexManager_invalidate(gsGlobal, coverTexture);
   if (coverTexture->Mem != NULL) {
@@ -431,6 +504,15 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     free(discTexture->Mem);
     discTexture->Mem = NULL;
   }
+  // NUEVO: Liberar memoria de Screen Art
+  if (screen1Loaded) {
+    free(screenTexture1->Mem);
+    screenTexture1->Mem = NULL;
+  }
+  if (screen2Loaded) {
+    free(screenTexture2->Mem);
+    screenTexture2->Mem = NULL;
+  }
   // NUEVO: Liberar memoria de Spine Art
   if (spineLoaded) {
     free(spineTexture->Mem);
@@ -452,6 +534,8 @@ void closeUI() {
   free(logoTexture);
   free(discTexture); // Liberar DiscTexture
   free(spineTexture);
+  free(screenTexture1);
+  free(screenTexture2);
   gsKit_deinit_global(gsGlobal);
 }
 
@@ -556,6 +640,7 @@ int uiLoop(TargetList *titles) {
       // LÓGICA DE ABORTO/REINICIO DE ANIMACIÓN
       // ************************************************
       frameCounter = 0;
+      screenCycleFrame = 0;
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
@@ -952,6 +1037,56 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
                     coverArtY2 + 2, 1, currentTheme.background);
 
+  // ************************************************
+  // LÓGICA DE ROTACIÓN CÍCLICA Y DIBUJADO DE SCREEN ART
+  // ************************************************
+
+  const int SCREEN_CYCLE_FRAMES = 180; // Alternar cada 3 segundos (60 fps * 3s)
+
+  if (screenCycleFrame >= SCREEN_CYCLE_FRAMES * 2) {
+    screenCycleFrame = 0;
+  }
+
+  // Controlar el avance (solo si el título es el seleccionado)
+  // Si el índice de título ha cambiado, el frameCounter se reinicia a 0 en
+  // uiLoop
+  if (selectedTitleIdx == lastTitleIdx) {
+    screenCycleFrame++;
+  }
+
+  // Determinar qué textura dibujar
+  GSTEXTURE *currentScreenTexture = NULL;
+  if (screenCycleFrame < SCREEN_CYCLE_FRAMES) {
+    // Primera mitad del ciclo: Muestra SCR.png
+    if (screenTexture1 != NULL && screenTexture1->Mem == NULL) {
+      currentScreenTexture = screenTexture1;
+    }
+  } else {
+    // Segunda mitad del ciclo: Muestra SCR2.png
+    if (screenTexture2 != NULL && screenTexture2->Mem == NULL) {
+      currentScreenTexture = screenTexture2;
+    }
+  }
+
+  // DIBUJADO
+  if (currentScreenTexture != NULL) {
+
+    // Usamos el tamaño fijo 141x106 para el mapeo UV, aunque el PNG real podría
+    // ser diferente
+    float texWidth = (float)SCREEN_ART_RES_W;
+    float texHeight = (float)SCREEN_ART_RES_H;
+
+    gsKit_prim_sprite_texture(
+        gsGlobal, currentScreenTexture, (float)crtArtX1,
+        (float)crtArtY1, // << Usar coordenadas del OVERLAY crtArt
+        0.0f, 0.0f, (float)crtArtX2,
+        (float)crtArtY2, // << Usar coordenadas del OVERLAY crtArt
+        texWidth, texHeight,
+        6, // Z-PRIORIDAD: 6 (Lo más lejano, para que el crtArt Overlay Z=1/2 lo
+           // cubra)
+        FontMainColor);
+  }
+
   // Duración del movimiento después de la pausa (ajustable)
   const int LOGO_MOVE_FRAMES = 180;
 
@@ -990,7 +1125,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                               (float)discTexture->Height, 1, FontMainColor);
   }
 
-// ************************************************
+  // ************************************************
   // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 2, antes de Cover)
   // Solución: Dibujado como 2 triángulos para evitar culling (descarte).
   // ************************************************
@@ -1008,9 +1143,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         // Vértice 2: TR
         spineArtQuad.xTR, spineArtQuad.yTR, texWidth, 0.0f,
         // Vértice 3: BL
-        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
-        2, FontMainColor
-    );
+        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight, 2, FontMainColor);
 
     // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
     gsKit_prim_triangle_texture(
@@ -1020,41 +1153,40 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         // Vértice 2: BR
         spineArtQuad.xBR, spineArtQuad.yBR, texWidth, texHeight,
         // Vértice 3: BL
-        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
-        2, FontMainColor
-    );
+        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight, 2, FontMainColor);
   }
 
-// ************************************************
-// 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
-// SOLUCIÓN: Dibujado como 2 triángulos para evitar culling.
-// ************************************************
-if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
+  // ************************************************
+  // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+  // SOLUCIÓN: Dibujado como 2 triángulos para evitar culling.
+  // ************************************************
+  if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
 
     // --- Triángulo 1: Parte Superior (TL, TR, BL) ---
-    gsKit_prim_triangle_texture(
-        gsGlobal, selectedTitleCover,
-        // Vértice 1: TL (x, y, u, v)
-        coverArtQuad.xTL, coverArtQuad.yTL, 0.0f, 0.0f,
-        // Vértice 2: TR
-        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f,
-        // Vértice 3: BL
-        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
-        2, FontMainColor
-    );
+    gsKit_prim_triangle_texture(gsGlobal, selectedTitleCover,
+                                // Vértice 1: TL (x, y, u, v)
+                                coverArtQuad.xTL, coverArtQuad.yTL, 0.0f, 0.0f,
+                                // Vértice 2: TR
+                                coverArtQuad.xTR, coverArtQuad.yTR,
+                                (float)selectedTitleCover->Width, 0.0f,
+                                // Vértice 3: BL
+                                coverArtQuad.xBL, coverArtQuad.yBL, 0.0f,
+                                (float)selectedTitleCover->Height, 2,
+                                FontMainColor);
 
     // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
     gsKit_prim_triangle_texture(
         gsGlobal, selectedTitleCover,
         // Vértice 1: TR
-        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f,
+        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width,
+        0.0f,
         // Vértice 2: BR
-        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width, (float)selectedTitleCover->Height,
+        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width,
+        (float)selectedTitleCover->Height,
         // Vértice 3: BL
-        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
-        2, FontMainColor
-    );
-}
+        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f,
+        (float)selectedTitleCover->Height, 2, FontMainColor);
+  }
   // ************************************************
   // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
@@ -1067,15 +1199,15 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
   // Logo/Disc/Spine son Z=3)
   drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
 
-    // ************************************************
+  // ************************************************
   // 5. DIBUJADO DE SCREEN (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
 
-  uint64_t screen_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
+  uint64_t crt_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  drawScreen((float)screenArtX1, (float)screenArtY1, 5, screen_color);
+  drawCrt((float)crtArtX1, (float)crtArtY1, 5, crt_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;

@@ -18,7 +18,7 @@ extern unsigned int SIZE_LOGO_PNG;
 extern unsigned char LOGO_PNG[] __attribute__((aligned(16)));
 extern unsigned int SIZE_BOX3D_PNG;
 extern unsigned char BOX3D_PNG[] __attribute__((aligned(16)));
-extern unsigned int SIZE_SCREEN_PNG;
-extern unsigned char SCREEN_PNG[] __attribute__((aligned(16)));
+extern unsigned int SIZE_CRT_PNG;
+extern unsigned char CRT_PNG[] __attribute__((aligned(16)));
 
 #endif
