@@ -295,8 +295,8 @@ int uiInit() {
   discTexture->PSM = GS_PSM_CT32;
   discTexture->Delayed = 1;
 
-  discArtX2 = (gsGlobal->Width - keepoutArea - 20 - COVER_ART_RES_W);
-  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 40;
+  discArtX2 = (gsGlobal->Width - keepoutArea - 50 - COVER_ART_RES_W);
+  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 70;
   discArtX1 = discArtX2 - DISC_ART_RES_W;
   discArtY1 = discArtY2 - DISC_ART_RES_H;
 
@@ -649,14 +649,14 @@ int uiLoop(TargetList *titles) {
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -90.0f;
+      logoAnimState.targetDistance = -160.0f;
       logoAnimState.currentOffset = 0.0f;
       logoAnimState.delayFrames = 25;
       logoAnimState.isFinished = false;
 
       // Disc Art (Mueve 64px a la derecha)
       discAnimState.startPosition = (float)discArtX1;
-      discAnimState.targetDistance = 94.0f;
+      discAnimState.targetDistance = 134.0f;
       discAnimState.currentOffset = 0.0f;
       discAnimState.delayFrames = 35;
       discAnimState.isFinished = false;
