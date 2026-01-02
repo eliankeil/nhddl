@@ -649,7 +649,7 @@ int uiLoop(TargetList *titles) {
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -180.0f;
+      logoAnimState.targetDistance = -173.0f;
       logoAnimState.currentOffset = 0.0f;
       logoAnimState.delayFrames = 25;
       logoAnimState.isFinished = false;
