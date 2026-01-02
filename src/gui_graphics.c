@@ -17,6 +17,7 @@ GSTEXTURE **fontPages;
 GSTEXTURE *icons;
 GSTEXTURE *logo;
 GSTEXTURE *box3d;
+GSTEXTURE *screen;
 
 // Used font
 const struct BMFont font = BMFONT_DEJAVU_SANS;
@@ -59,6 +60,13 @@ int initGraphics() {
     return -1;
   }
 
+      // Upload screen texture to GS
+  screen = calloc(sizeof(GSTEXTURE), 1);
+  if (gsKit_texture_png_mem(gsGlobal, screen, SCREEN_PNG, SIZE_SCREEN_PNG)) {
+    printf("ERROR: Failed to load screen texture\n");
+    return -1;
+  }
+
   logo->Filter = GS_FILTER_LINEAR; // Enable bilinear filtering
 
   return 0;
@@ -76,6 +84,8 @@ void closeFont() {
   free(icons);
   free(box3d->Mem);
   free(box3d);
+  free(screen->Mem);
+  free(screen);
   free(logo->Mem);
   free(logo);
   return;
@@ -155,6 +165,32 @@ void drawBox3d(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color
     gsKit_set_test(gsGlobal, GS_ATEST_ON);
     gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
 }
+
+// Returns screen height
+int getScreenHeight() { return screen->Height; }
+
+// Returns screen width
+int getScreenWidth() { return screen->Width; }
+
+// Dibuja el screen en coordenadas especificadas, usando 'color' para modular
+// (Asegúrate de cambiar también la declaración en gui_graphics.h)
+void drawScreen(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color!
+    gsKit_set_primalpha(gsGlobal, GS_BLEND_BACK2FRONT, 0);
+    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+    gsKit_prim_sprite_texture(gsGlobal, screen, 
+                            x,                
+                            y,                
+                            0,                
+                            0,                
+                            x + screen->Width,  
+                            y + screen->Height, 
+                            screen->Width + 1,  
+                            screen->Height + 1, 
+                            z, color); // <-- ¡Usar el parámetro 'color'!
+    gsKit_set_test(gsGlobal, GS_ATEST_ON);
+    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+}
+
 // Draws the icon in [x1,y1],[x2,y2] window.
 void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, IconType iconType) {
   Icon icon = ICONS[iconType];
