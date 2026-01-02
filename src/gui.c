@@ -244,7 +244,7 @@ int uiInit() {
   coverArtQuad.yTL = (float)coverArtY1; // TL sin sesgo
 
   coverArtQuad.xTR = (float)coverArtX2;
-  coverArtQuad.yTR = (float)coverArtY1 + 6.0f; // TR (Sesgo arriba)
+  coverArtQuad.yTR = (float)coverArtY1 + 7.0f; // TR (Sesgo arriba)
 
   coverArtQuad.xBR = (float)coverArtX2;
   coverArtQuad.yBR = (float)coverArtY2 - 17.0; // BR (Sesgo abajo)
@@ -1048,7 +1048,7 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 3, box_color);
+  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
