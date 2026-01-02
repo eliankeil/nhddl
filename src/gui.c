@@ -727,7 +727,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     static float scrollOffset = 0.0f;
     static int scrollState = 0;
     static int pauseCounter = 0;
-    static int lastTitleIdx = -1;
     static int scrollFinished = 0;
     static int holdCounter = 0;
 

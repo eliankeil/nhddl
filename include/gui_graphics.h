@@ -102,6 +102,10 @@ void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8
 //Draws the box3d
 void drawBox3D(float x, float y, int z, uint64_t color);
 
+// NUEVO: Declaraciones de funciones para Box3D
+int getBox3dWidth();
+int getBox3dHeight();
+
 // Draws the logo at specified coordinates
 void drawLogo(float x, float y, int z);
 
