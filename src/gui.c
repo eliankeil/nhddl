@@ -230,7 +230,7 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 15);
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 13);
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
@@ -291,7 +291,7 @@ int uiInit() {
   // para que el lomo parezca conectarse correctamente a la caja.
 
   spineArtQuad.xTL = (float)spineArtX1;
-  spineArtQuad.yTL = (float)spineArtY1 + 0.5f; // TL (Sesgo arriba, menos intenso)
+  spineArtQuad.yTL = (float)spineArtY1 + 1.5f; // TL (Sesgo arriba, menos intenso)
 
   spineArtQuad.xTR = (float)spineArtX2;
   spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
@@ -300,7 +300,7 @@ int uiInit() {
   spineArtQuad.yBR = (float)coverArtY2; // BR (Se conecta al BL del Cover, sin sesgo)
 
   spineArtQuad.xBL = (float)spineArtX1;
-  spineArtQuad.yBL = (float)spineArtY2 - 2.5f; // BL (Sesgo abajo, menos intenso)
+  spineArtQuad.yBL = (float)spineArtY2 - 3.0f; // BL (Sesgo abajo, menos intenso)
 
   return 0;
 }
@@ -948,7 +948,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     gsKit_prim_sprite_texture(gsGlobal, logoTexture, finalLogoArtX1,
                               (float)logoArtY1, 0.0f, 0.0f, finalLogoArtX2,
                               (float)logoArtY2, (float)logoTexture->Width,
-                              (float)logoTexture->Height, 3, FontMainColor);
+                              (float)logoTexture->Height, 1, FontMainColor);
   }
 
   // Duración del movimiento después de la pausa (ajustable)
@@ -967,7 +967,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
                               (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
                               (float)discArtY2, (float)discTexture->Width,
-                              (float)discTexture->Height, 3, FontMainColor);
+                              (float)discTexture->Height, 1, FontMainColor);
   }
 
   // ************************************************
@@ -986,7 +986,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                             (float)spineTexture->Height, // P3 (Bottom Right)
                             spineArtQuad.xBL, spineArtQuad.yBL, 0.0f,
                             (float)spineTexture->Height, // P4 (Bottom Left)
-                            3, FontMainColor             // Z, Color
+                            2, FontMainColor             // Z, Color
     );
   }
 
@@ -997,14 +997,10 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
     // CAMBIO A gsKit_prim_quad_texture
     gsKit_prim_quad_texture(
-        gsGlobal, selectedTitleCover, coverArtQuad.xTL, coverArtQuad.yTL, 0.0f,
-        0.0f, // P1 (Top Left)
-        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width,
-        0.0f, // P2 (Top Right)
-        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width,
-        (float)selectedTitleCover->Height, // P3 (Bottom Right)
-        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f,
-        (float)selectedTitleCover->Height, // P4 (Bottom Left)
+        gsGlobal, selectedTitleCover, coverArtQuad.xTL, coverArtQuad.yTL, 0.0f, 0.0f, // P1 (Top Left)
+        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width, (float)selectedTitleCover->Height, // P3 (Bottom Right)
+        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height, // P4 (Bottom Left)
+        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f, // P2 (Top Right)
         2, FontMainColor                   // Z, Color
     );
   }
@@ -1021,7 +1017,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 3, box_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
