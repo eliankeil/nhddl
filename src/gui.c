@@ -236,7 +236,7 @@ int uiInit() {
   int screenHeight = getScreenHeight();
   const int screenMargin = 30;
 
-  screenArtX2 = coverArtX1 + screenMargin;
+  screenArtX2 = box3dArtX1 - screenMargin;
   screenArtX1 = screenArtX2 - screenWidth;
   // Centrado vertical: Y1 = (H / 2) - (screen_H / 2)
   screenArtY1 = (gsGlobal->Height / 2) - (screenHeight / 2);
