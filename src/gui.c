@@ -1075,7 +1075,7 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  drawScreen((float)screenArtX1, (float)screenArtY1, 1, screen_color);
+  drawScreen((float)screenArtX1, (float)screenArtY1, 5, screen_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
