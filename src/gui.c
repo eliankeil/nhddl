@@ -658,7 +658,7 @@ int uiLoop(TargetList *titles) {
       discAnimState.startPosition = (float)discArtX1;
       discAnimState.targetDistance = 134.0f;
       discAnimState.currentOffset = 0.0f;
-      discAnimState.delayFrames = 35;
+      discAnimState.delayFrames = 25;
       discAnimState.isFinished = false;
     }
 
