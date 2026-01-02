@@ -230,7 +230,7 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 13);
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 12);
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
@@ -244,7 +244,7 @@ int uiInit() {
   coverArtQuad.yTL = (float)coverArtY1; // TL sin sesgo
 
   coverArtQuad.xTR = (float)coverArtX2;
-  coverArtQuad.yTR = (float)coverArtY1 + 7.0f; // TR (Sesgo arriba)
+  coverArtQuad.yTR = (float)coverArtY1 + 6.3f; // TR (Sesgo arriba)
 
   coverArtQuad.xBR = (float)coverArtX2;
   coverArtQuad.yBR = (float)coverArtY2 - 17.0; // BR (Sesgo abajo)
@@ -291,7 +291,7 @@ int uiInit() {
   // para que el lomo parezca conectarse correctamente a la caja.
 
   spineArtQuad.xTL = (float)spineArtX1;
-  spineArtQuad.yTL = (float)spineArtY1 + 1.5f; // TL (Sesgo arriba, menos intenso)
+  spineArtQuad.yTL = (float)spineArtY1 - 1.5f; // TL (Sesgo arriba, menos intenso)
 
   spineArtQuad.xTR = (float)spineArtX2;
   spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
