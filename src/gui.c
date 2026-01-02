@@ -957,7 +957,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80); 
     
     // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2, Logo/Disc/Spine son Z=3)
-    drawBox3D((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+    drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;

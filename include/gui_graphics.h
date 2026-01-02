@@ -100,7 +100,7 @@ void drawIcon(float x, float y, int z, uint64_t color, IconType iconType);
 void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, IconType iconType);
 
 //Draws the box3d
-void drawBox3D(float x, float y, int z, uint64_t color);
+void drawBox3d(float x, float y, int z, uint64_t color);
 
 // NUEVO: Declaraciones de funciones para Box3D
 int getBox3dWidth();
