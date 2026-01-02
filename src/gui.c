@@ -22,7 +22,7 @@
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
 // Dimensiones de las Artes
-#define COVER_ART_RES_W 140
+#define COVER_ART_RES_W 120
 #define COVER_ART_RES_H 200
 #define LOGO_ART_RES_W 150
 #define LOGO_ART_RES_H 62
@@ -118,6 +118,24 @@ static int box3dArtY1;
 static int box3dArtX2;
 static int box3dArtY2;
 
+// 4 Puntos para Cover Art: TopLeft(TL), TopRight(TR), BottomRight(BR),
+// BottomLeft(BL)
+static struct {
+  float xTL, yTL;
+  float xTR, yTR;
+  float xBR, yBR;
+  float xBL, yBL;
+} coverArtQuad;
+
+// 4 Puntos para Spine Art: TopLeft(TL), TopRight(TR), BottomRight(BR),
+// BottomLeft(BL)
+static struct {
+  float xTL, yTL;
+  float xTR, yTR;
+  float xBR, yBR;
+  float xBL, yBL;
+} spineArtQuad;
+
 const int keepoutArea = 20;
 const int headerHeight = 20 + keepoutArea;
 const int footerHeight = 30 + keepoutArea;
@@ -212,10 +230,27 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 15);
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 17);
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
+
+  // --- COVER ART (Frontal) ---
+  // Se mueve la esquina superior derecha (TR) hacia arriba y la inferior
+  // derecha (BR) hacia abajo. Esto crea un efecto de "libro abierto" o sesgo
+  // hacia el frente/lista.
+
+  coverArtQuad.xTL = (float)coverArtX1;
+  coverArtQuad.yTL = (float)coverArtY1; // TL sin sesgo
+
+  coverArtQuad.xTR = (float)coverArtX2;
+  coverArtQuad.yTR = (float)coverArtY1 - 6.0f; // TR (Sesgo arriba)
+
+  coverArtQuad.xBR = (float)coverArtX2;
+  coverArtQuad.yBR = (float)coverArtY2 + 17.0; // BR (Sesgo abajo)
+
+  coverArtQuad.xBL = (float)coverArtX1;
+  coverArtQuad.yBL = (float)coverArtY2; // BL sin sesgo
 
   // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
   logoTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -250,6 +285,22 @@ int uiInit() {
   // coverArt.
   spineArtX2 = coverArtX1;
   spineArtX1 = spineArtX2 - SPINE_ART_RES_W;
+
+  // --- SPINE ART (Lomo) ---
+  // El Spine debe tener sesgo opuesto al Cover,
+  // para que el lomo parezca conectarse correctamente a la caja.
+
+  spineArtQuad.xTL = (float)spineArtX1;
+  spineArtQuad.yTL = (float)spineArtY1 - 0.5f; // TL (Sesgo arriba, menos intenso)
+
+  spineArtQuad.xTR = (float)spineArtX2;
+  spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
+
+  spineArtQuad.xBR = (float)spineArtX2;
+  spineArtQuad.yBR = (float)coverArtY2; // BR (Se conecta al BL del Cover, sin sesgo)
+
+  spineArtQuad.xBL = (float)spineArtX1;
+  spineArtQuad.yBL = (float)spineArtY2 + 2.5f; // BL (Sesgo abajo, menos intenso)
 
   return 0;
 }
@@ -879,7 +930,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Draw cover art placeholder/frame
   gsKit_prim_sprite(gsGlobal, coverArtX1 - 2, coverArtY1 - 2, coverArtX2 + 2,
-                    coverArtY2 + 2, 1, currentTheme.coverFrame);
+                    coverArtY2 + 2, 1, currentTheme.background);
 
   // Duración del movimiento después de la pausa (ajustable)
   const int LOGO_MOVE_FRAMES = 80;
@@ -920,44 +971,57 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // ************************************************
-    // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
-    // Se dibuja en su posición ESTÁTICA (X1, Y1).
-    // ************************************************
-    if (spineTexture != NULL && spineTexture->Mem == NULL) {
-        
-        // Sin animación: utiliza directamente spineArtX1, spineArtY1
-        gsKit_prim_sprite_texture(gsGlobal, spineTexture, (float)spineArtX1,
-                                  (float)spineArtY1, 0.0f, 0.0f, (float)spineArtX2,
-                                  (float)spineArtY2, (float)spineTexture->Width,
-                                  (float)spineTexture->Height, 3, FontMainColor);
-    }
+  // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
+  // Se dibuja en su posición ESTÁTICA (X1, Y1).
+  // ************************************************
+  if (spineTexture != NULL && spineTexture->Mem == NULL) {
+
+    // CAMBIO A gsKit_prim_quad_texture
+    gsKit_prim_quad_texture(gsGlobal, spineTexture, spineArtQuad.xTL,
+                            spineArtQuad.yTL, 0.0f, 0.0f, // P1 (Top Left)
+                            spineArtQuad.xTR, spineArtQuad.yTR,
+                            (float)spineTexture->Width, 0.0f, // P2 (Top Right)
+                            spineArtQuad.xBR, spineArtQuad.yBR,
+                            (float)spineTexture->Width,
+                            (float)spineTexture->Height, // P3 (Bottom Right)
+                            spineArtQuad.xBL, spineArtQuad.yBL, 0.0f,
+                            (float)spineTexture->Height, // P4 (Bottom Left)
+                            3, FontMainColor             // Z, Color
+    );
+  }
 
   // ************************************************
   // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
   // ************************************************
   if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
-    gsKit_prim_sprite_texture(
-        gsGlobal, selectedTitleCover, coverArtX1, coverArtY1, 0.0f, 0.0f,
-        coverArtX2, coverArtY2, (float)selectedTitleCover->Width,
-        (float)selectedTitleCover->Height, 2, FontMainColor);
-  } else {
-    gsKit_prim_sprite(gsGlobal, coverArtX1, coverArtY1, coverArtX2, coverArtY2,
-                      1, currentTheme.background);
-    drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
-                   currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
+
+    // CAMBIO A gsKit_prim_quad_texture
+    gsKit_prim_quad_texture(
+        gsGlobal, selectedTitleCover, coverArtQuad.xTL, coverArtQuad.yTL, 0.0f,
+        0.0f, // P1 (Top Left)
+        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width,
+        0.0f, // P2 (Top Right)
+        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width,
+        (float)selectedTitleCover->Height, // P3 (Bottom Right)
+        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f,
+        (float)selectedTitleCover->Height, // P4 (Bottom Left)
+        2, FontMainColor                   // Z, Color
+    );
   }
   // ************************************************
-    // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
-    // ************************************************
-    // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus coordenadas
-    // en uiInit(). Asumimos que box3d es una textura global en gui_graphics.c
-    
-    // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
-    // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
-    uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80); 
-    
-    // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2, Logo/Disc/Spine son Z=3)
-    drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+  // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
+  // ************************************************
+  // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus
+  // coordenadas en uiInit(). Asumimos que box3d es una textura global en
+  // gui_graphics.c
+
+  // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
+  // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
+  uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80);
+
+  // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
+  // Logo/Disc/Spine son Z=3)
+  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
