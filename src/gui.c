@@ -992,7 +992,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         spineArtQuad.xTR, spineArtQuad.yTR, texWidth, 0.0f,
         // Vértice 3: BL
         spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
-        GS_PRIMITIVE_PERSPECTIVE, FontMainColor
+        2, FontMainColor
     );
 
     // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
@@ -1004,7 +1004,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
         spineArtQuad.xBR, spineArtQuad.yBR, texWidth, texHeight,
         // Vértice 3: BL
         spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
-        GS_PRIMITIVE_PERSPECTIVE, FontMainColor
+        2, FontMainColor
     );
   }
 
@@ -1023,7 +1023,7 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
         coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f,
         // Vértice 3: BL
         coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
-        GS_PRIMITIVE_PERSPECTIVE, FontMainColor
+        2, FontMainColor
     );
 
     // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
@@ -1035,7 +1035,7 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
         coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width, (float)selectedTitleCover->Height,
         // Vértice 3: BL
         coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
-        GS_PRIMITIVE_PERSPECTIVE, FontMainColor
+        2, FontMainColor
     );
 }
   // ************************************************

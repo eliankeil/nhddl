@@ -114,6 +114,6 @@ int getLogoHeight();
 
 // Returns logo width
 int getLogoWidth();
-#define GS_PRIM_SHADE_PERSPECTIVE (1 << 8)
-#define GS_PRIMITIVE_PERSPECTIVE (2 | GS_PRIM_SHADE_PERSPECTIVE)
+//#define GS_PRIM_SHADE_PERSPECTIVE (1 << 8)
+//#define GS_PRIMITIVE_PERSPECTIVE (2 | GS_PRIM_SHADE_PERSPECTIVE)
 #endif
