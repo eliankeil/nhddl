@@ -305,6 +305,11 @@ int uiInit() {
   screenTexture1->PSM = GS_PSM_CT32;
   screenTexture1->Delayed = 1;
 
+  screenArtX2 = crtArtX2 - 81;
+  screenArtY2 = crtArtY2 - 74;
+  screenArtX1 = screenArtX2 - SCREEN_ART_RES_W;
+  screenArtY1 = screenArtY2 - SCREEN_ART_RES_H;
+
   // Init screen texture 2
   screenTexture2 = calloc(sizeof(GSTEXTURE), 1);
   screenTexture2->PSM = GS_PSM_CT32;
@@ -1056,14 +1061,15 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   // Determinar qué textura dibujar
   GSTEXTURE *currentScreenTexture = NULL;
+
   if (screenCycleFrame < SCREEN_CYCLE_FRAMES) {
     // Primera mitad del ciclo: Muestra SCR.png
-    if (screenTexture1 != NULL && screenTexture1->Mem == NULL) {
+    if (screenTexture1 != NULL && screenTexture1->Vram != 0) { // << CORREGIDO
       currentScreenTexture = screenTexture1;
     }
   } else {
     // Segunda mitad del ciclo: Muestra SCR2.png
-    if (screenTexture2 != NULL && screenTexture2->Mem == NULL) {
+    if (screenTexture2 != NULL && screenTexture2->Vram != 0) { // << CORREGIDO
       currentScreenTexture = screenTexture2;
     }
   }
@@ -1076,15 +1082,15 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     float texWidth = (float)SCREEN_ART_RES_W;
     float texHeight = (float)SCREEN_ART_RES_H;
 
-    gsKit_prim_sprite_texture(
-        gsGlobal, currentScreenTexture, (float)crtArtX1,
-        (float)crtArtY1, // << Usar coordenadas del OVERLAY crtArt
-        0.0f, 0.0f, (float)crtArtX2,
-        (float)crtArtY2, // << Usar coordenadas del OVERLAY crtArt
-        texWidth, texHeight,
-        6, // Z-PRIORIDAD: 6 (Lo más lejano, para que el crtArt Overlay Z=1/2 lo
-           // cubra)
-        FontMainColor);
+    gsKit_prim_sprite_texture(gsGlobal, currentScreenTexture,
+                              (float)screenArtX1, // Usar X1 calculado
+                              (float)screenArtY1, // Usar Y1 calculado
+                              0.0f, 0.0f,
+                              (float)screenArtX2, // Usar X2 calculado
+                              (float)screenArtY2, // Usar Y2 calculado
+                              texWidth, texHeight,
+                              4, // Prioridad Z=4
+                              FontMainColor);
   }
 
   // Duración del movimiento después de la pausa (ajustable)
