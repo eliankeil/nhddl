@@ -118,6 +118,12 @@ static int box3dArtY1;
 static int box3dArtX2;
 static int box3dArtY2;
 
+// NUEVO: Coordenadas de Screen Art (Overlay)
+static int screenArtX1;
+static int screenArtY1;
+static int screenArtX2;
+static int screenArtY2;
+
 // 4 Puntos para Cover Art: TopLeft(TL), TopRight(TR), BottomRight(BR),
 // BottomLeft(BL)
 static struct {
@@ -224,6 +230,17 @@ int uiInit() {
   // Centrado vertical: Y1 = (H / 2) - (box3d_H / 2)
   box3dArtY1 = (gsGlobal->Height / 2) - (box3dHeight / 2);
   box3dArtY2 = box3dArtY1 + box3dHeight;
+
+    // Init screen overlay
+  int screenWidth = getScreenWidth();
+  int screenHeight = getScreenHeight();
+  const int screenMargin = 30;
+
+  screenArtX2 = coverArtX1 + screenMargin;
+  screenArtX1 = screenArtX2 - screenWidth;
+  // Centrado vertical: Y1 = (H / 2) - (screen_H / 2)
+  screenArtY1 = (gsGlobal->Height / 2) - (screenHeight / 2);
+  screenArtY2 = screenArtY1 + screenHeight;
 
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -1041,17 +1058,24 @@ if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
   // ************************************************
   // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
-  // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus
-  // coordenadas en uiInit(). Asumimos que box3d es una textura global en
-  // gui_graphics.c
 
   // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
   // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
-  uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80);
+  uint64_t box_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
   drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+
+    // ************************************************
+  // 5. DIBUJADO DE SCREEN (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
+  // ************************************************
+
+  uint64_t screen_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
+
+  // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
+  // Logo/Disc/Spine son Z=3)
+  drawScreen((float)screenArtX1, (float)screenArtY1, 1, screen_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
