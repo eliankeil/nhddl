@@ -268,7 +268,7 @@ int uiInit() {
   discTexture->Delayed = 1;
 
   discArtX2 = (gsGlobal->Width - keepoutArea - 20 - COVER_ART_RES_W);
-  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 20;
+  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 40;
   discArtX1 = discArtX2 - DISC_ART_RES_W;
   discArtY1 = discArtY2 - DISC_ART_RES_H;
 
@@ -291,7 +291,7 @@ int uiInit() {
   // para que el lomo parezca conectarse correctamente a la caja.
 
   spineArtQuad.xTL = (float)spineArtX1;
-  spineArtQuad.yTL = (float)spineArtY1 - 0.0f; // TL (Sesgo arriba, menos intenso)
+  spineArtQuad.yTL = (float)spineArtY1 + 0.4f; // TL (Sesgo arriba, menos intenso)
 
   spineArtQuad.xTR = (float)spineArtX2;
   spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
@@ -542,16 +542,16 @@ int uiLoop(TargetList *titles) {
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -60.0f;
+      logoAnimState.targetDistance = -90.0f;
       logoAnimState.currentOffset = 0.0f;
-      logoAnimState.delayFrames = 5;
+      logoAnimState.delayFrames = 25;
       logoAnimState.isFinished = false;
 
       // Disc Art (Mueve 64px a la derecha)
       discAnimState.startPosition = (float)discArtX1;
-      discAnimState.targetDistance = 64.0f;
+      discAnimState.targetDistance = 94.0f;
       discAnimState.currentOffset = 0.0f;
-      discAnimState.delayFrames = 5;
+      discAnimState.delayFrames = 35;
       discAnimState.isFinished = false;
     }
 
@@ -936,7 +936,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                     coverArtY2 + 2, 1, currentTheme.background);
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int LOGO_MOVE_FRAMES = 80;
+  const int LOGO_MOVE_FRAMES = 180;
 
   // ************************************************
   // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
@@ -955,7 +955,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int DISC_MOVE_FRAMES = 80;
+  const int DISC_MOVE_FRAMES = 140;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
