@@ -751,7 +751,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   int blockHeight = maxTitlesPerPage * getFontLineHeight();
 
   int offsetLeft = -4;
-  int offsetRight = -190;
+  int offsetRight = -210;
   int offsetTop = +2;
   int offsetBottom = +14;
 
