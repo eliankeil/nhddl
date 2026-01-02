@@ -234,7 +234,7 @@ int uiInit() {
     // Init screen overlay
   int screenWidth = getScreenWidth();
   int screenHeight = getScreenHeight();
-  const int screenMargin = 30;
+  const int screenMargin = 50;
 
   screenArtX2 = box3dArtX1 + screenMargin;
   screenArtX1 = screenArtX2 - screenWidth;
