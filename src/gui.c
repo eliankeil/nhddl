@@ -905,19 +905,36 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   const int DISC_MOVE_FRAMES = 80;
 
   // ************************************************
-  // 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
+  // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
   // ************************************************
-  if (spineTexture != NULL && spineTexture->Mem == NULL) {
+  if (discTexture != NULL && discTexture->Mem == NULL) {
 
-    // Sin animación: utiliza directamente spineArtX1, spineArtY1
-    gsKit_prim_sprite_texture(gsGlobal, spineTexture, (float)spineArtX1,
-                              (float)spineArtY1, 0.0f, 0.0f, (float)spineArtX2,
-                              (float)spineArtY2, (float)spineTexture->Width,
-                              (float)spineTexture->Height, 3, FontMainColor);
+    animateSprite(&discAnimState, DISC_MOVE_FRAMES);
+
+    float finalDiscArtX1 = (float)discArtX1 + discAnimState.currentOffset;
+    float finalDiscArtX2 = (float)discArtX2 + discAnimState.currentOffset;
+
+    gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
+                              (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
+                              (float)discArtY2, (float)discTexture->Width,
+                              (float)discTexture->Height, 3, FontMainColor);
   }
 
   // ************************************************
-  // 4. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+    // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
+    // Se dibuja en su posición ESTÁTICA (X1, Y1).
+    // ************************************************
+    if (spineTexture != NULL && spineTexture->Mem == NULL) {
+        
+        // Sin animación: utiliza directamente spineArtX1, spineArtY1
+        gsKit_prim_sprite_texture(gsGlobal, spineTexture, (float)spineArtX1,
+                                  (float)spineArtY1, 0.0f, 0.0f, (float)spineArtX2,
+                                  (float)spineArtY2, (float)spineTexture->Width,
+                                  (float)spineTexture->Height, 3, FontMainColor);
+    }
+
+  // ************************************************
+  // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
   // ************************************************
   if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
     gsKit_prim_sprite_texture(
@@ -930,21 +947,18 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
                    currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
-
   // ************************************************
-  // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
-  // ************************************************
-  // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus
-  // coordenadas en uiInit(). Asumimos que box3d es una textura global en
-  // gui_graphics.c
-
-  // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
-  // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
-  uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80);
-
-  // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
-  // Logo/Disc/Spine son Z=3)
-  drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+    // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
+    // ************************************************
+    // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus coordenadas
+    // en uiInit(). Asumimos que box3d es una textura global en gui_graphics.c
+    
+    // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
+    // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
+    uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80); 
+    
+    // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2, Logo/Disc/Spine son Z=3)
+    drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
