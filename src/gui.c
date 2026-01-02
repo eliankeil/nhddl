@@ -28,6 +28,8 @@
 #define LOGO_ART_RES_H 62
 #define DISC_ART_RES_W 128
 #define DISC_ART_RES_H 128
+#define SPINE_ART_RES_W 11
+#define SPINE_ART_RES_H 200
 
 // ************************************************
 // FUNCIÓN DE CORRECCIÓN DE ALPHA
@@ -67,6 +69,7 @@ GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
 static GSTEXTURE *logoTexture;
 static GSTEXTURE *discTexture; // Nuevo: Disc Texture
+static GSTEXTURE *spineTexture;
 static char lineBuffer[255];
 static int lastTitleIdx = -1;
 static int frameCounter = 0;
@@ -102,6 +105,18 @@ static int discArtX1;
 static int discArtY1;
 static int discArtX2;
 static int discArtY2;
+
+// NUEVO: Coordenadas de Spine Art
+static int spineArtX1;
+static int spineArtY1;
+static int spineArtX2;
+static int spineArtY2;
+
+// NUEVO: Coordenadas de Box3D Art (Overlay)
+static int box3dArtX1;
+static int box3dArtY1;
+static int box3dArtX2;
+static int box3dArtY2;
 
 const int keepoutArea = 20;
 const int headerHeight = 20 + keepoutArea;
@@ -181,6 +196,17 @@ int uiInit() {
     return -1;
   };
 
+  // Init box3d overlay
+  int box3dWidth = getBox3dWidth();
+  int box3dHeight = getBox3dHeight();
+  const int box3dMargin = 30;
+
+  box3dArtX2 = gsGlobal->Width - box3dMargin;
+  box3dArtX1 = box3dArtX2 - box3dWidth;
+  // Centrado vertical: Y1 = (H / 2) - (box3d_H / 2)
+  box3dArtY1 = (gsGlobal->Height / 2) - (box3dHeight / 2);
+  box3dArtY2 = box3dArtY1 + box3dHeight;
+
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
   coverTexture->PSM = GS_PSM_CT32;
@@ -210,6 +236,20 @@ int uiInit() {
   discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 20;
   discArtX1 = discArtX2 - DISC_ART_RES_W;
   discArtY1 = discArtY2 - DISC_ART_RES_H;
+
+  // Init spineArt
+  spineTexture = calloc(sizeof(GSTEXTURE), 1);
+  spineTexture->PSM = GS_PSM_CT32;
+  spineTexture->Delayed = 1;
+
+  // Se alinea verticalmente con coverArt (mismo Y1, Y2)
+  spineArtY1 = coverArtY1;
+  spineArtY2 = coverArtY2;
+
+  // Spine Art se toca el lado derecho (X2) contra el lado izquierdo (X1) de
+  // coverArt.
+  spineArtX2 = coverArtX1;
+  spineArtX1 = spineArtX2 - SPINE_ART_RES_W;
 
   return 0;
 }
@@ -262,6 +302,31 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     }
   }
 
+  // NUEVO: 3. LÓGICA DE CARGA DE SPINE ART (*_LAB.png)
+  // ************************************************
+  gsKit_TexManager_invalidate(gsGlobal, spineTexture);
+  if (spineTexture->Mem != NULL) {
+    free(spineTexture->Mem);
+    spineTexture->Mem = NULL;
+  }
+  spineTexture->Vram = 0;
+  spineTexture->VramClut = 0;
+
+  snprintf(lineBuffer, 255, "%s%s/%s_LAB.png", device->mountpoint, artPath,
+           titleID);
+
+  int spineLoaded = 0;
+  if (gsKit_texture_png(gsGlobal, spineTexture, lineBuffer) == 0) {
+    if (spineTexture->Mem != NULL) {
+      // NOTA: Aunque el spine es un lomo de 11x200,
+      // la función gsKit_texture_png lo habrá cargado con el ancho/alto real
+      // del PNG. Para Spine/Cover, asumimos que coinciden en altura.
+      correctAlpha(spineTexture);
+      gsKit_TexManager_bind(gsGlobal, spineTexture);
+      spineLoaded = 1;
+    }
+  }
+
   // --- 3. LÓGICA DE CARGA DE COVER ART (*_COV.png) ---
   gsKit_TexManager_invalidate(gsGlobal, coverTexture);
   if (coverTexture->Mem != NULL) {
@@ -295,6 +360,11 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     free(discTexture->Mem);
     discTexture->Mem = NULL;
   }
+  // NUEVO: Liberar memoria de Spine Art
+  if (spineLoaded) {
+    free(spineTexture->Mem);
+    spineTexture->Mem = NULL;
+  }
   if (coverLoaded) {
     free(coverTexture->Mem);
     coverTexture->Mem = NULL;
@@ -310,6 +380,7 @@ void closeUI() {
   free(coverTexture);
   free(logoTexture);
   free(discTexture); // Liberar DiscTexture
+  free(spineTexture);
   gsKit_deinit_global(gsGlobal);
 }
 
@@ -833,24 +904,24 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // Duración del movimiento después de la pausa (ajustable)
   const int DISC_MOVE_FRAMES = 80;
 
+// ************************************************
+    // 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
+    // ************************************************
+    if (spineTexture != NULL && spineTexture->Mem == NULL) {
+
+        animateSprite(&spineAnimState, SPINE_MOVE_FRAMES);
+
+        float finalSpineArtX1 = (float)spineArtX1 + spineAnimState.currentOffset;
+        float finalSpineArtX2 = (float)spineArtX2 + spineAnimState.currentOffset;
+
+        gsKit_prim_sprite_texture(gsGlobal, spineTexture, finalSpineArtX1,
+                                  (float)spineArtY1, 0.0f, 0.0f, finalSpineArtX2,
+                                  (float)spineArtY2, (float)spineTexture->Width,
+                                  (float)spineTexture->Height, 3, FontMainColor);
+    }
+
   // ************************************************
-  // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
-  // ************************************************
-  if (discTexture != NULL && discTexture->Mem == NULL) {
-
-    animateSprite(&discAnimState, DISC_MOVE_FRAMES);
-
-    float finalDiscArtX1 = (float)discArtX1 + discAnimState.currentOffset;
-    float finalDiscArtX2 = (float)discArtX2 + discAnimState.currentOffset;
-
-    gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
-                              (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
-                              (float)discArtY2, (float)discTexture->Width,
-                              (float)discTexture->Height, 3, FontMainColor);
-  }
-
-  // ************************************************
-  // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+  // 4. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
   // ************************************************
   if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
     gsKit_prim_sprite_texture(
@@ -863,6 +934,20 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     drawTextWindow(coverArtX1, coverArtY1, coverArtX2, coverArtY2, 1,
                    currentTheme.coverFrame, ALIGN_CENTER, "No cover art");
   }
+    
+    // ************************************************
+    // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
+    // ************************************************
+    // Usamos Box3D Art previamente cargado en gui_graphics.c y calculamos sus coordenadas
+    // en uiInit(). Asumimos que box3d es una textura global en gui_graphics.c
+    
+    // El color (0xFFFFFFFF con alpha a 0x80) se usa para teñir la textura
+    // (Asumiendo que drawBox3d acepta el parámetro 'color' como se sugirió).
+    uint64_t box_color = GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x80); 
+    
+    // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2, Logo/Disc/Spine son Z=3)
+    drawBox3d((float)box3dArtX1, (float)box3dArtY1, 5, box_color);
+
   // Incrementar el contador de frames para la animación
   frameCounter++;
 }

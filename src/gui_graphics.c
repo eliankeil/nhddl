@@ -16,6 +16,7 @@ GSTEXTURE **fontPages;
 // Graphics textures
 GSTEXTURE *icons;
 GSTEXTURE *logo;
+GSTEXTURE *box3d;
 
 // Used font
 const struct BMFont font = BMFONT_DEJAVU_SANS;
@@ -50,6 +51,14 @@ int initGraphics() {
     printf("ERROR: Failed to load logo texture\n");
     return -1;
   }
+
+    // Upload box3d texture to GS
+  box3d = calloc(sizeof(GSTEXTURE), 1);
+  if (gsKit_texture_png_mem(gsGlobal, box3d, BOX3D_PNG, SIZE_BOX3D_PNG)) {
+    printf("ERROR: Failed to load box3d texture\n");
+    return -1;
+  }
+
   logo->Filter = GS_FILTER_LINEAR; // Enable bilinear filtering
 
   return 0;
@@ -65,6 +74,8 @@ void closeFont() {
 
   free(icons->Mem);
   free(icons);
+  free(box3d->Mem);
+  free(box3d);
   free(logo->Mem);
   free(logo);
   return;
@@ -120,6 +131,30 @@ void drawLogo(float x, float y, int z) {
   gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
 }
 
+// Returns box3d height
+int getBox3dHeight() { return box3d->Height; }
+
+// Returns box3d width
+int getBox3dWidth() { return box3d->Width; }
+
+// Dibuja el box3d en coordenadas especificadas, usando 'color' para modular
+// (Asegúrate de cambiar también la declaración en gui_graphics.h)
+void drawBox3d(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color!
+    gsKit_set_primalpha(gsGlobal, GS_BLEND_BACK2FRONT, 0);
+    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+    gsKit_prim_sprite_texture(gsGlobal, box3d, 
+                            x,                
+                            y,                
+                            0,                
+                            0,                
+                            x + box3d->Width,  
+                            y + box3d->Height, 
+                            box3d->Width + 1,  
+                            box3d->Height + 1, 
+                            z, color); // <-- ¡Usar el parámetro 'color'!
+    gsKit_set_test(gsGlobal, GS_ATEST_ON);
+    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+}
 // Draws the icon in [x1,y1],[x2,y2] window.
 void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, IconType iconType) {
   Icon icon = ICONS[iconType];

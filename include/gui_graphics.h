@@ -6,6 +6,7 @@
 
 extern GSTEXTURE *icons;
 extern GSTEXTURE *logo;
+extern GSTEXTURE *box3d;
 
 // además de las demás funciones que ya declarás ahí
 
@@ -97,6 +98,9 @@ void drawIcon(float x, float y, int z, uint64_t color, IconType iconType);
 
 // Draws the icon in [x1,y1],[x2,y2] window.
 void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, IconType iconType);
+
+//Draws the box3d
+void drawBox3D(float x, float y, int z, uint64_t color);
 
 // Draws the logo at specified coordinates
 void drawLogo(float x, float y, int z);
