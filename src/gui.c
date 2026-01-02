@@ -1115,7 +1115,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int DISC_MOVE_FRAMES = 140;
+  const int DISC_MOVE_FRAMES = 240;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
@@ -1130,7 +1130,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
                               (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
                               (float)discArtY2, (float)discTexture->Width,
-                              (float)discTexture->Height, 1, FontMainColor);
+                              (float)discTexture->Height, 6, FontMainColor);
   }
 
   // ************************************************
