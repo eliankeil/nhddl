@@ -349,7 +349,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     if (discTexture->Mem != NULL) {
       correctAlpha(discTexture);
       gsKit_TexManager_bind(gsGlobal, discTexture);
-      coverTexture->Filter = GS_FILTER_BILINEAR;
+      discTexture->Filter = GS_FILTER_BILINEAR;
       discLoaded = 1;
     }
   }
