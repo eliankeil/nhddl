@@ -375,7 +375,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
       // del PNG. Para Spine/Cover, asumimos que coinciden en altura.
       correctAlpha(spineTexture);
       gsKit_TexManager_bind(gsGlobal, spineTexture);
-      coverTexture->Filter = GS_FILTER_BILINEAR;
+      spineTexture->Filter = GS_FILTER_BILINEAR;
       spineLoaded = 1;
     }
   }
