@@ -1074,23 +1074,25 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     }
   }
 
-  // DIBUJADO
+// DIBUJADO
   if (currentScreenTexture != NULL) {
 
-    // Usamos el tamaño fijo 141x106 para el mapeo UV, aunque el PNG real podría
-    // ser diferente
-    float texWidth = (float)SCREEN_ART_RES_W;
-    float texHeight = (float)SCREEN_ART_RES_H;
+    // Usamos el tamaño real cargado en la textura como U2/V2
+    float texWidth = (float)currentScreenTexture->Width;
+    float texHeight = (float)currentScreenTexture->Height;
 
-    gsKit_prim_sprite_texture(gsGlobal, currentScreenTexture,
-                              (float)screenArtX1, // Usar X1 calculado
-                              (float)screenArtY1, // Usar Y1 calculado
-                              0.0f, 0.0f,
-                              (float)screenArtX2, // Usar X2 calculado
-                              (float)screenArtY2, // Usar Y2 calculado
-                              texWidth, texHeight,
-                              4, // Prioridad Z=4
-                              FontMainColor);
+    gsKit_prim_sprite_texture(
+        gsGlobal, currentScreenTexture, 
+        (float)screenArtX1,      // X1
+        (float)screenArtY1,      // Y1
+        0.0f, 0.0f,              // U1, V1
+        (float)screenArtX2,      // X2
+        (float)screenArtY2,      // Y2
+        texWidth,                // U2 <<-- ¡CORREGIDO!
+        texHeight,               // V2 <<-- ¡CORREGIDO!
+        4,                       // Z-Prioridad
+        FontMainColor
+    );
   }
 
   // Duración del movimiento después de la pausa (ajustable)
