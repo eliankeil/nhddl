@@ -349,6 +349,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     if (discTexture->Mem != NULL) {
       correctAlpha(discTexture);
       gsKit_TexManager_bind(gsGlobal, discTexture);
+      coverTexture->Filter = GS_FILTER_BILINEAR;
       discLoaded = 1;
     }
   }
@@ -374,6 +375,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
       // del PNG. Para Spine/Cover, asumimos que coinciden en altura.
       correctAlpha(spineTexture);
       gsKit_TexManager_bind(gsGlobal, spineTexture);
+      coverTexture->Filter = GS_FILTER_BILINEAR;
       spineLoaded = 1;
     }
   }
@@ -395,6 +397,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
     if (coverTexture->Mem != NULL) {
       correctAlpha(coverTexture);
       gsKit_TexManager_bind(gsGlobal, coverTexture);
+      coverTexture->Filter = GS_FILTER_BILINEAR;
       coverLoaded = 1;
     }
   }
