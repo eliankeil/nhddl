@@ -970,40 +970,71 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
                               (float)discTexture->Height, 1, FontMainColor);
   }
 
-  // ************************************************
-  // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 3, antes de Cover)
-  // Se dibuja en su posición ESTÁTICA (X1, Y1).
+// ************************************************
+  // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 2, antes de Cover)
+  // Solución: Dibujado como 2 triángulos para evitar culling (descarte).
   // ************************************************
   if (spineTexture != NULL && spineTexture->Mem == NULL) {
 
-    // CAMBIO A gsKit_prim_quad_texture
-    gsKit_prim_quad_texture(gsGlobal, spineTexture, spineArtQuad.xTL,
-                            spineArtQuad.yTL, 0.0f, 0.0f, // P1 (Top Left)
-                            spineArtQuad.xTR, spineArtQuad.yTR,
-                            (float)spineTexture->Width, 0.0f, // P2 (Top Right)
-                            spineArtQuad.xBR, spineArtQuad.yBR,
-                            (float)spineTexture->Width,
-                            (float)spineTexture->Height, // P3 (Bottom Right)
-                            spineArtQuad.xBL, spineArtQuad.yBL, 0.0f,
-                            (float)spineTexture->Height, // P4 (Bottom Left)
-                            2, FontMainColor             // Z, Color
+    // La textura debe coincidir con el tamaño real cargado
+    float texWidth = (float)spineTexture->Width;
+    float texHeight = (float)spineTexture->Height;
+
+    // --- Triángulo 1: Parte Superior (TL, TR, BL) ---
+    gsKit_prim_triangle_texture(
+        gsGlobal, spineTexture,
+        // Vértice 1: TL (x, y, u, v)
+        spineArtQuad.xTL, spineArtQuad.yTL, 0.0f, 0.0f,
+        // Vértice 2: TR
+        spineArtQuad.xTR, spineArtQuad.yTR, texWidth, 0.0f,
+        // Vértice 3: BL
+        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
+        2, FontMainColor
+    );
+
+    // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
+    gsKit_prim_triangle_texture(
+        gsGlobal, spineTexture,
+        // Vértice 1: TR
+        spineArtQuad.xTR, spineArtQuad.yTR, texWidth, 0.0f,
+        // Vértice 2: BR
+        spineArtQuad.xBR, spineArtQuad.yBR, texWidth, texHeight,
+        // Vértice 3: BL
+        spineArtQuad.xBL, spineArtQuad.yBL, 0.0f, texHeight,
+        2, FontMainColor
     );
   }
 
-  // ************************************************
-  // 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
-  // ************************************************
-  if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
+// ************************************************
+// 3. DIBUJADO DE COVER ART (PRIORIDAD 1 / CIERRE)
+// SOLUCIÓN: Dibujado como 2 triángulos para evitar culling.
+// ************************************************
+if (selectedTitleCover != NULL && selectedTitleCover->Mem == NULL) {
 
-    // CAMBIO A gsKit_prim_quad_texture
-    gsKit_prim_quad_texture(
-        gsGlobal, selectedTitleCover, coverArtQuad.xTL, coverArtQuad.yTL, 0.0f, 0.0f, // P1 (Top Left)
-        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width, (float)selectedTitleCover->Height, // P3 (Bottom Right)
-        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height, // P4 (Bottom Left)
-        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f, // P2 (Top Right)
-        2, FontMainColor                   // Z, Color
+    // --- Triángulo 1: Parte Superior (TL, TR, BL) ---
+    gsKit_prim_triangle_texture(
+        gsGlobal, selectedTitleCover,
+        // Vértice 1: TL (x, y, u, v)
+        coverArtQuad.xTL, coverArtQuad.yTL, 0.0f, 0.0f,
+        // Vértice 2: TR
+        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f,
+        // Vértice 3: BL
+        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
+        2, FontMainColor
     );
-  }
+
+    // --- Triángulo 2: Parte Inferior (TR, BR, BL) ---
+    gsKit_prim_triangle_texture(
+        gsGlobal, selectedTitleCover,
+        // Vértice 1: TR
+        coverArtQuad.xTR, coverArtQuad.yTR, (float)selectedTitleCover->Width, 0.0f,
+        // Vértice 2: BR
+        coverArtQuad.xBR, coverArtQuad.yBR, (float)selectedTitleCover->Width, (float)selectedTitleCover->Height,
+        // Vértice 3: BL
+        coverArtQuad.xBL, coverArtQuad.yBL, 0.0f, (float)selectedTitleCover->Height,
+        2, FontMainColor
+    );
+}
   // ************************************************
   // 5. DIBUJADO DE BOX3D (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
