@@ -28,7 +28,7 @@
 #define LOGO_ART_RES_H 62
 #define DISC_ART_RES_W 128
 #define DISC_ART_RES_H 128
-#define SPINE_ART_RES_W 11
+#define SPINE_ART_RES_W 10.8
 #define SPINE_ART_RES_H 200
 
 // ************************************************
@@ -230,7 +230,7 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 12);
+  coverArtX2 = (gsGlobal->Width - keepoutArea - 12.8);
   coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
@@ -291,7 +291,7 @@ int uiInit() {
   // para que el lomo parezca conectarse correctamente a la caja.
 
   spineArtQuad.xTL = (float)spineArtX1;
-  spineArtQuad.yTL = (float)spineArtY1 - 1.5f; // TL (Sesgo arriba, menos intenso)
+  spineArtQuad.yTL = (float)spineArtY1 - 0.0f; // TL (Sesgo arriba, menos intenso)
 
   spineArtQuad.xTR = (float)spineArtX2;
   spineArtQuad.yTR = (float)coverArtY1; // TR (Se conecta al TL del Cover, sin sesgo)
