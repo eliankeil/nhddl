@@ -286,7 +286,7 @@ int uiInit() {
   logoTexture->Delayed = 1;
 
   logoArtX2 = (gsGlobal->Width - 10);
-  logoArtY2 = coverArtY1 + 10;
+  logoArtY2 = coverArtY1;
   logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
   logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
@@ -649,7 +649,7 @@ int uiLoop(TargetList *titles) {
 
       // Logo Art (Mueve 40px a la izquierda)
       logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -173.0f;
+      logoAnimState.targetDistance = -175.0f;
       logoAnimState.currentOffset = 0.0f;
       logoAnimState.delayFrames = 25;
       logoAnimState.isFinished = false;
