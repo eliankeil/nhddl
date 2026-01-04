@@ -239,7 +239,7 @@ int uiInit() {
   box3dArtX2 = gsGlobal->Width - box3dMargin;
   box3dArtX1 = box3dArtX2 - box3dWidth;
   // Centrado vertical: Y1 = (H / 2) - (box3d_H / 2)
-  box3dArtY1 = (gsGlobal->Height / 2) - (box3dHeight / 2);
+  box3dArtY1 = (gsGlobal->Height / 2) - (box3dHeight / 2) - 17;
   box3dArtY2 = box3dArtY1 + box3dHeight;
 
   // Init crt overlay
