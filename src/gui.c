@@ -24,10 +24,10 @@
 // Dimensiones de las Artes
 #define COVER_ART_RES_W 120
 #define COVER_ART_RES_H 200
-#define LOGO_ART_RES_W 150
-#define LOGO_ART_RES_H 62
-#define DISC_ART_RES_W 128
-#define DISC_ART_RES_H 128
+//#define LOGO_ART_RES_W 150
+//#define LOGO_ART_RES_H 62
+//#define DISC_ART_RES_W 128
+//#define DISC_ART_RES_H 128
 #define SPINE_ART_RES_W 10.8
 #define SPINE_ART_RES_H 200
 #define SCREEN_ART_RES_W 141
@@ -69,8 +69,8 @@ void closeUISplashThread();
 
 GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
-static GSTEXTURE *logoTexture;
-static GSTEXTURE *discTexture; // Nuevo: Disc Texture
+//static GSTEXTURE *logoTexture;
+//static GSTEXTURE *discTexture; // Nuevo: Disc Texture
 static GSTEXTURE *spineTexture;
 static GSTEXTURE *screenTexture1;
 static GSTEXTURE *screenTexture2;
@@ -88,8 +88,8 @@ typedef struct {
   bool isFinished;      // true si la animación ha terminado
 } AnimationState;
 
-static AnimationState logoAnimState;
-static AnimationState discAnimState;
+//static AnimationState logoAnimState;
+//static AnimationState discAnimState;
 // Path relative to storage device mountpoint.
 static const char artPath[] = "/ART";
 
@@ -100,16 +100,16 @@ static int coverArtX1;
 static int coverArtY1;
 
 // Coordenadas de Logo Art
-static int logoArtX1;
-static int logoArtY1;
-static int logoArtX2;
-static int logoArtY2;
+//static int logoArtX1;
+//static int logoArtY1;
+//static int logoArtX2;
+//static int logoArtY2;
 
 // Nuevo: Coordenadas de Disc Art
-static int discArtX1;
-static int discArtY1;
-static int discArtX2;
-static int discArtY2;
+//static int discArtX1;
+//static int discArtY1;
+//static int discArtX2;
+//static int discArtY2;
 
 // NUEVO: Coordenadas de Spine Art
 static int spineArtX1;
@@ -281,24 +281,24 @@ int uiInit() {
   coverArtQuad.yBL = (float)coverArtY2; // BL sin sesgo
 
   // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
-  logoTexture = calloc(sizeof(GSTEXTURE), 1);
-  logoTexture->PSM = GS_PSM_CT32;
-  logoTexture->Delayed = 1;
+  //logoTexture = calloc(sizeof(GSTEXTURE), 1);
+  //logoTexture->PSM = GS_PSM_CT32;
+  //logoTexture->Delayed = 1;
 
-  logoArtX2 = (gsGlobal->Width - 10);
-  logoArtY2 = coverArtY1;
-  logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
-  logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
+  //logoArtX2 = (gsGlobal->Width - 10);
+  //logoArtY2 = coverArtY1;
+  //logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
+  //logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
   // DISC ART: Inicialización y Coordenadas (Centrado en Cover Area)
-  discTexture = calloc(sizeof(GSTEXTURE), 1);
-  discTexture->PSM = GS_PSM_CT32;
-  discTexture->Delayed = 1;
+  //discTexture = calloc(sizeof(GSTEXTURE), 1);
+  //discTexture->PSM = GS_PSM_CT32;
+  //discTexture->Delayed = 1;
 
-  discArtX2 = (gsGlobal->Width - keepoutArea - 50 - COVER_ART_RES_W);
-  discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 70;
-  discArtX1 = discArtX2 - DISC_ART_RES_W;
-  discArtY1 = discArtY2 - DISC_ART_RES_H;
+  //discArtX2 = (gsGlobal->Width - keepoutArea - 50 - COVER_ART_RES_W);
+  //discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 70;
+  //discArtX1 = discArtX2 - DISC_ART_RES_W;
+  //discArtY1 = discArtY2 - DISC_ART_RES_H;
 
   // Init screen texture 1
   screenTexture1 = calloc(sizeof(GSTEXTURE), 1);
@@ -359,47 +359,47 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
   }
 
   // --- 1. LÓGICA DE CARGA DE LOGO ART (*_LGO.png) ---
-  gsKit_TexManager_invalidate(gsGlobal, logoTexture);
-  if (logoTexture->Mem != NULL) {
-    free(logoTexture->Mem);
-    logoTexture->Mem = NULL;
-  }
-  logoTexture->Vram = 0;
-  logoTexture->VramClut = 0;
+  //gsKit_TexManager_invalidate(gsGlobal, logoTexture);
+  //if (logoTexture->Mem != NULL) {
+  //  free(logoTexture->Mem);
+  //  logoTexture->Mem = NULL;
+  //}
+  //logoTexture->Vram = 0;
+  //logoTexture->VramClut = 0;
 
-  snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
+  //snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
            titleID);
 
-  int logoLoaded = 0;
-  if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
-    if (logoTexture->Mem != NULL) {
-      correctAlpha(logoTexture);
-      gsKit_TexManager_bind(gsGlobal, logoTexture);
-      logoLoaded = 1;
-    }
-  }
+  //int logoLoaded = 0;
+  //if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
+  //  if (logoTexture->Mem != NULL) {
+  //    correctAlpha(logoTexture);
+  //    gsKit_TexManager_bind(gsGlobal, logoTexture);
+  //    logoLoaded = 1;
+  //  }
+  //}
 
   // --- 2. LÓGICA DE CARGA DE DISC ART (*_ICO.png) ---
-  gsKit_TexManager_invalidate(gsGlobal, discTexture);
-  if (discTexture->Mem != NULL) {
-    free(discTexture->Mem);
-    discTexture->Mem = NULL;
-  }
-  discTexture->Vram = 0;
-  discTexture->VramClut = 0;
+  //gsKit_TexManager_invalidate(gsGlobal, discTexture);
+  //if (discTexture->Mem != NULL) {
+  //  free(discTexture->Mem);
+  //  discTexture->Mem = NULL;
+  //}
+  //discTexture->Vram = 0;
+  //discTexture->VramClut = 0;
 
-  snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-           titleID);
+  //snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
+  //         titleID);
 
-  int discLoaded = 0;
-  if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
-    if (discTexture->Mem != NULL) {
-      correctAlpha(discTexture);
-      gsKit_TexManager_bind(gsGlobal, discTexture);
-      discTexture->Filter = GS_FILTER_LINEAR;
-      discLoaded = 1;
-    }
-  }
+  //int discLoaded = 0;
+  //if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
+  //  if (discTexture->Mem != NULL) {
+  //    correctAlpha(discTexture);
+  //    gsKit_TexManager_bind(gsGlobal, discTexture);
+  //    discTexture->Filter = GS_FILTER_LINEAR;
+  //    discLoaded = 1;
+  //  }
+  //}
 
   // NUEVO: 3. LÓGICA DE CARGA DE SPINE ART (*_LAB.png)
   // ************************************************
@@ -501,14 +501,14 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
   // LIBERACIÓN DE MEMORIA RAM (CLEANUP FINAL)
   // ************************************************
 
-  if (logoLoaded) {
-    free(logoTexture->Mem);
-    logoTexture->Mem = NULL;
-  }
-  if (discLoaded) {
-    free(discTexture->Mem);
-    discTexture->Mem = NULL;
-  }
+  //if (logoLoaded) {
+  //  free(logoTexture->Mem);
+  //  logoTexture->Mem = NULL;
+  //}
+  //if (discLoaded) {
+  //  free(discTexture->Mem);
+  //  discTexture->Mem = NULL;
+  //}
   // NUEVO: Liberar memoria de Screen Art
   if (screen1Loaded) {
     free(screenTexture1->Mem);
@@ -536,8 +536,8 @@ void closeUI() {
   gsKit_vram_clear(gsGlobal);
   closeFont();
   free(coverTexture);
-  free(logoTexture);
-  free(discTexture); // Liberar DiscTexture
+//  free(logoTexture);
+//  free(discTexture); // Liberar DiscTexture
   free(spineTexture);
   free(screenTexture1);
   free(screenTexture2);
@@ -648,18 +648,18 @@ int uiLoop(TargetList *titles) {
       screenCycleFrame = 0;
 
       // Logo Art (Mueve 40px a la izquierda)
-      logoAnimState.startPosition = (float)logoArtX1;
-      logoAnimState.targetDistance = -175.0f;
-      logoAnimState.currentOffset = 0.0f;
-      logoAnimState.delayFrames = 25;
-      logoAnimState.isFinished = false;
+    //  logoAnimState.startPosition = (float)logoArtX1;
+    //  logoAnimState.targetDistance = -175.0f;
+    //  logoAnimState.currentOffset = 0.0f;
+    //  logoAnimState.delayFrames = 25;
+    //  logoAnimState.isFinished = false;
 
       // Disc Art (Mueve 64px a la derecha)
-      discAnimState.startPosition = (float)discArtX1;
-      discAnimState.targetDistance = 134.0f;
-      discAnimState.currentOffset = 0.0f;
-      discAnimState.delayFrames = 25;
-      discAnimState.isFinished = false;
+    //  discAnimState.startPosition = (float)discArtX1;
+    //  discAnimState.targetDistance = 134.0f;
+    //  discAnimState.currentOffset = 0.0f;
+    //  discAnimState.delayFrames = 25;
+    //  discAnimState.isFinished = false;
     }
 
     if (!isCoverUninitialized)
@@ -1096,42 +1096,42 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   }
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int LOGO_MOVE_FRAMES = 180;
+  //const int LOGO_MOVE_FRAMES = 180;
 
   // ************************************************
   // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
   // ************************************************
-  if (logoTexture != NULL && logoTexture->Mem == NULL) {
+  //if (logoTexture != NULL && logoTexture->Mem == NULL) {
 
-    animateSprite(&logoAnimState, LOGO_MOVE_FRAMES);
+  //  animateSprite(&logoAnimState, LOGO_MOVE_FRAMES);
 
-    float finalLogoArtX1 = (float)logoArtX1 + logoAnimState.currentOffset;
-    float finalLogoArtX2 = (float)logoArtX2 + logoAnimState.currentOffset;
+  //  float finalLogoArtX1 = (float)logoArtX1 + logoAnimState.currentOffset;
+  //  float finalLogoArtX2 = (float)logoArtX2 + logoAnimState.currentOffset;
 
-    gsKit_prim_sprite_texture(gsGlobal, logoTexture, finalLogoArtX1,
-                              (float)logoArtY1, 0.0f, 0.0f, finalLogoArtX2,
-                              (float)logoArtY2, (float)logoTexture->Width,
-                              (float)logoTexture->Height, 1, FontMainColor);
-  }
+  //  gsKit_prim_sprite_texture(gsGlobal, logoTexture, finalLogoArtX1,
+  //                            (float)logoArtY1, 0.0f, 0.0f, finalLogoArtX2,
+  //                            (float)logoArtY2, (float)logoTexture->Width,
+  //                            (float)logoTexture->Height, 1, FontMainColor);
+  //}
 
   // Duración del movimiento después de la pausa (ajustable)
-  const int DISC_MOVE_FRAMES = 240;
+  //const int DISC_MOVE_FRAMES = 240;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
   // ************************************************
-  if (discTexture != NULL && discTexture->Mem == NULL) {
+  //if (discTexture != NULL && discTexture->Mem == NULL) {
 
-    animateSprite(&discAnimState, DISC_MOVE_FRAMES);
+  //  animateSprite(&discAnimState, DISC_MOVE_FRAMES);
 
-    float finalDiscArtX1 = (float)discArtX1 + discAnimState.currentOffset;
-    float finalDiscArtX2 = (float)discArtX2 + discAnimState.currentOffset;
+  //  float finalDiscArtX1 = (float)discArtX1 + discAnimState.currentOffset;
+  //  float finalDiscArtX2 = (float)discArtX2 + discAnimState.currentOffset;
 
-    gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
-                              (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
-                              (float)discArtY2, (float)discTexture->Width,
-                              (float)discTexture->Height, 6, FontMainColor);
-  }
+  //  gsKit_prim_sprite_texture(gsGlobal, discTexture, finalDiscArtX1,
+  //                            (float)discArtY1, 0.0f, 0.0f, finalDiscArtX2,
+  //                            (float)discArtY2, (float)discTexture->Width,
+  //                            (float)discTexture->Height, 6, FontMainColor);
+  //}
 
   // ************************************************
   // NUEVO: 3. DIBUJADO DE SPINE ART (PRIORIDAD 2, antes de Cover)
