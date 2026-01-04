@@ -22,16 +22,16 @@
 #define DIV_ROUND(n, d) (n + (d - 1)) / d
 
 // Dimensiones de las Artes
-#define COVER_ART_RES_W 120
-#define COVER_ART_RES_H 200
+#define COVER_ART_RES_W 103
+#define COVER_ART_RES_H 172
 //#define LOGO_ART_RES_W 150
 //#define LOGO_ART_RES_H 62
 //#define DISC_ART_RES_W 128
 //#define DISC_ART_RES_H 128
-#define SPINE_ART_RES_W 10.8
-#define SPINE_ART_RES_H 200
-#define SCREEN_ART_RES_W 141
-#define SCREEN_ART_RES_H 106
+#define SPINE_ART_RES_W 10
+#define SPINE_ART_RES_H 172
+#define SCREEN_ART_RES_W 198
+#define SCREEN_ART_RES_H 148
 
 // ************************************************
 // FUNCIÓN DE CORRECCIÓN DE ALPHA
@@ -258,8 +258,8 @@ int uiInit() {
   coverTexture->PSM = GS_PSM_CT32;
   coverTexture->Delayed = 1;
 
-  coverArtX2 = (gsGlobal->Width - keepoutArea - 12.8);
-  coverArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2);
+  coverArtX2 = box3dArtX2 - 5;
+  coverArtY2 = box3dArtY2 - 123;
   coverArtX1 = coverArtX2 - COVER_ART_RES_W;
   coverArtY1 = coverArtY2 - COVER_ART_RES_H;
 
@@ -305,8 +305,8 @@ int uiInit() {
   screenTexture1->PSM = GS_PSM_CT32;
   screenTexture1->Delayed = 1;
 
-  screenArtX2 = box3dArtX1 + 81;
-  screenArtY2 = box3dArtY1 + 74;
+  screenArtX2 = box3dArtX1 + 219;
+  screenArtY2 = box3dArtY1 + 171;
   screenArtX1 = screenArtX2 - SCREEN_ART_RES_W;
   screenArtY1 = screenArtY2 - SCREEN_ART_RES_H;
 
