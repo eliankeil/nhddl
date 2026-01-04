@@ -7,7 +7,7 @@
 extern GSTEXTURE *icons;
 extern GSTEXTURE *logo;
 extern GSTEXTURE *box3d;
-extern GSTEXTURE *crt;
+//extern GSTEXTURE *crt;
 
 // además de las demás funciones que ya declarás ahí
 
@@ -108,11 +108,11 @@ int getBox3dWidth();
 int getBox3dHeight();
 
 //Draws the crt
-void drawCrt(float x, float y, int z, uint64_t color);
+//void drawCrt(float x, float y, int z, uint64_t color);
 
 // NUEVO: Declaraciones de funciones para Crt
-int getCrtWidth();
-int getCrtHeight();
+//int getCrtWidth();
+//int getCrtHeight();
 
 // Draws the logo at specified coordinates
 void drawLogo(float x, float y, int z);

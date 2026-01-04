@@ -17,7 +17,7 @@ GSTEXTURE **fontPages;
 GSTEXTURE *icons;
 GSTEXTURE *logo;
 GSTEXTURE *box3d;
-GSTEXTURE *crt;
+//GSTEXTURE *crt;
 
 // Used font
 const struct BMFont font = BMFONT_DEJAVU_SANS;
@@ -61,11 +61,11 @@ int initGraphics() {
   }
 
       // Upload crt texture to GS
-  crt = calloc(sizeof(GSTEXTURE), 1);
-  if (gsKit_texture_png_mem(gsGlobal, crt, CRT_PNG, SIZE_CRT_PNG)) {
-    printf("ERROR: Failed to load screen texture\n");
-    return -1;
-  }
+  //crt = calloc(sizeof(GSTEXTURE), 1);
+  //if (gsKit_texture_png_mem(gsGlobal, crt, CRT_PNG, SIZE_CRT_PNG)) {
+  //  printf("ERROR: Failed to load screen texture\n");
+  //  return -1;
+  //}
 
   logo->Filter = GS_FILTER_LINEAR; // Enable bilinear filtering
 
@@ -84,8 +84,8 @@ void closeFont() {
   free(icons);
   free(box3d->Mem);
   free(box3d);
-  free(crt->Mem);
-  free(crt);
+  //free(crt->Mem);
+  //free(crt);
   free(logo->Mem);
   free(logo);
   return;
@@ -167,29 +167,29 @@ void drawBox3d(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color
 }
 
 // Returns screen height
-int getCrtHeight() { return crt->Height; }
+//int getCrtHeight() { return crt->Height; }
 
 // Returns screen width
-int getCrtWidth() { return crt->Width; }
+//int getCrtWidth() { return crt->Width; }
 
 // Dibuja el screen en coordenadas especificadas, usando 'color' para modular
 // (Asegúrate de cambiar también la declaración en gui_graphics.h)
-void drawCrt(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color!
-    gsKit_set_primalpha(gsGlobal, GS_BLEND_BACK2FRONT, 0);
-    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
-    gsKit_prim_sprite_texture(gsGlobal, crt, 
-                            x,                
-                            y,                
-                            0,                
-                            0,                
-                            x + crt->Width,  
-                            y + crt->Height, 
-                            crt->Width + 1,  
-                            crt->Height + 1, 
-                            z, color); // <-- ¡Usar el parámetro 'color'!
-    gsKit_set_test(gsGlobal, GS_ATEST_ON);
-    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
-}
+//void drawCrt(float x, float y, int z, uint64_t color) { // <-- ¡Añadir color!
+//    gsKit_set_primalpha(gsGlobal, GS_BLEND_BACK2FRONT, 0);
+//    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+//    gsKit_prim_sprite_texture(gsGlobal, crt, 
+//                            x,                
+//                            y,                
+//                            0,                
+//                            0,                
+//                            x + crt->Width,  
+//                           y + crt->Height, 
+//                            crt->Width + 1,  
+//                            crt->Height + 1, 
+//                            z, color); // <-- ¡Usar el parámetro 'color'!
+//    gsKit_set_test(gsGlobal, GS_ATEST_ON);
+//    gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 0, 1, 0), 0);
+//}
 
 // Draws the icon in [x1,y1],[x2,y2] window.
 void drawIconWindow(int x1, int y1, int x2, int y2, int z, uint64_t color, uint8_t alignment, IconType iconType) {

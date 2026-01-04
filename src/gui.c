@@ -124,10 +124,10 @@ static int box3dArtX2;
 static int box3dArtY2;
 
 // NUEVO: Coordenadas de Screen Art (Overlay)
-static int crtArtX1;
-static int crtArtY1;
-static int crtArtX2;
-static int crtArtY2;
+//static int crtArtX1;
+//static int crtArtY1;
+//static int crtArtX2;
+//static int crtArtY2;
 
 // NUEVO: Coordenadas de Screen Art (Capturas de Pantalla)
 static int screenArtX1;
@@ -243,15 +243,15 @@ int uiInit() {
   box3dArtY2 = box3dArtY1 + box3dHeight;
 
   // Init crt overlay
-  int crtWidth = getCrtWidth();
-  int crtHeight = getCrtHeight();
-  const int crtMargin = 50;
+  //int crtWidth = getCrtWidth();
+  //int crtHeight = getCrtHeight();
+  //const int crtMargin = 50;
 
-  crtArtX2 = box3dArtX1 + crtMargin;
-  crtArtX1 = crtArtX2 - crtWidth;
+  //crtArtX2 = box3dArtX1 + crtMargin;
+  //crtArtX1 = crtArtX2 - crtWidth;
   // Centrado vertical: Y1 = (H / 2) - (crt_H / 2)
-  crtArtY1 = (gsGlobal->Height / 2) - (crtHeight / 2);
-  crtArtY2 = crtArtY1 + crtHeight;
+  //crtArtY1 = (gsGlobal->Height / 2) - (crtHeight / 2);
+  //crtArtY2 = crtArtY1 + crtHeight;
 
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -305,8 +305,8 @@ int uiInit() {
   screenTexture1->PSM = GS_PSM_CT32;
   screenTexture1->Delayed = 1;
 
-  screenArtX2 = crtArtX2 - 81;
-  screenArtY2 = crtArtY2 - 74;
+  screenArtX2 = spineArtX2 - 81;
+  screenArtY2 = spineArtY2 - 74;
   screenArtX1 = screenArtX2 - SCREEN_ART_RES_W;
   screenArtY1 = screenArtY2 - SCREEN_ART_RES_H;
 
@@ -1211,11 +1211,11 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // 5. DIBUJADO DE SCREEN (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
 
-  uint64_t crt_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
+  //uint64_t crt_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  drawCrt((float)crtArtX1, (float)crtArtY1, 5, crt_color);
+  //drawCrt((float)crtArtX1, (float)crtArtY1, 5, crt_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
