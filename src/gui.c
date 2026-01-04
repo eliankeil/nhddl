@@ -234,7 +234,7 @@ int uiInit() {
   // Init box3d overlay
   int box3dWidth = getBox3dWidth();
   int box3dHeight = getBox3dHeight();
-  const int box3dMargin = 30;
+  const int box3dMargin = 15;
 
   box3dArtX2 = gsGlobal->Width - box3dMargin;
   box3dArtX1 = box3dArtX2 - box3dWidth;
@@ -305,8 +305,8 @@ int uiInit() {
   screenTexture1->PSM = GS_PSM_CT32;
   screenTexture1->Delayed = 1;
 
-  screenArtX2 = spineArtX2 - 81;
-  screenArtY2 = spineArtY2 - 74;
+  screenArtX2 = box3dArtX1 + 81;
+  screenArtY2 = box3dArtY1 + 74;
   screenArtX1 = screenArtX2 - SCREEN_ART_RES_W;
   screenArtY1 = screenArtY2 - SCREEN_ART_RES_H;
 
@@ -840,7 +840,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
 
   int blockHeight = maxTitlesPerPage * getFontLineHeight();
 
-  int offsetLeft = -4;
+  int offsetLeft = -40;
   int offsetRight = -230;
   int offsetTop = +2;
   int offsetBottom = +14;
