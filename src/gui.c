@@ -368,7 +368,7 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
   //logoTexture->VramClut = 0;
 
   //snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
-           titleID);
+  //         titleID);
 
   //int logoLoaded = 0;
   //if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
