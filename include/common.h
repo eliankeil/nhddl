@@ -48,5 +48,7 @@ char *modeToString(ModeType mode);
 int getRelativePathIdx(char *path);
 // Returns device number index in path or -1 if path doesn't contain a device number
 int getDeviceNumberIdx(char *path);
+// Tests if file exists by opening it
+int tryFile(char *filepath);
 
 #endif

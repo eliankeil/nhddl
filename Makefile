@@ -7,7 +7,7 @@ GIT_VERSION := $(shell git describe --always --dirty --tags --exclude nightly)
 EE_BIN = nhddl_unc.elf
 EE_BIN_PKD = nhddl.elf
 
-EE_OBJS = main.o module_init.o common.o options.o launcher.o title_id.o target.o
+EE_OBJS = main.o module_init.o common.o options.o neutrino.o title_id.o target.o forwarder.o
 EE_OBJS += gui.o gui_graphics.o gui_args.o pad.o
 EE_OBJS += devices.o devices_mmce.o devices_bdm.o devices_iso.o devices_hdl.o
 # Basic modules

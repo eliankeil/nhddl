@@ -1,6 +1,7 @@
 #include "common.h"
 #include "devices.h"
 #include "dprintf.h"
+#include "module_init.h"
 #include "options.h"
 #include <debug.h>
 #include <kernel.h>
@@ -11,6 +12,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+// Path to Neutrino ELF
+char NEUTRINO_ELF_PATH[PATH_MAX + 1];
+// Neutrino ELF name relative to CWD
+static const char neutrinoELF[] = "neutrino.elf";
+// neutrino.elf fallback paths
+static char *neutrinoMCFallbackPaths[] = {
+    "mcX:/APPS/neutrino/neutrino.elf",
+    "mcX:/NEUTRINO/NEUTRINO.ELF",
+    "mcX:/NEUTRINO/neutrino.elf",
+};
+static char neutrinoStorageFallbackPath[] = "/neutrino/neutrino.elf";
 
 // Arguments
 static char isoArgument[] = "dvd";
@@ -124,6 +137,105 @@ void launchTitle(Target *target, ArgumentList *arguments) {
   }
 
   launchELF(argCount, argv);
+}
+
+// Attempts to find neutrino.elf at current path or one of fallback paths
+int findNeutrinoELF(char *cwdPath, ModuleInitType initType) {
+  if (cwdPath && cwdPath[0] != '\0') {
+    // If path is valid, try it
+    strcpy(NEUTRINO_ELF_PATH, cwdPath);
+    strcat(NEUTRINO_ELF_PATH, neutrinoELF);
+    if (!tryFile(NEUTRINO_ELF_PATH))
+      return 0;
+  }
+
+  if (initType == INIT_TYPE_FULL) {
+    // If neutrino.elf doesn't exist in CWD and all modules are loaded, try fallback paths on storage devices
+    struct DeviceMapEntry *device;
+    for (int i = 0; i < MAX_DEVICES; i++) {
+      NEUTRINO_ELF_PATH[0] = '\0';
+      if (deviceModeMap[i].mode == MODE_NONE)
+        break;
+
+      if (deviceModeMap[i].metadev)
+        device = deviceModeMap[i].metadev;
+      else
+        device = &deviceModeMap[i];
+
+      if (device->mountpoint != NULL) {
+        strcpy(NEUTRINO_ELF_PATH, device->mountpoint);
+        strcat(NEUTRINO_ELF_PATH, neutrinoStorageFallbackPath);
+        if (!tryFile(NEUTRINO_ELF_PATH))
+          return 0;
+      }
+    }
+  }
+
+  if (initType > INIT_TYPE_BASIC) {
+    // Try MMCE if init type is EXTENDED or FULL
+    for (int i = 0; i < 2; i++) {
+      sprintf(NEUTRINO_ELF_PATH, "mmce%d:%s", i, neutrinoStorageFallbackPath);
+      if (!tryFile(NEUTRINO_ELF_PATH))
+        return 0;
+    }
+  }
+
+  // Fallback to memory card paths
+  NEUTRINO_ELF_PATH[0] = '\0';
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < (sizeof(neutrinoMCFallbackPaths) / sizeof(char *)); j++) {
+      neutrinoMCFallbackPaths[j][2] = i + '0';
+      if (!tryFile(neutrinoMCFallbackPaths[j])) {
+        strcpy(NEUTRINO_ELF_PATH, neutrinoMCFallbackPaths[j]);
+        return 0;
+      }
+    }
+  }
+
+  if (NEUTRINO_ELF_PATH[0] == '\0') {
+    return -ENOENT;
+  }
+  return 0;
+}
+
+// Reads version.txt from NEUTRINO_ELF_PATH
+// Returns empty string if the file could not be read
+char *getNeutrinoVersion() {
+  // Get full path to Neutrino directory
+  const char *slashIdx = strrchr(NEUTRINO_ELF_PATH, '/');
+  if (slashIdx == NULL)
+    return strdup("");
+
+  // Get the length of directory path
+  int len = slashIdx - NEUTRINO_ELF_PATH;
+
+  // Build path to version.txt
+  char versionFilePath[PATH_MAX];
+  strncpy(versionFilePath, NEUTRINO_ELF_PATH, len);
+  versionFilePath[len] = '\0';
+  strcat(versionFilePath, "/version.txt");
+
+  // Open version.txt
+  FILE *file = fopen(versionFilePath, "r");
+  if (file == NULL)
+    return strdup("");
+
+  // Read the first line into versionFilePath, reusing it
+  versionFilePath[0] = ' ';
+  if (fgets(&versionFilePath[1], sizeof(versionFilePath) - 1, file) == NULL) {
+    fclose(file);
+    return strdup("");
+  }
+
+  fclose(file);
+
+  // Trim newline
+  len = strlen(versionFilePath);
+  if (len > 0 && versionFilePath[len - 1] == '\n') {
+    versionFilePath[len - 1] = '\0';
+  }
+
+  return strdup(versionFilePath);
 }
 
 __attribute__((section("._launch_args"))) // Place launchArgs in the _launch_args memory section

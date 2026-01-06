@@ -1,9 +1,10 @@
 #include "common.h"
 #include "devices.h"
 #include "dprintf.h"
+#include "forwarder.h"
 #include "gui.h"
-#include "launcher.h"
 #include "module_init.h"
+#include "neutrino.h"
 #include "options.h"
 #include "target.h"
 #include "title_id.h"
@@ -17,8 +18,6 @@
 
 // Launcher options
 LauncherOptions LAUNCHER_OPTIONS;
-// Path to Neutrino ELF
-char NEUTRINO_ELF_PATH[PATH_MAX + 1];
 // Options file name relative to CWD
 static const char optionsFile[] = "nhddl.yaml";
 // nhddl.yaml fallback paths
@@ -26,15 +25,6 @@ static char *nhddlFallbackPaths[] = {
     "mcX:/APP_NHDDL/nhddl.yaml",
 };
 static char nhddlStorageFallbackPath[] = "/nhddl/nhddl.yaml";
-// Neutrino ELF name relative to CWD
-static const char neutrinoELF[] = "neutrino.elf";
-// neutrino.elf fallback paths
-static char *neutrinoMCFallbackPaths[] = {
-    "mcX:/APPS/neutrino/neutrino.elf",
-    "mcX:/NEUTRINO/NEUTRINO.ELF",
-    "mcX:/NEUTRINO/neutrino.elf",
-};
-static char neutrinoStorageFallbackPath[] = "/neutrino/neutrino.elf";
 
 // Supported options
 #define OPTION_VMODE "video"
@@ -57,14 +47,8 @@ int loadOptions(char *cwdPath, ModuleInitType initType);
 void parseArgv(int argc, char *argv[]);
 // Parses argv[0] for mode postfix
 ModeType parseFilename(const char *path);
-// Attempts to find neutrino.elf at current path or one of fallback paths
-int findNeutrinoELF(char *cwdPath, ModuleInitType initType);
-// Reads version.txt from NEUTRINO_ELF_PATH; returns empty string if the file could not be read
-char *getNeutrinoVersion();
 // Tries to load IPCONFIG.DAT from memory card
 void parseIPConfig();
-// Forwards the image to Neutrino without loading the UI
-int forwardBoot();
 
 int main(int argc, char *argv[]) {
   DPRINTF("*************\nNHDDL %s\nA Neutrino launcher by pcm720\n*************\n", GIT_VERSION);
@@ -369,16 +353,6 @@ void parseArgv(int argc, char *argv[]) {
     LAUNCHER_OPTIONS.mode = MODE_ALL;
 }
 
-// Tests if file exists by opening it
-int tryFile(char *filepath) {
-  int fd = open(filepath, O_RDONLY);
-  if (fd < 0) {
-    return fd;
-  }
-  close(fd);
-  return 0;
-}
-
 // Loads NHDDL options from optionsFile
 int loadOptions(char *cwdPath, ModuleInitType initType) {
   char lineBuffer[PATH_MAX + sizeof(optionsFile) + 1];
@@ -469,168 +443,4 @@ fileExists:
   freeArgumentList(options);
 
   return 0;
-}
-
-// Attempts to find neutrino.elf at current path or one of fallback paths
-int findNeutrinoELF(char *cwdPath, ModuleInitType initType) {
-  if (cwdPath && cwdPath[0] != '\0') {
-    // If path is valid, try it
-    strcpy(NEUTRINO_ELF_PATH, cwdPath);
-    strcat(NEUTRINO_ELF_PATH, neutrinoELF);
-    if (!tryFile(NEUTRINO_ELF_PATH))
-      return 0;
-  }
-
-  if (initType == INIT_TYPE_FULL) {
-    // If neutrino.elf doesn't exist in CWD and all modules are loaded, try fallback paths on storage devices
-    struct DeviceMapEntry *device;
-    for (int i = 0; i < MAX_DEVICES; i++) {
-      NEUTRINO_ELF_PATH[0] = '\0';
-      if (deviceModeMap[i].mode == MODE_NONE)
-        break;
-
-      if (deviceModeMap[i].metadev)
-        device = deviceModeMap[i].metadev;
-      else
-        device = &deviceModeMap[i];
-
-      if (device->mountpoint != NULL) {
-        strcpy(NEUTRINO_ELF_PATH, device->mountpoint);
-        strcat(NEUTRINO_ELF_PATH, neutrinoStorageFallbackPath);
-        if (!tryFile(NEUTRINO_ELF_PATH))
-          return 0;
-      }
-    }
-  }
-
-  if (initType > INIT_TYPE_BASIC) {
-    // Try MMCE if init type is EXTENDED or FULL
-    for (int i = 0; i < 2; i++) {
-      sprintf(NEUTRINO_ELF_PATH, "mmce%d:%s", i, neutrinoStorageFallbackPath);
-      if (!tryFile(NEUTRINO_ELF_PATH))
-        return 0;
-    }
-  }
-
-  // Fallback to memory card paths
-  NEUTRINO_ELF_PATH[0] = '\0';
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < (sizeof(neutrinoMCFallbackPaths) / sizeof(char *)); j++) {
-      neutrinoMCFallbackPaths[j][2] = i + '0';
-      if (!tryFile(neutrinoMCFallbackPaths[j])) {
-        strcpy(NEUTRINO_ELF_PATH, neutrinoMCFallbackPaths[j]);
-        return 0;
-      }
-    }
-  }
-
-  if (NEUTRINO_ELF_PATH[0] == '\0') {
-    return -ENOENT;
-  }
-  return 0;
-}
-
-// Reads version.txt from NEUTRINO_ELF_PATH
-// Returns empty string if the file could not be read
-char *getNeutrinoVersion() {
-  // Get full path to Neutrino directory
-  const char *slashIdx = strrchr(NEUTRINO_ELF_PATH, '/');
-  if (slashIdx == NULL)
-    return strdup("");
-
-  // Get the length of directory path
-  int len = slashIdx - NEUTRINO_ELF_PATH;
-
-  // Build path to version.txt
-  char versionFilePath[PATH_MAX];
-  strncpy(versionFilePath, NEUTRINO_ELF_PATH, len);
-  versionFilePath[len] = '\0';
-  strcat(versionFilePath, "/version.txt");
-
-  // Open version.txt
-  FILE *file = fopen(versionFilePath, "r");
-  if (file == NULL)
-    return strdup("");
-
-  // Read the first line into versionFilePath, reusing it
-  versionFilePath[0] = ' ';
-  if (fgets(&versionFilePath[1], sizeof(versionFilePath) - 1, file) == NULL) {
-    fclose(file);
-    return strdup("");
-  }
-
-  fclose(file);
-
-  // Trim newline
-  len = strlen(versionFilePath);
-  if (len > 0 && versionFilePath[len - 1] == '\n') {
-    versionFilePath[len - 1] = '\0';
-  }
-
-  return strdup(versionFilePath);
-}
-
-// Quickly forwards the image to Neutrino without loading the UI
-int forwardBoot() {
-  int res;
-  // Forward to Neutrino without loading the UI
-  if (!LAUNCHER_OPTIONS.noInit)
-    res = initModules(INIT_TYPE_FULL);
-  else
-    res = initModules(INIT_TYPE_NOINIT);
-  if (res) {
-    DPRINTF("Failed to init modules: %d\n", res);
-    return res;
-  }
-
-  int deviceCount = initDeviceMap();
-  if (deviceCount <= 0) {
-    DPRINTF("Failed to init devices: %d\n", deviceCount);
-    return -ENODEV;
-  }
-
-  if ((res = tryFile(LAUNCHER_OPTIONS.image)) < 0) {
-    DPRINTF("Target image not found: %d\n", res);
-    return -ENOENT;
-  }
-
-  if (findNeutrinoELF(NULL, INIT_TYPE_FULL)) {
-    DPRINTF("Failed to find Neutrino\n");
-    return -ENOENT;
-  }
-
-  Target target = {
-      .idx = 0,
-      .id = getTitleID(LAUNCHER_OPTIONS.image),
-      .fullPath = LAUNCHER_OPTIONS.image,
-  };
-
-  char *fileext = strrchr(LAUNCHER_OPTIONS.image, '.');
-  if ((fileext != NULL) && (!strcmp(fileext, ".iso") || !strcmp(fileext, ".ISO"))) {
-    // Get file name without the extension
-    char *isoName = strrchr(LAUNCHER_OPTIONS.image, '/');
-    if (!isoName)
-      isoName = LAUNCHER_OPTIONS.image;
-    else
-      isoName++;
-
-    int nameLength = (int)(fileext - isoName);
-    target.name = calloc(sizeof(char), nameLength + 1);
-    strncpy(target.name, isoName, nameLength);
-  }
-
-  for (int i = 0; i < deviceCount; i++)
-    if (strstr(LAUNCHER_OPTIONS.image, deviceModeMap[i].mountpoint)) {
-      target.device = &deviceModeMap[i];
-      break;
-    }
-
-  if (!target.device) {
-    DPRINTF("Target device not found\n");
-    return -ENODEV;
-  }
-
-  // Run the image
-  launchTitle(&target, loadLaunchArgumentLists(&target));
-  return -ENOENT;
 }

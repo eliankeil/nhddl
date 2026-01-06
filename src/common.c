@@ -1,5 +1,6 @@
 #include "common.h"
 #include <debug.h>
+#include <fcntl.h>
 #include <stdio.h>
 
 // Logs to debug screen and debug console
@@ -59,4 +60,14 @@ int getDeviceNumberIdx(char *path) {
     path++;
   }
   return -1;
+}
+
+// Tests if file exists by opening it
+int tryFile(char *filepath) {
+  int fd = open(filepath, O_RDONLY);
+  if (fd < 0) {
+    return fd;
+  }
+  close(fd);
+  return 0;
 }
