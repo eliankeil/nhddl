@@ -1,5 +1,5 @@
-#ifndef _GUI_ARGS_H_
-#define _GUI_ARGS_H_
+#ifndef _UI_ARGS_H_
+#define _UI_ARGS_H_
 
 #include "options.h"
 

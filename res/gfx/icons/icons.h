@@ -1,5 +1,5 @@
-#ifndef _GUI_ICONS_H_
-#define _GUI_ICONS_H_
+#ifndef _UI_ICONS_H_
+#define _UI_ICONS_H_
 
 // All icons except "Enabled" taken from OPL and modified to fit NHDDL
 

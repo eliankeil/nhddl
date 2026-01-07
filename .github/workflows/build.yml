@@ -9,6 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
+    - name: Install cmake
+      run: |
+        apk add cmake
+
     - uses: actions/checkout@v4
       with:
         submodules: recursive
@@ -21,7 +25,13 @@ jobs:
     - name: Compile project
       id: make
       run: |
-        make
+        cmake -B build
+        cmake --build build
+
+    - name: Prepare artifacts
+      if: steps.make.outcome == 'success'
+      run: |
+        mv build/nhddl.elf nhddl.elf
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -30,7 +40,6 @@ jobs:
         name: artifacts
         path: |
           nhddl.elf
-          !nhddl_unc.elf
           README.md
           examples/*.yaml
 

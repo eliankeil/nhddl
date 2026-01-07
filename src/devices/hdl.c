@@ -2,7 +2,7 @@
 #include "common.h"
 #include "devices.h"
 #include "dprintf.h"
-#include "gui.h"
+#include "ui/ui.h"
 #include <hdd-ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>

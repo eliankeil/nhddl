@@ -1,7 +1,7 @@
-#include "gui_graphics.h"
+#include "ui/graphics.h"
 #include "dprintf.h"
-#include "gui_dejavu_sans.h"
-#include "gui_icons.h"
+#include "ui/dejavu_sans.h"
+#include "ui/icons.h"
 #include <dmaKit.h>
 #include <gsKit.h>
 #include <gsToolkit.h>

@@ -1,7 +1,7 @@
 // Implements support for known Neutrino arguments
-#include "gui_args.h"
-#include "gui_graphics.h"
+#include "ui/args.h"
 #include "options.h"
+#include "ui/graphics.h"
 #include <libpad.h>
 #include <stdint.h>
 #include <stdio.h>

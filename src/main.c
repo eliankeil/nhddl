@@ -2,12 +2,12 @@
 #include "devices.h"
 #include "dprintf.h"
 #include "forwarder.h"
-#include "gui.h"
 #include "module_init.h"
 #include "neutrino.h"
 #include "options.h"
 #include "target.h"
 #include "title_id.h"
+#include "ui/ui.h"
 #include <ctype.h>
 #include <debug.h>
 #include <fcntl.h>

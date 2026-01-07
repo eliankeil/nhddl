@@ -1,4 +1,4 @@
-#include "pad.h"
+#include "ui/pad.h"
 #include <kernel.h>
 #include <libpad.h>
 #include <stdint.h>
@@ -62,7 +62,6 @@ int waitForInput(int button) {
       return curInputs;
   }
 }
-
 
 // Returns inputs on both gamepads
 int pollInput() { return (pollPad(0, 0) | pollPad(1, 0)); }

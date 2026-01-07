@@ -2,7 +2,7 @@
 #include "common.h"
 #include "devices.h"
 #include "dprintf.h"
-#include "gui.h"
+#include "ui/ui.h"
 #include "options.h"
 #include "title_id.h"
 #include <errno.h>

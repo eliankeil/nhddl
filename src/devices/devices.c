@@ -1,7 +1,7 @@
 #include "devices.h"
 #include "common.h"
 #include "dprintf.h"
-#include "gui.h"
+#include "ui/ui.h"
 #include <errno.h>
 #include <kernel.h>
 #include <stdio.h>

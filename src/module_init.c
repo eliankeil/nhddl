@@ -1,7 +1,7 @@
 #include "module_init.h"
 #include "common.h"
 #include "dprintf.h"
-#include "gui.h"
+#include "ui/ui.h"
 #include <ctype.h>
 #include <debug.h>
 #include <fcntl.h>

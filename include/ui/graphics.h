@@ -1,5 +1,5 @@
-#ifndef _GUI_GRAPHICS_H_
-#define _GUI_GRAPHICS_H_
+#ifndef _UI_GRAPHICS_H_
+#define _UI_GRAPHICS_H_
 
 #include <gsKit.h>
 #include <stdint.h>

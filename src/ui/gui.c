@@ -1,11 +1,11 @@
-#include "gui.h"
 #include "common.h"
 #include "dprintf.h"
-#include "gui_args.h"
-#include "gui_graphics.h"
 #include "neutrino.h"
 #include "options.h"
-#include "pad.h"
+#include "ui/args.h"
+#include "ui/graphics.h"
+#include "ui/pad.h"
+#include "ui/ui.h"
 #include <dmaKit.h>
 #include <gsKit.h>
 #include <gsToolkit.h>
