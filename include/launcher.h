@@ -7,5 +7,6 @@
 // Launches target, passing arguments to Neutrino.
 // Expects arguments to be initialized
 void launchTitle(Target *target, ArgumentList *arguments);
+void launchElfTarget(Target *target);
 
 #endif
