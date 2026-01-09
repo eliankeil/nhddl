@@ -34,6 +34,5 @@ void uiSplashSetNeutrinoVersion(const char *str);
 
 // Stops UI splash thread
 void stopUISplashThread();
-int stopUISplashThread(void);
 
 #endif
