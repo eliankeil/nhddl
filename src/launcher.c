@@ -1,45 +1,48 @@
+// src/launcher.c
 #include "common.h"
 #include "devices.h"
 #include "options.h"
+#include "launcher.h"
 #include <kernel.h>
-#include <loadfile.h> // Necesario para t_ExecData, SifLoadElf y ExecPS2
 #include <sifrpc.h>
+#include <loadfile.h>   // t_ExecData, SifLoadElf, ExecPS2
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-// Loader ELF variables
+// Loader ELF embebido
 extern uint8_t loader_elf[];
 extern int size_loader_elf;
-// Arguments
+
+// Argumentos comunes para Neutrino
 static char isoArgument[] = "dvd";
 static char bsdArgument[] = "bsd";
 static char bsdfsArgument[] = "bsdfs";
 
-// Neutrino bsd values
-#define BSD_ATA "ata"
+// Valores bsd (Neutrino)
+#define BSD_ATA    "ata"
 #define BSD_MX4SIO "mx4sio"
-#define BSD_UDPBD "udpbd"
-#define BSD_USB "usb"
-#define BSD_ILINK "ilink"
-#define BSD_MMCE "mmce"
+#define BSD_UDPBD  "udpbd"
+#define BSD_USB    "usb"
+#define BSD_ILINK  "ilink"
+#define BSD_MMCE   "mmce"
 
-// Neutrino bsdfs values
-#define BSDFS_HDL "hdl"
+// Valores bsdfs (Neutrino)
+#define BSDFS_HDL  "hdl"
 
-// Ejecuta un ELF directamente (ELFs POPStarter)
+// ---------------------------------------------------------
+// ELF directo (POPStarter / apps)
+// ---------------------------------------------------------
 void launchElfTarget(Target *target) {
   printf("Launching ELF: %s\n", target->fullPath);
 
-  // Inicializar RPC
+  // Asegurar RPC y detener hilos de UI
   SifInitRpc(0);
-
-  // Detener hilos secundarios (ej. splash)
   stopUISplashThread();
 
-  // Limpiar cachés
+  // Limpiar cachés antes de cargar
   FlushCache(0);
   FlushCache(2);
 
@@ -48,78 +51,66 @@ void launchElfTarget(Target *target) {
 
   int ret = SifLoadElf(target->fullPath, &elfdata);
   if (ret == 0 && elfdata.epc != 0) {
-    // Salir de RPC antes de saltar
+    // Salir de RPC antes de saltar al nuevo ELF
     SifExitRpc();
 
-    // Saltar al ELF
+    // Salto al ELF (no vuelve si todo va bien)
     ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
   } else {
-    printf("ERROR: Failed to load ELF %s\n", target->fullPath);
+    printf("ERROR: Failed to load ELF %s (ret=%d)\n", target->fullPath, ret);
+  }
+}
+
+// ---------------------------------------------------------
+// Helper: construir argv para loader.elf (Neutrino)
+// ---------------------------------------------------------
+static int assembleArgv(ArgumentList *arguments, char *argv[]) {
+  Argument *curArg = arguments->first;
+  int argCount = 1; // argv[0] = neutrino.elf
+  int argSize = 0;
+
+  argv[0] = NEUTRINO_ELF_PATH;
+  while (curArg != NULL) {
+    if (!curArg->isDisabled) {
+      argSize = (int)strlen(curArg->arg) + (int)strlen(curArg->value) + 3; // \0, '=' y '-'
+      char *value = calloc(sizeof(char), argSize);
+
+      if (!strlen(curArg->value))
+        snprintf(value, argSize, "-%s", curArg->arg);
+      else
+        snprintf(value, argSize, "-%s=%s", curArg->arg, curArg->value);
+
+      argv[argCount] = value;
+      argCount++;
+    }
+    curArg = curArg->next;
   }
 
-  // Assembles argument lists into argv for loader.elf.
-  // Expects argv to be initialized with at least (arguments->total) elements.
-  int assembleArgv(ArgumentList * arguments, char *argv[]) {
-    Argument *curArg = arguments->first;
-    int argCount = 1; // argv[0] is always neutrino.elf
-    int argSize = 0;
+  if (argCount != arguments->total)
+    argv = realloc(argv, argCount * sizeof(char *));
 
-    argv[0] = NEUTRINO_ELF_PATH;
-    while (curArg != NULL) {
-      if (!curArg->isDisabled) {
-        argSize =
-            strlen(curArg->arg) + strlen(curArg->value) + 3; // + \0, = and -
-        char *value = calloc(sizeof(char), argSize);
+  return argCount;
+}
 
-        if (!strlen(curArg->value))
-          snprintf(value, argSize, "-%s", curArg->arg);
-        else
-          snprintf(value, argSize, "-%s=%s", curArg->arg, curArg->value);
-
-        argv[argCount] = value;
-        argCount++;
-      }
-      curArg = curArg->next;
-    }
-
-    if (argCount != arguments->total)
-      argv = realloc(argv, argCount * sizeof(char *));
-
-    return argCount;
+// ---------------------------------------------------------
+// ISO → Neutrino
+// ---------------------------------------------------------
+void launchTitle(Target *target, ArgumentList *arguments) {
+  // Caso ELF: derivar al camino directo y salir
+  if (target->isElf) {
+    launchElfTarget(target);
+    return;
   }
 
-  // Launches target, passing arguments to Neutrino.
-  // Expects arguments to be initialized
-  void launchTitle(Target * target, ArgumentList * arguments) {
-    // Si es ELF, ejecutar directo y salir
-    if (target->isElf) {
-      printf("Launching ELF: %s\n", target->fullPath);
-      // Nota: updateLastLaunchedTitle puede optar por incluir ELFs si lo deseas
-      launchElfTarget(target);
-      return;
-    }
-
-    // ISO → Neutrino
-    char *bsdValue;
-    switch (target->device->mode) {
-    case MODE_ATA:
-      bsdValue = BSD_ATA;
-      break;
-    case MODE_MX4SIO:
-      bsdValue = BSD_MX4SIO;
-      break;
-    case MODE_UDPBD:
-      bsdValue = BSD_UDPBD;
-      break;
-    case MODE_USB:
-      bsdValue = BSD_USB;
-      break;
-    case MODE_ILINK:
-      bsdValue = BSD_ILINK;
-      break;
-    case MODE_MMCE:
-      bsdValue = BSD_MMCE;
-      break;
+  // ISO → determinar backend bsd/bsdfs
+  char *bsdValue;
+  switch (target->device->mode) {
+    case MODE_ATA:    bsdValue = BSD_ATA;    break;
+    case MODE_MX4SIO: bsdValue = BSD_MX4SIO; break;
+    case MODE_UDPBD:  bsdValue = BSD_UDPBD;  break;
+    case MODE_USB:    bsdValue = BSD_USB;    break;
+    case MODE_ILINK:  bsdValue = BSD_ILINK;  break;
+    case MODE_MMCE:   bsdValue = BSD_MMCE;   break;
     case MODE_HDL:
       bsdValue = BSD_ATA;
       appendArgument(arguments, newArgument(bsdfsArgument, BSDFS_HDL));
@@ -127,103 +118,95 @@ void launchElfTarget(Target *target) {
     default:
       printf("ERROR: Unsupported mode\n");
       return;
-    }
-
-    printf("Updating last launched title\n");
-    if (updateLastLaunchedTitle(target->device, target->fullPath)) {
-      printf("ERROR: Failed to update last launched title\n");
-    }
-
-    if (target->device->sync)
-      target->device->sync();
-
-    printf("Mounting VMC on MMCE devices\n");
-    mmceMountVMC(target->id);
-
-    appendArgument(arguments, newArgument(bsdArgument, bsdValue));
-    appendArgument(arguments, newArgument(isoArgument, target->fullPath));
-    if (target->device->mode != MODE_HDL)
-      appendArgument(arguments, newArgument("qb", ""));
-
-    char **argv = malloc(((arguments->total) + 1) * sizeof(char *));
-    int argCount = assembleArgv(arguments, argv);
-
-    printf("Launching %s (%s) with arguments:\n", target->name, target->id);
-    for (int i = 0; i < argCount; i++) {
-      printf("%d: %s\n", i + 1, argv[i]);
-    }
-
-    printf("ERROR: failed to load %s: %d\n", NEUTRINO_ELF_PATH,
-           LoadELFFromFile(argCount, argv));
   }
 
-  //
-  // All the following code is modified version of elf.c from PS2SDK with
-  // unneeded bits removed
-  //
+  printf("Updating last launched title\n");
+  if (updateLastLaunchedTitle(target->device, target->fullPath)) {
+    printf("WARN: Failed to update last launched title\n");
+  }
 
-  typedef struct {
-    uint8_t ident[16]; // struct definition for ELF object header
-    uint16_t type;
-    uint16_t machine;
-    uint32_t version;
-    uint32_t entry;
-    uint32_t phoff;
-    uint32_t shoff;
-    uint32_t flags;
-    uint16_t ehsize;
-    uint16_t phentsize;
-    uint16_t phnum;
-    uint16_t shentsize;
-    uint16_t shnum;
-    uint16_t shstrndx;
-  } elf_header_t;
+  if (target->device->sync)
+    target->device->sync();
 
-  typedef struct {
-    uint32_t type; // struct definition for ELF program section header
-    uint32_t offset;
-    void *vaddr;
-    uint32_t paddr;
-    uint32_t filesz;
-    uint32_t memsz;
-    uint32_t flags;
-    uint32_t align;
-  } elf_pheader_t;
+  // Montaje de VMC en MMCE si aplica
+  mmceMountVMC(target->id);
 
-// ELF-loading stuff
-#define ELF_MAGIC 0x464c457f
+  appendArgument(arguments, newArgument(bsdArgument, bsdValue));
+  appendArgument(arguments, newArgument(isoArgument, target->fullPath));
+  if (target->device->mode != MODE_HDL)
+    appendArgument(arguments, newArgument("qb", ""));
+
+  char **argv = malloc(((arguments->total) + 1) * sizeof(char *));
+  int argCount = assembleArgv(arguments, argv);
+
+  printf("Launching %s (%s) with arguments:\n", target->name, target->id);
+  for (int i = 0; i < argCount; i++)
+    printf("%d: %s\n", i + 1, argv[i]);
+
+  printf("ERROR: failed to load %s: %d\n", NEUTRINO_ELF_PATH,
+         LoadELFFromFile(argCount, argv));
+}
+
+// ---------------------------------------------------------
+// Ejecutar loader.elf embebido con argv
+// ---------------------------------------------------------
+typedef struct {
+  uint8_t  ident[16];
+  uint16_t type;
+  uint16_t machine;
+  uint32_t version;
+  uint32_t entry;
+  uint32_t phoff;
+  uint32_t shoff;
+  uint32_t flags;
+  uint16_t ehsize;
+  uint16_t phentsize;
+  uint16_t phnum;
+  uint16_t shentsize;
+  uint16_t shnum;
+  uint16_t shstrndx;
+} elf_header_t;
+
+typedef struct {
+  uint32_t type;
+  uint32_t offset;
+  void    *vaddr;
+  uint32_t paddr;
+  uint32_t filesz;
+  uint32_t memsz;
+  uint32_t flags;
+  uint32_t align;
+} elf_pheader_t;
+
+#define ELF_MAGIC   0x464c457f
 #define ELF_PT_LOAD 1
 
-  int LoadELFFromFile(int argc, char *argv[]) {
-    uint8_t *boot_elf;
-    elf_header_t *eh;
-    elf_pheader_t *eph;
-    void *pdata;
-    int i;
+int LoadELFFromFile(int argc, char *argv[]) {
+  uint8_t      *boot_elf;
+  elf_header_t *eh;
+  elf_pheader_t *eph;
+  void         *pdata;
 
-    // Wipe memory region where the ELF loader is going to be loaded (see
-    // loader/linkfile)
-    memset((void *)0x00084000, 0, 0x00100000 - 0x00084000);
+  // Limpiar región donde se cargará el loader (ver linkfile de loader)
+  memset((void *)0x00084000, 0, 0x00100000 - 0x00084000);
 
-    boot_elf = (uint8_t *)loader_elf;
-    eh = (elf_header_t *)boot_elf;
-    if (_lw((uint32_t)&eh->ident) != ELF_MAGIC)
-      __builtin_trap();
+  boot_elf = (uint8_t *)loader_elf;
+  eh = (elf_header_t *)boot_elf;
+  if (_lw((uint32_t)&eh->ident) != ELF_MAGIC)
+    __builtin_trap();
 
-    eph = (elf_pheader_t *)(boot_elf + eh->phoff);
+  eph = (elf_pheader_t *)(boot_elf + eh->phoff);
 
-    // Scan through the ELF's program headers and copy them into RAM
-    for (i = 0; i < eh->phnum; i++) {
-      if (eph[i].type != ELF_PT_LOAD)
-        continue;
-
-      pdata = (void *)(boot_elf + eph[i].offset);
-      memcpy(eph[i].vaddr, pdata, eph[i].filesz);
-    }
-
-    SifExitRpc();
-    FlushCache(0);
-    FlushCache(2);
-
-    return ExecPS2((void *)eh->entry, NULL, argc, argv);
+  // Copiar las secciones cargables a RAM
+  for (int i = 0; i < eh->phnum; i++) {
+    if (eph[i].type != ELF_PT_LOAD) continue;
+    pdata = (void *)(boot_elf + eph[i].offset);
+    memcpy(eph[i].vaddr, pdata, eph[i].filesz);
   }
+
+  SifExitRpc();
+  FlushCache(0);
+  FlushCache(2);
+
+  return ExecPS2((void *)eh->entry, NULL, argc, argv);
+}
