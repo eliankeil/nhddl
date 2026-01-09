@@ -971,6 +971,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       }
       drawStartX = cutLeft;
     }
+    
 
     int minStartX = cutRight - textWidth;
     int maxStartX = cutLeft;
