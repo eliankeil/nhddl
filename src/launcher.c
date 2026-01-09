@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "gui.h"
 
 // Loader ELF embebido
 extern uint8_t loader_elf[];
