@@ -1,3 +1,4 @@
+// main.c
 #include "common.h"
 #include "devices.h"
 #include "gui.h"
@@ -35,7 +36,6 @@ static char *neutrinoMCFallbackPaths[] = {
 };
 static char neutrinoStorageFallbackPath[] = "/neutrino/neutrino.elf";
 
-// Supported options
 #define OPTION_VMODE "video"
 #define OPTION_MODE "mode"
 #define OPTION_UDPBD_IP "udpbd_ip"
@@ -46,23 +46,14 @@ static char neutrinoStorageFallbackPath[] = "/neutrino/neutrino.elf";
 #define GIT_VERSION "v-0.0.0-unknown"
 #endif
 
-// Does a quick init for options given in argv
 int argInit();
-// Initializes modules, NHDDL configuraton, Neutrino path and device map
 int init(ModeType mode);
-// Loads NHDDL options from optionsFile
 int loadOptions(char *cwdPath, ModuleInitType initType);
-// Attempts to parse argv into LAUNCHER_OPTIONS
 void parseArgv(int argc, char *argv[]);
-// Parses argv[0] for mode postfix
 ModeType parseFilename(const char *path);
-// Attempts to find neutrino.elf at current path or one of fallback paths
 int findNeutrinoELF(char *cwdPath, ModuleInitType initType);
-// Reads version.txt from NEUTRINO_ELF_PATH; returns empty string if the file could not be read
 char *getNeutrinoVersion();
-// Tries to load IPCONFIG.DAT from memory card
 void parseIPConfig();
-// Forwards the image to Neutrino without loading the UI
 int forwardBoot();
 
 int main(int argc, char *argv[]) {
@@ -71,7 +62,6 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < argc; i++)
     printf("argv[%d] = %s\n", i, argv[i]);
 
-  // Parse arguments
   if ((argc > 0 && argv[0][0] == '-') || (argc > 1 && argv[1][0] == '-'))
     parseArgv(argc, argv);
 
@@ -98,7 +88,6 @@ int main(int argc, char *argv[]) {
   }
 
   if ((argc > 0 && argv[0][0] == '-') || (argc > 1 && argv[1][0] == '-'))
-    // If argv contains arguments, use them for init
     res = argInit();
   else if (argv && argv[0])
     res = init(parseFilename(argv[0]));
@@ -115,18 +104,23 @@ int main(int argc, char *argv[]) {
   titles->first = NULL;
   titles->last = NULL;
 
-  // Scan every initialized device for entries
+  // Escaneo de ISOs y ELFs (lista única)
   for (int i = 0; i < MAX_DEVICES; i++) {
     if (deviceModeMap[i].mode == MODE_NONE || deviceModeMap[i].mountpoint == NULL)
       break;
 
-    // Ignore devices without a scan function
-    if (deviceModeMap[i].scan == NULL)
-      continue;
+    // ISOs (usa función legacy en deviceModeMap)
+    if (deviceModeMap[i].scan) {
+      res = deviceModeMap[i].scan(titles, &deviceModeMap[i]);
+      if (res != 0) {
+        printf("WARN: failed to scan ISOs on %s: %d\n", deviceModeMap[i].mountpoint, res);
+      }
+    }
 
-    res = deviceModeMap[i].scan(titles, &deviceModeMap[i]);
-    if (res != 0) {
-      printf("WARN: failed to scan %s: %d\n", deviceModeMap[i].mountpoint, res);
+    // ELFs (siempre intentar /APPS/*/XX.*.ELF)
+    res = findELF(titles, &deviceModeMap[i]);
+    if (res != 0 && res != -ENOENT) {
+      printf("WARN: failed to scan ELFs on %s: %d\n", deviceModeMap[i].mountpoint, res);
     }
   }
 
@@ -150,6 +144,7 @@ fail:
   sleep(10);
   return 1;
 }
+
 
 // Initializes device map while logging errors
 int initDevices() {

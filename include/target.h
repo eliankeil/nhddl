@@ -1,3 +1,4 @@
+// target.h
 #ifndef _TARGET_H_
 #define _TARGET_H_
 
@@ -9,16 +10,17 @@ struct DeviceMapEntry;
 
 // An entry in TargetList
 typedef struct Target {
-  uint16_t idx;           // ISO index (monotonically increasing). Used to uniquely identify the list entry
-  char *fullPath;         // Full path to ISO
-  char *name;             // Target name (extracted from file name)
-  char *id;               // Title ID
-  struct DeviceMapEntry *device; // Device entry
+  uint16_t idx;                    // ISO/ELF index (monotonically increasing)
+  char *fullPath;                  // Full path to ISO/ELF
+  char *name;                      // Display name (file or folder-derived)
+  char *id;                        // Title ID (ISOs only; NULL for ELFs)
+  struct DeviceMapEntry *device;   // Device entry
 
-  int isFavorite;         // <-- NUEVO: 0 = normal, 1 = favorito
+  int isFavorite;                  // 0 = normal, 1 = favorito
+  int isElf;                       // 0 = ISO, 1 = ELF
 
-  struct Target *prev;    // Previous target in the list
-  struct Target *next;    // Next target in the list
+  struct Target *prev;             // Previous target in the list
+  struct Target *next;             // Next target in the list
 } Target;
 
 // A linked list of launch candidates

@@ -1,3 +1,4 @@
+// launcher.c
 #include "common.h"
 #include "devices.h"
 #include "options.h"
@@ -30,6 +31,25 @@ static char bsdfsArgument[] = "bsdfs";
 
 int LoadELFFromFile(int argc, char *argv[]);
 
+// Ejecuta un ELF directamente (ELFs POPStarter)
+void launchElfTarget(Target *target) {
+  // Apagar/limpiar lo necesario del UI antes del salto (pad/audio/gs externos)
+  SifInitRpc(0);
+  FlushCache(0);
+
+  t_ExecData elfdata;
+  memset(&elfdata, 0, sizeof(elfdata));
+
+  int ret = SifLoadElf(target->fullPath, &elfdata);
+  if (ret == 0 && elfdata.epc != 0) {
+    FlushCache(0);
+    FlushCache(2);
+    ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
+  } else {
+    printf("ERROR: Failed to load ELF %s\n", target->fullPath);
+  }
+}
+
 // Assembles argument lists into argv for loader.elf.
 // Expects argv to be initialized with at least (arguments->total) elements.
 int assembleArgv(ArgumentList *arguments, char *argv[]) {
@@ -54,7 +74,6 @@ int assembleArgv(ArgumentList *arguments, char *argv[]) {
     curArg = curArg->next;
   }
 
-  // Free unused memory
   if (argCount != arguments->total)
     argv = realloc(argv, argCount * sizeof(char *));
 
@@ -64,28 +83,29 @@ int assembleArgv(ArgumentList *arguments, char *argv[]) {
 // Launches target, passing arguments to Neutrino.
 // Expects arguments to be initialized
 void launchTitle(Target *target, ArgumentList *arguments) {
-  // Append arguments
+  // Si es ELF, ejecutar directo y salir
+  if (target->isElf) {
+    printf("Launching ELF: %s\n", target->fullPath);
+    // Nota: updateLastLaunchedTitle puede optar por incluir ELFs si lo deseas
+    launchElfTarget(target);
+    return;
+  }
+
+  // ISO → Neutrino
   char *bsdValue;
-  // Map target device index to Neutrino bsd argument
   switch (target->device->mode) {
   case MODE_ATA:
-    bsdValue = BSD_ATA;
-    break;
+    bsdValue = BSD_ATA; break;
   case MODE_MX4SIO:
-    bsdValue = BSD_MX4SIO;
-    break;
+    bsdValue = BSD_MX4SIO; break;
   case MODE_UDPBD:
-    bsdValue = BSD_UDPBD;
-    break;
+    bsdValue = BSD_UDPBD; break;
   case MODE_USB:
-    bsdValue = BSD_USB;
-    break;
+    bsdValue = BSD_USB; break;
   case MODE_ILINK:
-    bsdValue = BSD_ILINK;
-    break;
+    bsdValue = BSD_ILINK; break;
   case MODE_MMCE:
-    bsdValue = BSD_MMCE;
-    break;
+    bsdValue = BSD_MMCE; break;
   case MODE_HDL:
     bsdValue = BSD_ATA;
     appendArgument(arguments, newArgument(bsdfsArgument, BSDFS_HDL));
@@ -100,21 +120,17 @@ void launchTitle(Target *target, ArgumentList *arguments) {
     printf("ERROR: Failed to update last launched title\n");
   }
 
-  // Sync storage device before loading Neutrino
   if (target->device->sync)
     target->device->sync();
 
   printf("Mounting VMC on MMCE devices\n");
   mmceMountVMC(target->id);
 
-  // Append bsd and ISO path
   appendArgument(arguments, newArgument(bsdArgument, bsdValue));
   appendArgument(arguments, newArgument(isoArgument, target->fullPath));
-  // Use quickboot to reduce load times (except for HDL mode because it requires hdlfs module)
   if (target->device->mode != MODE_HDL)
     appendArgument(arguments, newArgument("qb", ""));
 
-  // Assemble argv
   char **argv = malloc(((arguments->total) + 1) * sizeof(char *));
   int argCount = assembleArgv(arguments, argv);
 
@@ -125,6 +141,7 @@ void launchTitle(Target *target, ArgumentList *arguments) {
 
   printf("ERROR: failed to load %s: %d\n", NEUTRINO_ELF_PATH, LoadELFFromFile(argCount, argv));
 }
+
 
 //
 // All the following code is modified version of elf.c from PS2SDK with unneeded bits removed

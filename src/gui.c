@@ -869,13 +869,22 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     if (titleY >= listY2 - marginBottom)
       break;
 
+    // Diferenciar ISO vs ELF en el bloque seleccionado
     if (selectedTitleIdx == curTitle->idx) {
-      drawTextWindow(coverArtX1,
-                     drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0,
-                                    0, currentTheme.listText, ALIGN_HCENTER,
-                                    curTitle->id),
-                     coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
-                     modeToString(curTitle->device->mode));
+      if (curTitle->isElf) {
+        // Mostrar solo el nombre del ELF
+        drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
+                       currentTheme.listText, ALIGN_HCENTER,
+                       curTitle->name);
+      } else {
+        // Mostrar ID y modo para ISOs
+        drawTextWindow(coverArtX1,
+                       drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0,
+                                      0, currentTheme.listText, ALIGN_HCENTER,
+                                      curTitle->id),
+                       coverArtX2, 0, 0, currentTheme.listText, ALIGN_HCENTER,
+                       modeToString(curTitle->device->mode));
+      }
     }
 
     int textX1 = listX1 + marginLeft;
@@ -885,6 +894,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     int cutLeft = textX1 + 11;
     int cutRight = textX2 - 20;
 
+    // Scroll logic (sin cambios)
     static float scrollOffset = 0.0f;
     static int scrollState = 0;
     static int pauseCounter = 0;
@@ -978,6 +988,8 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   next:
     curTitle = curTitle->next;
   }
+}
+
 
   // --- Dibujar íconos de scroll ---
 
@@ -1292,6 +1304,11 @@ void drawTitleOptionsFooter(int baseX) {
 // Draws well-known Neutrino arguments
 // Returns -1 if error occurs
 int uiTitleOptionsLoop(Target *target) {
+  // Caso ELF → no hay opciones
+  if (target->isElf) {
+    return 0;
+  }
+
   int res = 0;
 
   // Load arguments from config files
@@ -1332,24 +1349,19 @@ int uiTitleOptionsLoop(Target *target) {
     // Process user inputs
     input = waitForInput(-1);
     if (input & (PAD_L1 | PAD_R1)) {
-      // Show full argument list
       if ((res = uiArgumentListLoop(target, titleArguments)))
         goto exit;
-
-      // Re-parse arguments
       activeArgumentIdx = 0;
       for (i = 0; i < uiArgumentsTotal; i++)
         uiArguments[i].parse(&uiArguments[i], titleArguments);
     } else if (input & PAD_SQUARE) {
-      // Launch title without saving arguments
       uiLaunchTitle(target, titleArguments);
-      res = -1; // If this was somehow reached, something went terribly wrong
+      res = -1;
       goto exit;
     } else if (input & PAD_START) {
       updateTitleLaunchArguments(target, titleArguments);
       goto exit;
     } else if (input & PAD_TRIANGLE) {
-      // Quit to title list
       goto exit;
     } else {
       switch (uiArguments[activeArgumentIdx].handleInput(
@@ -1375,9 +1387,13 @@ exit:
   return res;
 }
 
+
 // Handles all arguments in arugment list
 // Returns -1 if error occurs, 1 if parent needs to exit to title list
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
+  if (target->isElf) {
+    return 0;
+  }
   int selectedArgIdx = 0;
   int input = 0;
 
@@ -1492,16 +1508,36 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
 // Displays Game ID and launches the title
 void uiLaunchTitle(Target *target, ArgumentList *arguments) {
-  // Initialize arugments if not set
+  // Caso ELF → ejecución directa sin argumentos ni opciones
+  if (target->isElf) {
+    gsKit_clear(gsGlobal, currentTheme.background);
+
+    // Pantalla simple de confirmación
+    snprintf(lineBuffer, 255, "Launching ELF\n%s\n\n%s",
+             target->name, target->fullPath);
+    drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0,
+                   currentTheme.listText, ALIGN_CENTER, lineBuffer);
+
+    gsKit_queue_exec(gsGlobal);
+    gsKit_finish();
+    gsKit_sync_flip(gsGlobal);
+
+    // Cleanup UI y salto directo
+    closePad();
+    closeUI();
+    launchElfTarget(target);
+    return;
+  }
+
+  // Caso ISO → camino existente con Neutrino
   if (arguments == NULL) {
     arguments = loadLaunchArgumentLists(target);
   }
 
   gsKit_clear(gsGlobal, currentTheme.background);
 
-  // Draw screen with GameID and title parameters
-  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s", target->name, target->id,
-           target->fullPath);
+  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s",
+           target->name, target->id, target->fullPath);
   drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0,
                  currentTheme.listText, ALIGN_CENTER, lineBuffer);
   drawGameID(target->id);
@@ -1510,11 +1546,11 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
   gsKit_finish();
   gsKit_sync_flip(gsGlobal);
 
-  // Cleanup the UI and launch title
   closePad();
   closeUI();
   launchTitle(target, arguments);
 }
+
 
 //
 // GameID code based on
