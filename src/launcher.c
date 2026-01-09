@@ -1,10 +1,9 @@
-// launcher.c
 #include "common.h"
 #include "devices.h"
 #include "options.h"
 #include <kernel.h>
 #include <sifrpc.h>
-#include <loadfile.h>
+#include <loadfile.h>   // Necesario para t_ExecData, SifLoadElf y ExecPS2
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,26 +29,35 @@ static char bsdfsArgument[] = "bsdfs";
 // Neutrino bsdfs values
 #define BSDFS_HDL "hdl"
 
-int LoadELFFromFile(int argc, char *argv[]);
-
 // Ejecuta un ELF directamente (ELFs POPStarter)
 void launchElfTarget(Target *target) {
-  // Apagar/limpiar lo necesario del UI antes del salto (pad/audio/gs externos)
-  SifInitRpc(0);
-  FlushCache(0);
+    printf("Launching ELF: %s\n", target->fullPath);
 
-  t_ExecData elfdata;
-  memset(&elfdata, 0, sizeof(elfdata));
+    // Inicializar RPC
+    SifInitRpc(0);
 
-  int ret = SifLoadElf(target->fullPath, &elfdata);
-  if (ret == 0 && elfdata.epc != 0) {
+    // Detener hilos secundarios (ej. splash)
+    stopUISplashThread();
+
+    // Limpiar cachés
     FlushCache(0);
     FlushCache(2);
-    ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
-  } else {
-    printf("ERROR: Failed to load ELF %s\n", target->fullPath);
-  }
+
+    t_ExecData elfdata;
+    memset(&elfdata, 0, sizeof(elfdata));
+
+    int ret = SifLoadElf(target->fullPath, &elfdata);
+    if (ret == 0 && elfdata.epc != 0) {
+        // Salir de RPC antes de saltar
+        SifExitRpc();
+
+        // Saltar al ELF
+        ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
+    } else {
+        printf("ERROR: Failed to load ELF %s\n", target->fullPath);
+    }
 }
+
 
 // Assembles argument lists into argv for loader.elf.
 // Expects argv to be initialized with at least (arguments->total) elements.
