@@ -4,6 +4,7 @@
 #include "options.h"
 #include <kernel.h>
 #include <sifrpc.h>
+#include <loadfile.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
