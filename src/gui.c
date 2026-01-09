@@ -989,7 +989,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   next:
     curTitle = curTitle->next;
   }
-}
+
 
 
   // --- Dibujar íconos de scroll ---
@@ -1233,6 +1233,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // Incrementar el contador de frames para la animación
   frameCounter++;
 }
+
 
 void drawTitleOptionsFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
