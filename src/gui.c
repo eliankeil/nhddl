@@ -971,7 +971,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       }
       drawStartX = cutLeft;
     }
-    
+
 
     int minStartX = cutRight - textWidth;
     int maxStartX = cutLeft;
@@ -1389,12 +1389,14 @@ exit:
 }
 
 
-// Handles all arguments in arugment list
+// Handles all arguments in argument list
 // Returns -1 if error occurs, 1 if parent needs to exit to title list
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
+  // Caso ELF → no hay lista de argumentos
   if (target->isElf) {
     return 0;
   }
+
   int selectedArgIdx = 0;
   int input = 0;
 
@@ -1418,8 +1420,6 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
     int startY = headerHeight + 2.5 * getFontLineHeight();
     int idx = 0;
 
-    // Set number of elements per page according to line height and available
-    // screen height
     int maxArguments =
         (gsGlobal->Height - startY - footerHeight - getFontLineHeight() / 2) /
         getFontLineHeight();
@@ -1435,17 +1435,14 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
     Argument *argument = titleArguments->first;
     while (argument != NULL) {
-      // Do not display arguments before the current page
       if (idx < maxArguments * curPage) {
         idx++;
         goto next;
       }
-      // Do not display arguments beyond the current page
       if (idx >= maxArguments * (curPage + 1)) {
         break;
       }
 
-      // Draw argument
       if (!argument->isDisabled)
         drawIconWindow(baseX, startY, 20, startY + getFontLineHeight(), 0,
                        currentTheme.iconEnabled, ALIGN_CENTER, ICON_ENABLED);
@@ -1467,14 +1464,12 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
     gsKit_finish();
     gsKit_sync_flip(gsGlobal);
 
-    // Process user inputs
     input = waitForInput(-1);
     if (input & (PAD_L1 | PAD_R1)) {
       return 0;
     } else if (input & PAD_SQUARE) {
-      // Launch title without saving arguments
       uiLaunchTitle(target, titleArguments);
-      return -1; // If this was somehow reached, something went terribly wrong
+      return -1;
     } else if (input & PAD_START) {
       updateTitleLaunchArguments(target, titleArguments);
       return 1;
@@ -1482,30 +1477,26 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
       return 1;
     }
 
-    // Ignore inputs when the argument is not initialized
     if (!curArgument)
       continue;
 
     if (input & (PAD_CROSS | PAD_CIRCLE)) {
-      // Toggle argument
       curArgument->isDisabled = !curArgument->isDisabled;
-      // If the argument was disabled, reset global flag
       if (curArgument->isDisabled)
         curArgument->isGlobal = 0;
     } else if (input & PAD_UP) {
-      // Point to the previous argument
       selectedArgIdx =
           (selectedArgIdx - 1 + titleArguments->total) % titleArguments->total;
       curArgument =
           (curArgument->prev) ? curArgument->prev : titleArguments->last;
     } else if (input & PAD_DOWN) {
-      // Advance to the next argument
       selectedArgIdx = (selectedArgIdx + 1) % titleArguments->total;
       curArgument =
           (curArgument->next) ? curArgument->next : titleArguments->first;
     }
   }
 }
+
 
 // Displays Game ID and launches the title
 void uiLaunchTitle(Target *target, ArgumentList *arguments) {
