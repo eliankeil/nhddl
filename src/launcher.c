@@ -36,46 +36,37 @@ static char bsdfsArgument[] = "bsdfs";
 // ELF directo (POPStarter / apps) — secuencia tipo uLE
 // ---------------------------------------------------------
 void launchElfTarget(Target *target) {
-  // 1) Cambiar CWD al directorio del ELF
-  //    Ej.: de "mass:/APPS/POPS/XX.MYELF.ELF" a "mass:/APPS/POPS"
-  char pathBuf[512];
-  snprintf(pathBuf, sizeof(pathBuf), "%s", target->fullPath);
+    // Cambiar CWD al directorio del ELF
+    char pathBuf[512];
+    snprintf(pathBuf, sizeof(pathBuf), "%s", target->fullPath);
+    char *lastSlash = strrchr(pathBuf, '/');
+    if (lastSlash) {
+        *lastSlash = '\0';
+        chdir(pathBuf);
+    }
 
-  // Buscar última '/' y terminar allí la cadena para obtener el directorio
-  char *lastSlash = strrchr(pathBuf, '/');
-  if (lastSlash != NULL) {
-    *lastSlash = '\0';
-    // Cambiar CWD; si falla, lo registramos pero seguimos (POPStarter suele depender de CWD)
-    int cdret = chdir(pathBuf);
-    printf("CWD -> %s (ret=%d)\n", pathBuf, cdret);
-  } else {
-    // Si no hay '/', dejamos CWD como esté
-    printf("WARN: launchElfTarget: no slash in path: %s\n", target->fullPath);
-  }
+    // Resetear IOP como hace uLaunchELF
+    SifIopReset(NULL, 0);
+    while (!SifIopSync()) { /* esperar */ }
 
-  // 2) Inicializar RPC para SifLoadElf
-  SifInitRpc(0);
+    // Re‑inicializar RPC
+    SifInitRpc(0);
 
-  // 3) Cargar ELF
-  t_ExecData elfdata;
-  memset(&elfdata, 0, sizeof(elfdata));
+    // Cargar ELF
+    t_ExecData elfdata;
+    memset(&elfdata, 0, sizeof(elfdata));
+    int ret = SifLoadElf(target->fullPath, &elfdata);
 
-  int ret = SifLoadElf(target->fullPath, &elfdata);
-  printf("SifLoadElf(ret=%d, epc=%p, gp=%p)\n", ret, (void *)elfdata.epc, (void *)elfdata.gp);
-
-  if (ret != 0 || elfdata.epc == 0) {
-    printf("ERROR: Failed to load ELF %s (ret=%d)\n", target->fullPath, ret);
-    return;
-  }
-
-  // 4) Handoff limpio
-  SifExitRpc();
-  FlushCache(0);
-  FlushCache(2);
-
-  // 5) Ejecutar (no debería volver)
-  ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
+    if (ret == 0 && elfdata.epc != 0) {
+        SifExitRpc();
+        FlushCache(0);
+        FlushCache(2);
+        ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 0, NULL);
+    } else {
+        printf("ERROR: no se pudo cargar %s (ret=%d)\n", target->fullPath, ret);
+    }
 }
+
 
 
 // ---------------------------------------------------------
