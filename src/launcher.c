@@ -1,4 +1,3 @@
-// src/launcher.c
 #include "common.h"
 #include "devices.h"
 #include "options.h"
@@ -11,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "gui.h"
 
 // Loader ELF embebido
 extern uint8_t loader_elf[];
@@ -34,28 +32,20 @@ static char bsdfsArgument[] = "bsdfs";
 #define BSDFS_HDL  "hdl"
 
 // ---------------------------------------------------------
-// ELF directo (POPStarter / apps)
+// ELF directo (POPStarter / apps) — camino minimalista
 // ---------------------------------------------------------
 void launchElfTarget(Target *target) {
   printf("Launching ELF: %s\n", target->fullPath);
 
-  // Asegurar RPC y detener hilos de UI
-  SifInitRpc(0);
-  stopUISplashThread();
-
-  // Limpiar cachés antes de cargar
-  FlushCache(0);
-  FlushCache(2);
-
+  // Camino limpio: no tocar hilos UI, RPC ni drivers.
+  // Solo cargar ELF, limpiar cachés y ejecutar.
   t_ExecData elfdata;
   memset(&elfdata, 0, sizeof(elfdata));
 
   int ret = SifLoadElf(target->fullPath, &elfdata);
   if (ret == 0 && elfdata.epc != 0) {
-    // Salir de RPC antes de saltar al nuevo ELF
-    SifExitRpc();
-
-    // Salto al ELF (no vuelve si todo va bien)
+    FlushCache(0);
+    FlushCache(2);
     ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
   } else {
     printf("ERROR: Failed to load ELF %s (ret=%d)\n", target->fullPath, ret);
@@ -87,9 +77,8 @@ static int assembleArgv(ArgumentList *arguments, char *argv[]) {
     curArg = curArg->next;
   }
 
-  if (argCount != arguments->total)
-    argv = realloc(argv, argCount * sizeof(char *));
-
+  // Nota: argv es un puntero local; evitar reasignarlo aquí.
+  // El buffer inicial debe ser suficientemente grande.
   return argCount;
 }
 
@@ -97,7 +86,7 @@ static int assembleArgv(ArgumentList *arguments, char *argv[]) {
 // ISO → Neutrino
 // ---------------------------------------------------------
 void launchTitle(Target *target, ArgumentList *arguments) {
-  // Caso ELF: derivar al camino directo y salir
+  // Caso ELF: camino directo y salir
   if (target->isElf) {
     launchElfTarget(target);
     return;
@@ -183,10 +172,10 @@ typedef struct {
 #define ELF_PT_LOAD 1
 
 int LoadELFFromFile(int argc, char *argv[]) {
-  uint8_t      *boot_elf;
-  elf_header_t *eh;
+  uint8_t       *boot_elf;
+  elf_header_t  *eh;
   elf_pheader_t *eph;
-  void         *pdata;
+  void          *pdata;
 
   // Limpiar región donde se cargará el loader (ver linkfile de loader)
   memset((void *)0x00084000, 0, 0x00100000 - 0x00084000);
@@ -205,7 +194,7 @@ int LoadELFFromFile(int argc, char *argv[]) {
     memcpy(eph[i].vaddr, pdata, eph[i].filesz);
   }
 
-  SifExitRpc();
+  // Hand-off limpio al loader embebido
   FlushCache(0);
   FlushCache(2);
 
