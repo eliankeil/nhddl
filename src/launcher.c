@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <iopcontrol.h>
 #include <iopheap.h>
+#include <fileio.h>
 
 
 // Loader ELF embebido
@@ -38,6 +39,7 @@ static char bsdfsArgument[] = "bsdfs";
 // ---------------------------------------------------------
 // ELF directo (POPStarter / apps) — secuencia tipo uLE
 // ---------------------------------------------------------
+
 void launchElfTarget(Target *target) {
     // Cambiar CWD al directorio del ELF
     char pathBuf[512];
@@ -48,12 +50,14 @@ void launchElfTarget(Target *target) {
         chdir(pathBuf);
     }
 
-    // Resetear IOP como hace uLaunchELF
+    // Resetear IOP
     SifIopReset(NULL, 0);
-    while (!SifIopSync()) { /* esperar */ }
+    while (!SifIopSync()) { }
 
-    // Re‑inicializar RPC
+    // Re‑inicializar servicios básicos
     SifInitRpc(0);
+    SifLoadFileInit();
+    fioInit();
 
     // Cargar ELF
     t_ExecData elfdata;
@@ -69,6 +73,7 @@ void launchElfTarget(Target *target) {
         printf("ERROR: no se pudo cargar %s (ret=%d)\n", target->fullPath, ret);
     }
 }
+
 
 
 
