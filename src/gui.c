@@ -1501,18 +1501,16 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 
 // Displays Game ID and launches the title
 void uiLaunchTitle(Target *target, ArgumentList *arguments) {
-  // Caso ELF → ejecución directa sin argumentos ni opciones
-if (target->isElf) {
-  gsKit_clear(gsGlobal, currentTheme.background);
-  snprintf(lineBuffer, 255, "Launching ELF\n%s\n\n%s", target->name, target->fullPath);
-  drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0, currentTheme.listText, ALIGN_CENTER, lineBuffer);
-  gsKit_queue_exec(gsGlobal);
-  gsKit_finish();
-  gsKit_sync_flip(gsGlobal);
+    if (target->isElf) {
+        // No dibujar ni cerrar UI/pad aquí
+        // Asegurarse de detener splash thread si está activo
+        closeUISplashThread();
 
-  launchElfTarget(target);
-  return;
-}
+        // Salto directo al ELF
+        launchElfTarget(target);
+        return;
+    }
+
 
 
   // Caso ISO → camino existente con Neutrino

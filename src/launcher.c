@@ -34,10 +34,10 @@ static char bsdfsArgument[] = "bsdfs";
 #define BSDFS_HDL  "hdl"
 
 // ---------------------------------------------------------
-// ELF directo (POPStarter / apps) — secuencia tipo uLE con reset IOP
+// ELF directo (POPStarter / apps) — secuencia tipo uLE, sin GS y con IOP reset
 // ---------------------------------------------------------
 void launchElfTarget(Target *target) {
-    // Cambiar CWD al directorio del ELF (ayuda a POPStarter con rutas relativas)
+    // 1) CWD al directorio del ELF (ayuda a rutas relativas)
     char pathBuf[512];
     snprintf(pathBuf, sizeof(pathBuf), "%s", target->fullPath);
     char *lastSlash = strrchr(pathBuf, '/');
@@ -46,28 +46,31 @@ void launchElfTarget(Target *target) {
         chdir(pathBuf);
     }
 
-    // Resetear IOP y sincronizar (estado limpio como uLaunchELF)
+    // 2) Resetear IOP y sincronizar
     SifIopReset(NULL, 0);
     while (!SifIopSync()) { }
 
-    // Re‑inicializar RPC y el servicio de loadfile para SifLoadElf
+    // 3) Re‑inicializar RPC y el servicio de loadfile
     SifInitRpc(0);
     SifLoadFileInit();
 
-    // Cargar ELF
+    // 4) Cargar ELF
     t_ExecData elfdata;
     memset(&elfdata, 0, sizeof(elfdata));
     int ret = SifLoadElf(target->fullPath, &elfdata);
-
-    if (ret == 0 && elfdata.epc != 0) {
-        // Hand-off limpio
-        SifExitRpc();
-        FlushCache(0);
-        FlushCache(2);
-        ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 0, NULL);
-    } else {
+    if (ret != 0 || elfdata.epc == 0) {
         printf("ERROR: no se pudo cargar %s (ret=%d)\n", target->fullPath, ret);
+        return;
     }
+
+    // 5) Hand-off limpio: salir de RPC, limpiar cachés y desactivar interrupciones EE
+    SifExitRpc();
+    FlushCache(0);
+    FlushCache(2);
+    DI(); // desactivar interrupciones del EE para evitar callbacks activos
+
+    // 6) Ejecutar (no debería volver)
+    ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 0, NULL);
 }
 
 // ---------------------------------------------------------
@@ -104,6 +107,7 @@ static int assembleArgv(ArgumentList *arguments, char *argv[]) {
 void launchTitle(Target *target, ArgumentList *arguments) {
   // Caso ELF: camino directo y salir
   if (target->isElf) {
+    // IMPORTANTE: no dibujar ni cerrar UI/pad aquí; POPStarter se encarga
     launchElfTarget(target);
     return;
   }
@@ -210,7 +214,7 @@ int LoadELFFromFile(int argc, char *argv[]) {
     memcpy(eph[i].vaddr, pdata, eph[i].filesz);
   }
 
-  // Handoff al loader embebido
+  // Hand-off al loader embebido
   FlushCache(0);
   FlushCache(2);
 
