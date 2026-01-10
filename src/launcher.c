@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <iopcontrol.h>
+#include <iopheap.h>
+
 
 // Loader ELF embebido
 extern uint8_t loader_elf[];
