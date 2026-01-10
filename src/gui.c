@@ -1515,9 +1515,7 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
     gsKit_finish();
     gsKit_sync_flip(gsGlobal);
 
-    // Cleanup UI y salto directo
-    closePad();
-    closeUI();
+    // No cerrar pad/UI aquí → POPStarter se encarga
     launchElfTarget(target);
     return;
   }
@@ -1543,6 +1541,7 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
   closeUI();
   launchTitle(target, arguments);
 }
+
 
 
 //

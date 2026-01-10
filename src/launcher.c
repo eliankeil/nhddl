@@ -1,3 +1,4 @@
+// src/launcher.c
 #include "common.h"
 #include "devices.h"
 #include "options.h"
@@ -15,7 +16,7 @@
 extern uint8_t loader_elf[];
 extern int size_loader_elf;
 
-// Argumentos comunes para Neutrino
+// Argumentos comunes para Neutrino (ISO)
 static char isoArgument[] = "dvd";
 static char bsdArgument[] = "bsd";
 static char bsdfsArgument[] = "bsdfs";
@@ -32,24 +33,26 @@ static char bsdfsArgument[] = "bsdfs";
 #define BSDFS_HDL  "hdl"
 
 // ---------------------------------------------------------
-// ELF directo (POPStarter / apps) — camino minimalista
+// ELF directo (POPStarter / apps) — secuencia tipo uLE
 // ---------------------------------------------------------
 void launchElfTarget(Target *target) {
-  printf("Launching ELF: %s\n", target->fullPath);
-
-  // Camino limpio: no tocar hilos UI, RPC ni drivers.
-  // Solo cargar ELF, limpiar cachés y ejecutar.
   t_ExecData elfdata;
   memset(&elfdata, 0, sizeof(elfdata));
 
+  // 1) Cargar ELF
   int ret = SifLoadElf(target->fullPath, &elfdata);
-  if (ret == 0 && elfdata.epc != 0) {
-    FlushCache(0);
-    FlushCache(2);
-    ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
-  } else {
+  if (ret != 0 || elfdata.epc == 0) {
     printf("ERROR: Failed to load ELF %s (ret=%d)\n", target->fullPath, ret);
+    return;
   }
+
+  // 2) Handoff limpio: cerrar RPC y limpiar cachés JUSTO antes del salto
+  SifExitRpc();
+  FlushCache(0);
+  FlushCache(2);
+
+  // 3) Ejecutar ELF (no debería volver)
+  ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
 }
 
 // ---------------------------------------------------------
@@ -77,13 +80,11 @@ static int assembleArgv(ArgumentList *arguments, char *argv[]) {
     curArg = curArg->next;
   }
 
-  // Nota: argv es un puntero local; evitar reasignarlo aquí.
-  // El buffer inicial debe ser suficientemente grande.
   return argCount;
 }
 
 // ---------------------------------------------------------
-// ISO → Neutrino
+// ISO → Neutrino (sin cambios)
 // ---------------------------------------------------------
 void launchTitle(Target *target, ArgumentList *arguments) {
   // Caso ELF: camino directo y salir
@@ -138,7 +139,7 @@ void launchTitle(Target *target, ArgumentList *arguments) {
 }
 
 // ---------------------------------------------------------
-// Ejecutar loader.elf embebido con argv
+// Ejecutar loader.elf embebido con argv (Neutrino ISO path)
 // ---------------------------------------------------------
 typedef struct {
   uint8_t  ident[16];
@@ -194,7 +195,7 @@ int LoadELFFromFile(int argc, char *argv[]) {
     memcpy(eph[i].vaddr, pdata, eph[i].filesz);
   }
 
-  // Hand-off limpio al loader embebido
+  // Handoff al loader embebido
   FlushCache(0);
   FlushCache(2);
 
