@@ -6,15 +6,12 @@
 #include <kernel.h>
 #include <sifrpc.h>
 #include <loadfile.h>   // t_ExecData, SifLoadElf, ExecPS2
+#include <iopcontrol.h> // SifIopReset, SifIopSync
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <iopcontrol.h>
-#include <iopheap.h>
-#include <fileio.h>
-
 
 // Loader ELF embebido
 extern uint8_t loader_elf[];
@@ -37,11 +34,10 @@ static char bsdfsArgument[] = "bsdfs";
 #define BSDFS_HDL  "hdl"
 
 // ---------------------------------------------------------
-// ELF directo (POPStarter / apps) — secuencia tipo uLE
+// ELF directo (POPStarter / apps) — secuencia tipo uLE con reset IOP
 // ---------------------------------------------------------
-
 void launchElfTarget(Target *target) {
-    // Cambiar CWD al directorio del ELF
+    // Cambiar CWD al directorio del ELF (ayuda a POPStarter con rutas relativas)
     char pathBuf[512];
     snprintf(pathBuf, sizeof(pathBuf), "%s", target->fullPath);
     char *lastSlash = strrchr(pathBuf, '/');
@@ -50,14 +46,13 @@ void launchElfTarget(Target *target) {
         chdir(pathBuf);
     }
 
-    // Resetear IOP
+    // Resetear IOP y sincronizar (estado limpio como uLaunchELF)
     SifIopReset(NULL, 0);
     while (!SifIopSync()) { }
 
-    // Re‑inicializar servicios básicos
+    // Re‑inicializar RPC y el servicio de loadfile para SifLoadElf
     SifInitRpc(0);
     SifLoadFileInit();
-    fioInit();
 
     // Cargar ELF
     t_ExecData elfdata;
@@ -65,6 +60,7 @@ void launchElfTarget(Target *target) {
     int ret = SifLoadElf(target->fullPath, &elfdata);
 
     if (ret == 0 && elfdata.epc != 0) {
+        // Hand-off limpio
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
@@ -73,9 +69,6 @@ void launchElfTarget(Target *target) {
         printf("ERROR: no se pudo cargar %s (ret=%d)\n", target->fullPath, ret);
     }
 }
-
-
-
 
 // ---------------------------------------------------------
 // Helper: construir argv para loader.elf (Neutrino)
