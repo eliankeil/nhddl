@@ -7,13 +7,16 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 #
-# Modified to not reset IOP for use with NHDDL
+# Corregido para handoff limpio tipo uLaunchELF (reset IOP, servicios mínimos)
 */
 
 #include <kernel.h>
-#include <loadfile.h>
-#include <ps2sdkapi.h>
 #include <sifrpc.h>
+#include <iopcontrol.h>
+#include <loadfile.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 
 //--------------------------------------------------------------
 // Redefinition of init/deinit libc:
@@ -30,8 +33,6 @@ DISABLE_EXTRA_TIMERS_FUNCTIONS();
 PS2_DISABLE_AUTOSTART_PTHREAD();
 
 //--------------------------------------------------------------
-// Start of function code:
-//--------------------------------------------------------------
 // Clear user memory
 // PS2Link (C) 2003 Tord Lindstrom (pukko@home.se)
 //         (C) 2003 adresd (adresd_ps2dev@yahoo.com)
@@ -39,39 +40,63 @@ PS2_DISABLE_AUTOSTART_PTHREAD();
 static void wipeUserMem(void) {
   int i;
   for (i = 0x100000; i < GetMemorySize(); i += 64) {
-    asm volatile("\tsq $0, 0(%0) \n"
-                 "\tsq $0, 16(%0) \n"
-                 "\tsq $0, 32(%0) \n"
-                 "\tsq $0, 48(%0) \n" ::"r"(i));
+    asm volatile(
+      "\tsq $0, 0(%0) \n"
+      "\tsq $0, 16(%0) \n"
+      "\tsq $0, 32(%0) \n"
+      "\tsq $0, 48(%0) \n"
+      :: "r"(i));
   }
 }
 
 int main(int argc, char *argv[]) {
-  static t_ExecData elfdata;
-  int ret;
-
-  elfdata.epc = 0;
-
-  // arg[0] is path to ELF
-  if (argc < 1) {
+  // Esperamos argv[1] = ruta absoluta del ELF a ejecutar (POPStarter/app)
+  if (argc < 2 || argv[1] == NULL || argv[1][0] == '\0') {
+    printf("Loader: no ELF path provided in argv[1]\n");
     return -EINVAL;
   }
 
-  // Initialize
+  const char *elfPath = argv[1];
+
+  // Cambiar CWD al directorio del ELF (ayuda con rutas relativas)
+  char pathBuf[512];
+  snprintf(pathBuf, sizeof(pathBuf), "%s", elfPath);
+  char *slash = strrchr(pathBuf, '/');
+  if (slash) {
+    *slash = '\0';
+    chdir(pathBuf);
+  }
+
+  // Reset IOP y sincronización → entorno limpio como uLaunchELF
+  SifIopReset(NULL, 0);
+  while (!SifIopSync()) { /* esperar */ }
+
+  // Re-init RPC y servicio de loadfile para SifLoadElf
   SifInitRpc(0);
+  SifLoadFileInit();
+
+  // Opcional: limpiar memoria de usuario para evitar residuos
   wipeUserMem();
 
-  // Writeback data cache before loading ELF.
-  FlushCache(0);
-  SifLoadFileInit();
-  ret = SifLoadElf(argv[0], &elfdata);
-  SifLoadFileExit();
-  if (ret == 0 && elfdata.epc != 0) {
-    FlushCache(0);
-    FlushCache(2);
-    return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc, argv);
-  } else {
+  // Cargar ELF objetivo
+  t_ExecData elfdata;
+  memset(&elfdata, 0, sizeof(elfdata));
+
+  int ret = SifLoadElf(elfPath, &elfdata);
+  if (ret != 0 || elfdata.epc == 0) {
+    printf("Loader: SifLoadElf failed (%d) for %s\n", ret, elfPath);
+    // Cerrar RPC antes de salir
     SifExitRpc();
-    return -ENOENT;
+    return ret ? ret : -ENOENT;
   }
+
+  // Hand-off limpio justo antes del salto
+  SifExitRpc();
+  FlushCache(0);
+  FlushCache(2);
+  DI(); // desactivar interrupciones del EE para evitar callbacks activos
+
+  // Ejecutar ELF (sin argumentos; POPStarter no los necesita)
+  // No debería volver.
+  return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 0, NULL);
 }

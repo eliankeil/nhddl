@@ -24,10 +24,10 @@
 // Dimensiones de las Artes
 #define COVER_ART_RES_W 103
 #define COVER_ART_RES_H 172
-//#define LOGO_ART_RES_W 150
-//#define LOGO_ART_RES_H 62
-//#define DISC_ART_RES_W 128
-//#define DISC_ART_RES_H 128
+// #define LOGO_ART_RES_W 150
+// #define LOGO_ART_RES_H 62
+// #define DISC_ART_RES_W 128
+// #define DISC_ART_RES_H 128
 #define SPINE_ART_RES_W 10
 #define SPINE_ART_RES_H 172
 #define SCREEN_ART_RES_W 198
@@ -69,8 +69,8 @@ void closeUISplashThread();
 
 GSGLOBAL *gsGlobal;
 static GSTEXTURE *coverTexture;
-//static GSTEXTURE *logoTexture;
-//static GSTEXTURE *discTexture; // Nuevo: Disc Texture
+// static GSTEXTURE *logoTexture;
+// static GSTEXTURE *discTexture; // Nuevo: Disc Texture
 static GSTEXTURE *spineTexture;
 static GSTEXTURE *screenTexture1;
 static GSTEXTURE *screenTexture2;
@@ -88,9 +88,9 @@ typedef struct {
   bool isFinished;      // true si la animación ha terminado
 } AnimationState;
 
-//static AnimationState logoAnimState;
-//static AnimationState discAnimState;
-// Path relative to storage device mountpoint.
+// static AnimationState logoAnimState;
+// static AnimationState discAnimState;
+//  Path relative to storage device mountpoint.
 static const char artPath[] = "/ART";
 
 // Coordenadas de Cover Art
@@ -100,16 +100,16 @@ static int coverArtX1;
 static int coverArtY1;
 
 // Coordenadas de Logo Art
-//static int logoArtX1;
-//static int logoArtY1;
-//static int logoArtX2;
-//static int logoArtY2;
+// static int logoArtX1;
+// static int logoArtY1;
+// static int logoArtX2;
+// static int logoArtY2;
 
 // Nuevo: Coordenadas de Disc Art
-//static int discArtX1;
-//static int discArtY1;
-//static int discArtX2;
-//static int discArtY2;
+// static int discArtX1;
+// static int discArtY1;
+// static int discArtX2;
+// static int discArtY2;
 
 // NUEVO: Coordenadas de Spine Art
 static int spineArtX1;
@@ -124,10 +124,10 @@ static int box3dArtX2;
 static int box3dArtY2;
 
 // NUEVO: Coordenadas de Screen Art (Overlay)
-//static int crtArtX1;
-//static int crtArtY1;
-//static int crtArtX2;
-//static int crtArtY2;
+// static int crtArtX1;
+// static int crtArtY1;
+// static int crtArtX2;
+// static int crtArtY2;
 
 // NUEVO: Coordenadas de Screen Art (Capturas de Pantalla)
 static int screenArtX1;
@@ -243,15 +243,15 @@ int uiInit() {
   box3dArtY2 = box3dArtY1 + box3dHeight;
 
   // Init crt overlay
-  //int crtWidth = getCrtWidth();
-  //int crtHeight = getCrtHeight();
-  //const int crtMargin = 50;
+  // int crtWidth = getCrtWidth();
+  // int crtHeight = getCrtHeight();
+  // const int crtMargin = 50;
 
-  //crtArtX2 = box3dArtX1 + crtMargin;
-  //crtArtX1 = crtArtX2 - crtWidth;
-  // Centrado vertical: Y1 = (H / 2) - (crt_H / 2)
-  //crtArtY1 = (gsGlobal->Height / 2) - (crtHeight / 2);
-  //crtArtY2 = crtArtY1 + crtHeight;
+  // crtArtX2 = box3dArtX1 + crtMargin;
+  // crtArtX1 = crtArtX2 - crtWidth;
+  //  Centrado vertical: Y1 = (H / 2) - (crt_H / 2)
+  // crtArtY1 = (gsGlobal->Height / 2) - (crtHeight / 2);
+  // crtArtY2 = crtArtY1 + crtHeight;
 
   // Init cover texture
   coverTexture = calloc(sizeof(GSTEXTURE), 1);
@@ -281,24 +281,24 @@ int uiInit() {
   coverArtQuad.yBL = (float)coverArtY2; // BL sin sesgo
 
   // LOGO ART: Inicialización y Coordenadas (Centrado en Cover Area)
-  //logoTexture = calloc(sizeof(GSTEXTURE), 1);
-  //logoTexture->PSM = GS_PSM_CT32;
-  //logoTexture->Delayed = 1;
+  // logoTexture = calloc(sizeof(GSTEXTURE), 1);
+  // logoTexture->PSM = GS_PSM_CT32;
+  // logoTexture->Delayed = 1;
 
-  //logoArtX2 = (gsGlobal->Width - 10);
-  //logoArtY2 = coverArtY1;
-  //logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
-  //logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
+  // logoArtX2 = (gsGlobal->Width - 10);
+  // logoArtY2 = coverArtY1;
+  // logoArtX1 = logoArtX2 - LOGO_ART_RES_W;
+  // logoArtY1 = logoArtY2 - LOGO_ART_RES_H;
 
   // DISC ART: Inicialización y Coordenadas (Centrado en Cover Area)
-  //discTexture = calloc(sizeof(GSTEXTURE), 1);
-  //discTexture->PSM = GS_PSM_CT32;
-  //discTexture->Delayed = 1;
+  // discTexture = calloc(sizeof(GSTEXTURE), 1);
+  // discTexture->PSM = GS_PSM_CT32;
+  // discTexture->Delayed = 1;
 
-  //discArtX2 = (gsGlobal->Width - keepoutArea - 50 - COVER_ART_RES_W);
-  //discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 70;
-  //discArtX1 = discArtX2 - DISC_ART_RES_W;
-  //discArtY1 = discArtY2 - DISC_ART_RES_H;
+  // discArtX2 = (gsGlobal->Width - keepoutArea - 50 - COVER_ART_RES_W);
+  // discArtY2 = (gsGlobal->Height / 2) + (COVER_ART_RES_H / 2) + 70;
+  // discArtX1 = discArtX2 - DISC_ART_RES_W;
+  // discArtY1 = discArtY2 - DISC_ART_RES_H;
 
   // Init screen texture 1
   screenTexture1 = calloc(sizeof(GSTEXTURE), 1);
@@ -359,47 +359,47 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
   }
 
   // --- 1. LÓGICA DE CARGA DE LOGO ART (*_LGO.png) ---
-  //gsKit_TexManager_invalidate(gsGlobal, logoTexture);
-  //if (logoTexture->Mem != NULL) {
+  // gsKit_TexManager_invalidate(gsGlobal, logoTexture);
+  // if (logoTexture->Mem != NULL) {
   //  free(logoTexture->Mem);
   //  logoTexture->Mem = NULL;
   //}
-  //logoTexture->Vram = 0;
-  //logoTexture->VramClut = 0;
+  // logoTexture->Vram = 0;
+  // logoTexture->VramClut = 0;
 
-  //snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
-  //         titleID);
+  // snprintf(lineBuffer, 255, "%s%s/%s_LGO.png", device->mountpoint, artPath,
+  //          titleID);
 
-  //int logoLoaded = 0;
-  //if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
-  //  if (logoTexture->Mem != NULL) {
-  //    correctAlpha(logoTexture);
-  //    gsKit_TexManager_bind(gsGlobal, logoTexture);
-  //    logoLoaded = 1;
-  //  }
-  //}
+  // int logoLoaded = 0;
+  // if (gsKit_texture_png(gsGlobal, logoTexture, lineBuffer) == 0) {
+  //   if (logoTexture->Mem != NULL) {
+  //     correctAlpha(logoTexture);
+  //     gsKit_TexManager_bind(gsGlobal, logoTexture);
+  //     logoLoaded = 1;
+  //   }
+  // }
 
   // --- 2. LÓGICA DE CARGA DE DISC ART (*_ICO.png) ---
-  //gsKit_TexManager_invalidate(gsGlobal, discTexture);
-  //if (discTexture->Mem != NULL) {
+  // gsKit_TexManager_invalidate(gsGlobal, discTexture);
+  // if (discTexture->Mem != NULL) {
   //  free(discTexture->Mem);
   //  discTexture->Mem = NULL;
   //}
-  //discTexture->Vram = 0;
-  //discTexture->VramClut = 0;
+  // discTexture->Vram = 0;
+  // discTexture->VramClut = 0;
 
-  //snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
-  //         titleID);
+  // snprintf(lineBuffer, 255, "%s%s/%s_ICO.png", device->mountpoint, artPath,
+  //          titleID);
 
-  //int discLoaded = 0;
-  //if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
-  //  if (discTexture->Mem != NULL) {
-  //    correctAlpha(discTexture);
-  //    gsKit_TexManager_bind(gsGlobal, discTexture);
-  //    discTexture->Filter = GS_FILTER_LINEAR;
-  //    discLoaded = 1;
-  //  }
-  //}
+  // int discLoaded = 0;
+  // if (gsKit_texture_png(gsGlobal, discTexture, lineBuffer) == 0) {
+  //   if (discTexture->Mem != NULL) {
+  //     correctAlpha(discTexture);
+  //     gsKit_TexManager_bind(gsGlobal, discTexture);
+  //     discTexture->Filter = GS_FILTER_LINEAR;
+  //     discLoaded = 1;
+  //   }
+  // }
 
   // NUEVO: 3. LÓGICA DE CARGA DE SPINE ART (*_LAB.png)
   // ************************************************
@@ -501,15 +501,15 @@ int loadArt(struct DeviceMapEntry *device, char *titleID) {
   // LIBERACIÓN DE MEMORIA RAM (CLEANUP FINAL)
   // ************************************************
 
-  //if (logoLoaded) {
-  //  free(logoTexture->Mem);
-  //  logoTexture->Mem = NULL;
-  //}
-  //if (discLoaded) {
-  //  free(discTexture->Mem);
-  //  discTexture->Mem = NULL;
-  //}
-  // NUEVO: Liberar memoria de Screen Art
+  // if (logoLoaded) {
+  //   free(logoTexture->Mem);
+  //   logoTexture->Mem = NULL;
+  // }
+  // if (discLoaded) {
+  //   free(discTexture->Mem);
+  //   discTexture->Mem = NULL;
+  // }
+  //  NUEVO: Liberar memoria de Screen Art
   if (screen1Loaded) {
     free(screenTexture1->Mem);
     screenTexture1->Mem = NULL;
@@ -536,8 +536,8 @@ void closeUI() {
   gsKit_vram_clear(gsGlobal);
   closeFont();
   free(coverTexture);
-//  free(logoTexture);
-//  free(discTexture); // Liberar DiscTexture
+  //  free(logoTexture);
+  //  free(discTexture); // Liberar DiscTexture
   free(spineTexture);
   free(screenTexture1);
   free(screenTexture2);
@@ -648,18 +648,18 @@ int uiLoop(TargetList *titles) {
       screenCycleFrame = 0;
 
       // Logo Art (Mueve 40px a la izquierda)
-    //  logoAnimState.startPosition = (float)logoArtX1;
-    //  logoAnimState.targetDistance = -175.0f;
-    //  logoAnimState.currentOffset = 0.0f;
-    //  logoAnimState.delayFrames = 25;
-    //  logoAnimState.isFinished = false;
+      //  logoAnimState.startPosition = (float)logoArtX1;
+      //  logoAnimState.targetDistance = -175.0f;
+      //  logoAnimState.currentOffset = 0.0f;
+      //  logoAnimState.delayFrames = 25;
+      //  logoAnimState.isFinished = false;
 
       // Disc Art (Mueve 64px a la derecha)
-    //  discAnimState.startPosition = (float)discArtX1;
-    //  discAnimState.targetDistance = 134.0f;
-    //  discAnimState.currentOffset = 0.0f;
-    //  discAnimState.delayFrames = 25;
-    //  discAnimState.isFinished = false;
+      //  discAnimState.startPosition = (float)discArtX1;
+      //  discAnimState.targetDistance = 134.0f;
+      //  discAnimState.currentOffset = 0.0f;
+      //  discAnimState.delayFrames = 25;
+      //  discAnimState.isFinished = false;
     }
 
     if (!isCoverUninitialized)
@@ -874,8 +874,7 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       if (curTitle->isElf) {
         // Mostrar solo el nombre del ELF
         drawTextWindow(coverArtX1, coverArtY2 + 5, coverArtX2, 0, 0,
-                       currentTheme.listText, ALIGN_HCENTER,
-                       curTitle->name);
+                       currentTheme.listText, ALIGN_HCENTER, curTitle->name);
       } else {
         // Mostrar ID y modo para ISOs
         drawTextWindow(coverArtX1,
@@ -972,7 +971,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
       drawStartX = cutLeft;
     }
 
-
     int minStartX = cutRight - textWidth;
     int maxStartX = cutLeft;
     if (drawStartX < minStartX)
@@ -989,8 +987,6 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   next:
     curTitle = curTitle->next;
   }
-
-
 
   // --- Dibujar íconos de scroll ---
 
@@ -1087,34 +1083,32 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
     }
   }
 
-// DIBUJADO
+  // DIBUJADO
   if (currentScreenTexture != NULL) {
 
     // Usamos el tamaño real cargado en la textura como U2/V2
     float texWidth = (float)currentScreenTexture->Width;
     float texHeight = (float)currentScreenTexture->Height;
 
-    gsKit_prim_sprite_texture(
-        gsGlobal, currentScreenTexture, 
-        (float)screenArtX1,      // X1
-        (float)screenArtY1,      // Y1
-        0.0f, 0.0f,              // U1, V1
-        (float)screenArtX2,      // X2
-        (float)screenArtY2,      // Y2
-        texWidth,                // U2 <<-- ¡CORREGIDO!
-        texHeight,               // V2 <<-- ¡CORREGIDO!
-        4,                       // Z-Prioridad
-        FontMainColor
-    );
+    gsKit_prim_sprite_texture(gsGlobal, currentScreenTexture,
+                              (float)screenArtX1, // X1
+                              (float)screenArtY1, // Y1
+                              0.0f, 0.0f,         // U1, V1
+                              (float)screenArtX2, // X2
+                              (float)screenArtY2, // Y2
+                              texWidth,           // U2 <<-- ¡CORREGIDO!
+                              texHeight,          // V2 <<-- ¡CORREGIDO!
+                              4,                  // Z-Prioridad
+                              FontMainColor);
   }
 
   // Duración del movimiento después de la pausa (ajustable)
-  //const int LOGO_MOVE_FRAMES = 180;
+  // const int LOGO_MOVE_FRAMES = 180;
 
   // ************************************************
   // 1. DIBUJADO DE LOGO ART (PRIORIDAD 3)
   // ************************************************
-  //if (logoTexture != NULL && logoTexture->Mem == NULL) {
+  // if (logoTexture != NULL && logoTexture->Mem == NULL) {
 
   //  animateSprite(&logoAnimState, LOGO_MOVE_FRAMES);
 
@@ -1128,12 +1122,12 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   //}
 
   // Duración del movimiento después de la pausa (ajustable)
-  //const int DISC_MOVE_FRAMES = 240;
+  // const int DISC_MOVE_FRAMES = 240;
 
   // ************************************************
   // 2. DIBUJADO DE DISC ART (PRIORIDAD 2)
   // ************************************************
-  //if (discTexture != NULL && discTexture->Mem == NULL) {
+  // if (discTexture != NULL && discTexture->Mem == NULL) {
 
   //  animateSprite(&discAnimState, DISC_MOVE_FRAMES);
 
@@ -1224,16 +1218,15 @@ void drawTitleList(TargetList *titles, int selectedTitleIdx,
   // 5. DIBUJADO DE SCREEN (PRIORIDAD MÁXIMA / CAPA SUPERIOR)
   // ************************************************
 
-  //uint64_t crt_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
+  // uint64_t crt_color = GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x80);
 
   // Z = 5 para que esté por encima de todas las demás capas (Cover es Z=2,
   // Logo/Disc/Spine son Z=3)
-  //drawCrt((float)crtArtX1, (float)crtArtY1, 5, crt_color);
+  // drawCrt((float)crtArtX1, (float)crtArtY1, 5, crt_color);
 
   // Incrementar el contador de frames para la animación
   frameCounter++;
 }
-
 
 void drawTitleOptionsFooter(int baseX) {
   int baseY = gsGlobal->Height - footerHeight;
@@ -1389,7 +1382,6 @@ exit:
   return res;
 }
 
-
 // Handles all arguments in argument list
 // Returns -1 if error occurs, 1 if parent needs to exit to title list
 int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
@@ -1498,17 +1490,13 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
   }
 }
 
-
 // Displays Game ID and launches the title
 void uiLaunchTitle(Target *target, ArgumentList *arguments) {
-    if (target->isElf) {
-        // No dibujar ni cerrar UI/pad aquí
-        launchElfTarget(target);
-        return;
-    }
-
-
-
+  if (target->isElf) {
+    // Nada de gsKit_* ni cerrar pad/UI aquí.
+    launchElfTarget(target);
+    return;
+  }
 
   // Caso ISO → camino existente con Neutrino
   if (arguments == NULL) {
@@ -1517,8 +1505,8 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
 
   gsKit_clear(gsGlobal, currentTheme.background);
 
-  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s",
-           target->name, target->id, target->fullPath);
+  snprintf(lineBuffer, 255, "Launching\n%s\n%s\n\n%s", target->name, target->id,
+           target->fullPath);
   drawTextWindow(0, 0, gsGlobal->Width, gsGlobal->Height, 0,
                  currentTheme.listText, ALIGN_CENTER, lineBuffer);
   drawGameID(target->id);
@@ -1531,8 +1519,6 @@ void uiLaunchTitle(Target *target, ArgumentList *arguments) {
   closeUI();
   launchTitle(target, arguments);
 }
-
-
 
 //
 // GameID code based on
