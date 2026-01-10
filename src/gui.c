@@ -1503,13 +1503,10 @@ int uiArgumentListLoop(Target *target, ArgumentList *titleArguments) {
 void uiLaunchTitle(Target *target, ArgumentList *arguments) {
     if (target->isElf) {
         // No dibujar ni cerrar UI/pad aquí
-        // Asegurarse de detener splash thread si está activo
-        closeUISplashThread();
-
-        // Salto directo al ELF
         launchElfTarget(target);
         return;
     }
+
 
 
 
