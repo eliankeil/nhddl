@@ -187,16 +187,11 @@ void gcParse(NeutrinoArgument *arg, ArgumentList *list) {
 //
 // GSM arguments
 //
-#define GSM_FULL_HEIGHT_MODES_HEADER "Full-height"
-#define GSM_HALF_HEIGHT_MODES_HEADER "Half-height"
-#define GSM_COMPAT_MODES_HEADER "Compatibility modes"
 static const ArgValueMap gsmValueMap[] = {
-    {(1 << 0), "fp", "Full-frame: force progressive (480p/576p)"},
-    {(1 << 1), ":fp1", "Half-frame: force progressive (240p/288p)"},
-    {(1 << 2), ":fp2", "Half-frame: force progressive with line doubling (480p/576p)"},
-    {(1 << 3), ":1", "Field flipping type 1 (GSM/OPL)"},
-    {(1 << 4), ":2", "Field flipping type 2"},
-    {(1 << 5), ":3", "Field flipping type 3"},
+    {(1 << 0), "fp1", "Force progressive (240p/288p)"}, {(1 << 1), "fp2", "Force progressive (480p/576p)"},
+    {(1 << 2), "1080ix1", "Force 1080i with x1 scale"}, {(1 << 3), "1080ix2", "Force 1080i with x2 scale"},
+    {(1 << 4), "1080ix3", "Force 1080i with x3 scale"}, {(1 << 5), ":1", "Field flipping type 1 (GSM/OPL)"},
+    {(1 << 6), ":2", "Field flipping type 2"},          {(1 << 7), ":3", "Field flipping type 3"},
 };
 
 int gsmDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int maxWidth, int maxHeight) {
@@ -216,47 +211,71 @@ int gsmDraw(NeutrinoArgument *arg, uint8_t isActive, int x, int y, int z, int ma
 ActionType gsmInput(NeutrinoArgument *arg, int input) {
   if (input & (PAD_CROSS | PAD_CIRCLE)) {
     switch (arg->activeElementIdx) {
-    case 0: // Full-frame: force progressive
+    case 0: // 240/288p
+      arg->state &= ~gsmValueMap[4].mode;
+      arg->state &= ~gsmValueMap[3].mode;
+      arg->state &= ~gsmValueMap[2].mode;
+      arg->state &= ~gsmValueMap[1].mode;
       arg->state ^= gsmValueMap[0].mode;
       break;
-    case 1:                               // Half-frame: force progressive
-      arg->state &= ~gsmValueMap[2].mode; // Disable line doubling
+    case 1: // 480p/576p
+      arg->state &= ~gsmValueMap[4].mode;
+      arg->state &= ~gsmValueMap[3].mode;
+      arg->state &= ~gsmValueMap[2].mode;
+      arg->state &= ~gsmValueMap[0].mode;
       arg->state ^= gsmValueMap[1].mode;
       break;
-    case 2:                               // Half-frame: force progressive with line doubling
-      arg->state &= ~gsmValueMap[1].mode; // Disable force progressive
+    case 2: // 1080i x1
+      arg->state &= ~gsmValueMap[4].mode;
+      arg->state &= ~gsmValueMap[3].mode;
+      arg->state &= ~gsmValueMap[1].mode;
+      arg->state &= ~gsmValueMap[0].mode;
       arg->state ^= gsmValueMap[2].mode;
       break;
-    case 3: // Field flipping type 1
-      arg->state ^= gsmValueMap[3].mode;
-      // Disable other field flipping modes
+    case 3: // 1080i x2
       arg->state &= ~gsmValueMap[4].mode;
-      arg->state &= ~gsmValueMap[5].mode;
-      // Force enable force progressive if none is set
-      if (arg->state == gsmValueMap[3].mode)
-        arg->state |= gsmValueMap[0].mode;
+      arg->state &= ~gsmValueMap[2].mode;
+      arg->state &= ~gsmValueMap[1].mode;
+      arg->state &= ~gsmValueMap[0].mode;
+      arg->state ^= gsmValueMap[3].mode;
       break;
-    case 4: // Field flipping type 2
-      arg->state ^= gsmValueMap[4].mode;
-      // Disable other field flipping modes
+    case 4: // 1080i x3
       arg->state &= ~gsmValueMap[3].mode;
-      arg->state &= ~gsmValueMap[5].mode;
-      // Force enable force progressive if none is set
-      if (arg->state == gsmValueMap[4].mode)
-        arg->state |= gsmValueMap[0].mode;
+      arg->state &= ~gsmValueMap[2].mode;
+      arg->state &= ~gsmValueMap[1].mode;
+      arg->state &= ~gsmValueMap[0].mode;
+      arg->state ^= gsmValueMap[4].mode;
       break;
-    case 5: // Field flipping type  3
+    case 5: // Field flipping type 1
       arg->state ^= gsmValueMap[5].mode;
       // Disable other field flipping modes
-      arg->state &= ~gsmValueMap[3].mode;
-      arg->state &= ~gsmValueMap[4].mode;
+      arg->state &= ~gsmValueMap[6].mode;
+      arg->state &= ~gsmValueMap[7].mode;
       // Force enable force progressive if none is set
       if (arg->state == gsmValueMap[5].mode)
-        arg->state |= gsmValueMap[0].mode;
+        arg->state |= gsmValueMap[1].mode;
+      break;
+    case 6: // Field flipping type 2
+      arg->state ^= gsmValueMap[6].mode;
+      // Disable other field flipping modes
+      arg->state &= ~gsmValueMap[5].mode;
+      arg->state &= ~gsmValueMap[7].mode;
+      // Force enable force progressive if none is set
+      if (arg->state == gsmValueMap[6].mode)
+        arg->state |= gsmValueMap[1].mode;
+      break;
+    case 7: // Field flipping type  3
+      arg->state ^= gsmValueMap[7].mode;
+      // Disable other field flipping modes
+      arg->state &= ~gsmValueMap[5].mode;
+      arg->state &= ~gsmValueMap[6].mode;
+      // Force enable force progressive if none is set
+      if (arg->state == gsmValueMap[7].mode)
+        arg->state |= gsmValueMap[1].mode;
       break;
     }
     // Reset state if only field flipping is enabled
-    if ((arg->state == gsmValueMap[3].mode) || (arg->state == gsmValueMap[4].mode) || (arg->state == gsmValueMap[5].mode))
+    if ((arg->state == gsmValueMap[5].mode) || (arg->state == gsmValueMap[6].mode) || (arg->state == gsmValueMap[7].mode))
       arg->state = 0;
 
     return ACTION_CHANGED;
@@ -291,35 +310,30 @@ void gsmMarshal(NeutrinoArgument *arg, ArgumentList *list) {
   larg->value = calloc(sizeof(char), 10);
 
   if (arg->state) {
-    const char *ffArg = "";
-    const char *hfArg = "";
+    const char *vmArg = "";
     const char *cmArg = "";
 
-    // Full-height
+    // Video mode
     if (arg->state & gsmValueMap[0].mode) {
-      ffArg = gsmValueMap[0].value;
-    }
-    // Half-height
-    if (arg->state & gsmValueMap[1].mode) {
-      hfArg = gsmValueMap[1].value;
+      vmArg = gsmValueMap[0].value;
+    } else if (arg->state & gsmValueMap[1].mode) {
+      vmArg = gsmValueMap[1].value;
     } else if (arg->state & gsmValueMap[2].mode) {
-      hfArg = gsmValueMap[2].value;
+      vmArg = gsmValueMap[2].value;
+    } else if (arg->state & gsmValueMap[3].mode) {
+      vmArg = gsmValueMap[3].value;
+    } else if (arg->state & gsmValueMap[4].mode) {
+      vmArg = gsmValueMap[4].value;
     }
     // Field flipping
-    if (arg->state & gsmValueMap[3].mode) {
-      cmArg = gsmValueMap[3].value;
-    } else if (arg->state & gsmValueMap[4].mode) {
-      cmArg = gsmValueMap[4].value;
-    } else if (arg->state & gsmValueMap[5].mode) {
+    if (arg->state & gsmValueMap[5].mode) {
       cmArg = gsmValueMap[5].value;
+    } else if (arg->state & gsmValueMap[6].mode) {
+      cmArg = gsmValueMap[6].value;
+    } else if (arg->state & gsmValueMap[7].mode) {
+      cmArg = gsmValueMap[7].value;
     }
-
-    // Insert placeholder if the compatibility argument
-    // is not empty, but the half-frame argument is
-    if (hfArg[0] == '\0' && cmArg[0] != '\0')
-      hfArg = ":";
-
-    snprintf(larg->value, 10, "%s%s%s", ffArg, hfArg, cmArg);
+    snprintf(larg->value, 10, "%s%s", vmArg, cmArg);
   }
 
   // Remove global flag only if value has changed and has value
@@ -357,48 +371,52 @@ void gsmParse(NeutrinoArgument *arg, ArgumentList *list) {
 
   char *argptr = larg->value;
 
-  // Full-frame
-  if (argptr[0] != ':') {
-    if (!strncmp(argptr, "fp", 2))
+  // Video modes
+  if (!strncmp(argptr, "fp", 2)) {
+    switch (argptr[2]) {
+    case '1':
       arg->state |= gsmValueMap[0].mode;
-    else
-      goto fail;
-
-    argptr += 3;
-  } else
-    argptr++;
-
-  // Half-frame
-  if (argptr[0] == '\0')
-    return;
-  if (argptr[0] != ':') {
-    if (!strncmp(argptr, "fp1", 3))
+      break;
+    case '2':
       arg->state |= gsmValueMap[1].mode;
-    else if (!strncmp(argptr, "fp2", 3))
-      arg->state |= gsmValueMap[2].mode;
-    else
+      break;
+    default:
       goto fail;
-
-    argptr += 4;
+    }
+    argptr += 3;
+  } else if (!strncmp(argptr, "1080ix", 6)) {
+    switch (argptr[6]) {
+    case '1':
+      arg->state |= gsmValueMap[2].mode;
+      break;
+    case '2':
+      arg->state |= gsmValueMap[3].mode;
+      break;
+    case '3':
+      arg->state |= gsmValueMap[4].mode;
+      break;
+    default:
+      goto fail;
+    }
+    argptr += 7;
   } else
-    argptr++;
+    goto fail;
 
   // Compatibility modes
-  if (argptr[0] == '\0')
-    return;
-  if (argptr[0] != ':') {
-    if (!strncmp(argptr, "1", 1))
-      arg->state |= gsmValueMap[3].mode;
-    else if (!strncmp(argptr, "2", 1))
-      arg->state |= gsmValueMap[4].mode;
-    else if (!strncmp(argptr, "3", 1))
-      arg->state |= gsmValueMap[5].mode;
-    else
-      goto fail;
-
-    argptr += 2;
-  } else
+  if (argptr[0] == ':') {
     argptr++;
+    switch (argptr[0]) {
+    case '1': // Mode 1
+      arg->state |= gsmValueMap[5].mode;
+      break;
+    case '2': // Mode 2
+      arg->state |= gsmValueMap[6].mode;
+      break;
+    case '3': // Mode 3
+      arg->state |= gsmValueMap[7].mode;
+      break;
+    }
+  }
 
   return;
 fail:
