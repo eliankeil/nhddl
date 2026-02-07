@@ -1,10 +1,10 @@
 // Implements titleScanFunc for file-based devices (MMCE, BDM)
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
 #include "ui/ui.h"
 #include "options.h"
-#include "title_id.h"
+#include "devices/title_id.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <ps2sdkapi.h>

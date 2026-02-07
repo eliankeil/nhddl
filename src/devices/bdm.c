@@ -1,6 +1,6 @@
 // Implements support for BDM devices
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
 #include "ui/ui.h"
 #include <errno.h>

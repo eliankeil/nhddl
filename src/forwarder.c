@@ -1,10 +1,10 @@
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
 #include "neutrino.h"
-#include "module_init.h"
+#include "devices/init.h"
 #include "options.h"
-#include "title_id.h"
+#include "devices/title_id.h"
 #include <stdlib.h>
 #include <string.h>
 

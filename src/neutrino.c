@@ -1,7 +1,7 @@
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
-#include "module_init.h"
+#include "devices/init.h"
 #include "options.h"
 #include <debug.h>
 #include <kernel.h>

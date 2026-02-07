@@ -1,4 +1,4 @@
-#include "devices.h"
+#include "devices/devices.h"
 #include "common.h"
 #include "dprintf.h"
 #include "ui/ui.h"

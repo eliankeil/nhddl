@@ -1,7 +1,7 @@
 #ifndef _NEUTRINO_H_
 #define _NEUTRINO_H_
 
-#include "module_init.h"
+#include "devices/init.h"
 #include "options.h"
 #include "target.h"
 

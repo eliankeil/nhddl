@@ -1,4 +1,4 @@
-#include "module_init.h"
+#include "devices/init.h"
 #include "common.h"
 #include "dprintf.h"
 #include "ui/ui.h"

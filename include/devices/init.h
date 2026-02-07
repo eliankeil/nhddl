@@ -1,5 +1,5 @@
-#ifndef _MODULE_INIT_H_
-#define _MODULE_INIT_H_
+#ifndef _DEVICES_INIT_H_
+#define _DEVICES_INIT_H_
 
 typedef enum {
   // Initialize only base modules

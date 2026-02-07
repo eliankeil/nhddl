@@ -1,6 +1,6 @@
 #include "options.h"
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
 #include <ctype.h>
 #include <errno.h>

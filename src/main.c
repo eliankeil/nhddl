@@ -1,12 +1,12 @@
 #include "common.h"
-#include "devices.h"
+#include "devices/devices.h"
 #include "dprintf.h"
 #include "forwarder.h"
-#include "module_init.h"
+#include "devices/init.h"
 #include "neutrino.h"
 #include "options.h"
 #include "target.h"
-#include "title_id.h"
+#include "devices/title_id.h"
 #include "ui/ui.h"
 #include <ctype.h>
 #include <debug.h>

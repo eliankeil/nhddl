@@ -12,11 +12,9 @@ option(ENABLE_PRINTF "Enable printf debugging output" OFF)
 # Source files
 set(SOURCES
     src/main.c
-    src/module_init.c
     src/common.c
     src/options.c
     src/neutrino.c
-    src/title_id.c
     src/target.c
     src/forwarder.c
 
@@ -27,11 +25,13 @@ set(SOURCES
     src/ui/pad.c
 
     # Devices
+    src/devices/init.c
     src/devices/devices.c
     src/devices/mmce.c
     src/devices/bdm.c
     src/devices/iso.c
     src/devices/hdl.c
+    src/devices/title_id.c
 )
 include(irx.cmake)
 
