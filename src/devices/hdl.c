@@ -273,16 +273,15 @@ int findHDLTargets(TargetList *result, struct DeviceMapEntry *device) {
     return -ENODEV;
   }
 
-  iox_dirent_t dirent;
+  iox_dirent_t dirent = {0};
   // PS2HDD Dread calls return APA partitions
-  uint64_t accLBA = 0; // Used to keep track of partition LBA as a workaround for upstream ps2hdd module not setting dirent.stat.private_5
   while (fileXioDread(fd, &dirent) > 0) {
     // Check partition magic and partition flag
     if (dirent.stat.mode == HDL_FS_MAGIC && (dirent.stat.attr & APA_FLAG_SUB) == 0) {
-      Target *title = scanPartition(device->mountpoint, dirent.name, accLBA);
-      if (title == NULL) {
+      Target *title = scanPartition(device->mountpoint, dirent.name, dirent.stat.private_5);
+      if (!title)
         continue;
-      }
+
       title->device = device;
 
       // Increment title counter and update target list
@@ -295,8 +294,6 @@ int findHDLTargets(TargetList *result, struct DeviceMapEntry *device) {
         insertIntoTargetList(result, title);
       }
     }
-    // Add partition size (in blocks) to get next partition's LBA
-    accLBA += dirent.stat.size;
   }
   fileXioDclose(fd);
 

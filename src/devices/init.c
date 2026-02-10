@@ -43,7 +43,7 @@ IRX_DEFINE(mx4sio_bd_mini);
 IRX_DEFINE(iLinkman);
 IRX_DEFINE(IEEE1394_bd_mini);
 IRX_DEFINE(smap_udpbd);
-IRX_DEFINE(ps2hdd);
+IRX_DEFINE(ps2hdd_osd);
 IRX_DEFINE(ps2fs);
 
 // Function used to initialize module arguments.
@@ -106,7 +106,7 @@ static ModuleListEntry moduleList[] = {
     // iLink Mass Storage
     INT_MODULE(IEEE1394_bd_mini, MODE_ILINK, NULL, INIT_TYPE_FULL),
     // PS2HDD driver
-    INT_MODULE(ps2hdd, MODE_HDL, &initPS2HDDArguments, INIT_TYPE_FULL),
+    INT_MODULE(ps2hdd_osd, MODE_HDL, &initPS2HDDArguments, INIT_TYPE_FULL),
     // PFS driver
     INT_MODULE(ps2fs, MODE_HDL, &initPS2FSArguments, INIT_TYPE_FULL),
 };
