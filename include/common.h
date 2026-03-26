@@ -9,13 +9,13 @@ typedef enum {
   MODE_NONE = 0,
   MODE_ATA = (1 << 0),
   MODE_MX4SIO = (1 << 1),
-  MODE_UDPBD = (1 << 2),
+  MODE_UDPFS = (1 << 2),
   MODE_USB = (1 << 3),
   MODE_ILINK = (1 << 4),
   MODE_MMCE = (1 << 5),
   MODE_HDL = (1 << 6),
-  MODE_BDM = MODE_ATA | MODE_MX4SIO | MODE_UDPBD | MODE_USB | MODE_ILINK | MODE_HDL, // Internal mode, used to avoid loading BDM modules
-  MODE_ALL = MODE_ATA | MODE_MX4SIO | MODE_UDPBD | MODE_USB | MODE_ILINK | MODE_MMCE | MODE_HDL,
+  MODE_BDM = MODE_ATA | MODE_MX4SIO | MODE_USB | MODE_ILINK | MODE_HDL, // Internal mode, used to avoid loading BDM modules
+  MODE_ALL = MODE_ATA | MODE_MX4SIO | MODE_UDPFS | MODE_USB | MODE_ILINK | MODE_MMCE | MODE_HDL,
 } ModeType;
 
 // Supported video mode types
@@ -30,7 +30,7 @@ typedef enum {
 typedef struct {
   VModeType vmode;
   ModeType mode;
-  char udpbdIp[16];
+  char udpfsIp[16];
   char *image; // Used along with the mode argument to turn NHDDL into a simple Neutrino forwarder
   int noInit;
 } LauncherOptions;

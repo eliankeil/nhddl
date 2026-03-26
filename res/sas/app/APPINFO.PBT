@@ -186,7 +186,7 @@ RETURN -1
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV1$" "6"
         SET "DEV1" "-mode=ilink"
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV1$" "7"
-        SET "DEV1" "-mode=udpbd -udpbd_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
+        SET "DEV1" "-mode=udpfs -udpfs_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
     ENDIF
     # DEVICE 2
     IF EQU "$BM.APPCNF_APP_NHDDL_DEV2$" "0"
@@ -204,7 +204,7 @@ RETURN -1
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV2$" "6"
         SET "DEV2" "-mode=ilink"
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV2$" "7"
-        SET "DEV2" "-mode=udpbd -udpbd_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
+        SET "DEV2" "-mode=udpfs -udpfs_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
     ENDIF
     # DEVICE 3
     IF EQU "$BM.APPCNF_APP_NHDDL_DEV3$" "0"
@@ -222,7 +222,7 @@ RETURN -1
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV3$" "6"
         SET "DEV3" "-mode=ilink"
     ELSEIF EQU "$BM.APPCNF_APP_NHDDL_DEV3$" "7"
-        SET "DEV3" "-mode=udpbd -udpbd_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
+        SET "DEV3" "-mode=udpfs -udpfs_ip=$BM.CNF_NET_IP0$.$BM.CNF_NET_IP1$.$BM.CNF_NET_IP2$.$BM.CNF_NET_IP3$"
     ENDIF
 
     LOADEXEC "PBAT" "$BM.SCRIPTS$/LOADEXEC.PBT" "$PWD$/$ELF$" "$DEV1$ $DEV2$ $DEV3$"

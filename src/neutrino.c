@@ -33,7 +33,7 @@ static char bsdfsArgument[] = "bsdfs";
 // Neutrino bsd values
 #define BSD_ATA "ata"
 #define BSD_MX4SIO "mx4sio"
-#define BSD_UDPBD "udpbd"
+#define BSD_UDPFS "udpfs"
 #define BSD_USB "usb"
 #define BSD_ILINK "ilink"
 #define BSD_MMCE "mmce"
@@ -87,8 +87,8 @@ void launchTitle(Target *target, ArgumentList *arguments) {
   case MODE_MX4SIO:
     bsdValue = BSD_MX4SIO;
     break;
-  case MODE_UDPBD:
-    bsdValue = BSD_UDPBD;
+  case MODE_UDPFS:
+    bsdValue = BSD_UDPFS;
     break;
   case MODE_USB:
     bsdValue = BSD_USB;

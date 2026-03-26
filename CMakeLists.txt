@@ -7,7 +7,7 @@ project(nhddl)
 set(EE_BIN "nhddl_unc.elf")
 set(EE_BIN_PKD "nhddl.elf")
 # Enable debug output if requested
-option(ENABLE_PRINTF "Enable printf debugging output" OFF)
+option(ENABLE_PRINTF "Enable printf debugging output" ON)
 
 # Source files
 set(SOURCES
@@ -28,6 +28,7 @@ set(SOURCES
     src/devices/init.c
     src/devices/devices.c
     src/devices/mmce.c
+    src/devices/udpfs.c
     src/devices/bdm.c
     src/devices/iso.c
     src/devices/hdl.c

@@ -42,7 +42,9 @@ IRX_DEFINE(usbmass_bd_mini);
 IRX_DEFINE(mx4sio_bd_mini);
 IRX_DEFINE(iLinkman);
 IRX_DEFINE(IEEE1394_bd_mini);
-IRX_DEFINE(smap_udpbd);
+IRX_DEFINE(smap);
+IRX_DEFINE(ministack);
+IRX_DEFINE(udpfs_ioman);
 IRX_DEFINE(ps2hdd_bdm);
 IRX_DEFINE(ps2fs);
 
@@ -86,13 +88,15 @@ static ModuleListEntry moduleList[] = {
     // Backend modules
     //
     // DEV9
-    INT_MODULE(ps2dev9, MODE_UDPBD | MODE_ATA | MODE_HDL, NULL, INIT_TYPE_FULL),
+    INT_MODULE(ps2dev9, MODE_UDPFS | MODE_ATA | MODE_HDL, NULL, INIT_TYPE_FULL),
     // BDM
     INT_MODULE(bdm, MODE_BDM, NULL, INIT_TYPE_FULL),
     // FAT/exFAT
     INT_MODULE(bdmfs_fatfs, MODE_BDM, NULL, INIT_TYPE_FULL),
-    // SMAP driver. Actually includes small IP stack and UDPTTY
-    INT_MODULE(smap_udpbd, MODE_UDPBD, &initSMAPArguments, INIT_TYPE_FULL),
+    // UDPFS
+    INT_MODULE(smap, MODE_UDPFS, NULL, INIT_TYPE_FULL),
+    INT_MODULE(ministack, MODE_UDPFS, &initSMAPArguments, INIT_TYPE_FULL),
+    INT_MODULE(udpfs_ioman, MODE_UDPFS, NULL, INIT_TYPE_FULL),
     // ATA
     INT_MODULE(ata_bd, MODE_ATA | MODE_HDL, NULL, INIT_TYPE_FULL),
     // USBD
@@ -229,7 +233,7 @@ int parseIPConfig() {
   }
 
   if ((ipconfigFd < 0) || (count < sizeof(ipAddr) - 1)) {
-    if (LAUNCHER_OPTIONS.mode & MODE_UDPBD) {
+    if (LAUNCHER_OPTIONS.mode & MODE_UDPFS) {
       uiSplashLogString(LEVEL_WARN, "Failed to get IP address from IPCONFIG.DAT\n");
     }
     return -ENOENT;
@@ -242,21 +246,21 @@ int parseIPConfig() {
     count++;
   }
 
-  strlcpy(LAUNCHER_OPTIONS.udpbdIp, ipAddr, count + 1);
-  return strlen(LAUNCHER_OPTIONS.udpbdIp);
+  strlcpy(LAUNCHER_OPTIONS.udpfsIp, ipAddr, count + 1);
+  return strlen(LAUNCHER_OPTIONS.udpfsIp);
 }
 
 // Builds IP address argument for SMAP modules
 char *initSMAPArguments(uint32_t *argLength) {
-  // If udpbd_ip was not set, try to get IP from IPCONFIG.DAT
-  if ((LAUNCHER_OPTIONS.udpbdIp[0] == '\0') && (parseIPConfig() <= 0)) {
+  // If udpfs_ip was not set, try to get IP from IPCONFIG.DAT
+  if ((LAUNCHER_OPTIONS.udpfsIp[0] == '\0') && (parseIPConfig() <= 0)) {
     return NULL;
   }
 
   char ipArg[19]; // 15 bytes for IP string + 3 bytes for 'ip='
   *argLength = 19;
   char *argStr = calloc(sizeof(char), 19);
-  snprintf(argStr, sizeof(ipArg), "ip=%s", LAUNCHER_OPTIONS.udpbdIp);
+  snprintf(argStr, sizeof(ipArg), "ip=%s", LAUNCHER_OPTIONS.udpfsIp);
   return argStr;
 }
 

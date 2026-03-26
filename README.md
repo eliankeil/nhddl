@@ -90,28 +90,27 @@ Note that __MMCE devices will not be available__ when this mode is enabled.
 Using more than one USB mass storage device at the same time is not recommended.
 To skip all other devices, `mode: usb` must be present in `nhddl.yaml`.
 
-#### UDPBD
+#### UDPFS
 
-To skip all other devices, `mode: udpbd` must be present in `nhddl.yaml`.
+To skip all other devices, `mode: udpfs` must be present in `nhddl.yaml`.
 
-UDPBD module requires PS2 IP address to work.  
+UDPFS module requires PS2 IP address to work.  
 NHDDL attempts to retrieve PS2 IP address from the following sources:
-- `udpbd_ip` flag in `nhddl.yaml`
+- `udpfs_ip` flag in `nhddl.yaml`
 - `SYS-CONF/IPCONFIG.DAT` on the memory card (usually created by w/uLaunchELF via `MISC/Configure/Network Settings...`)
 
-`udpbd_ip` flag takes priority over `IPCONFIG.DAT`.
+`udpfs_ip` flag takes priority over `IPCONFIG.DAT`.
 
-Make sure to set the IP address in Neutrino config files (as of Neutrino 1.6.0, `config/bsd-udpbd.toml`).  
+Make sure to set the IP address in Neutrino config files (as of Neutrino 1.8.0, `config/bsd-udpfs.toml`).  
 Consult Neutrino documentation for more details.
 
-Recommended UDPBD server implementations:
-- [udpbd-server](https://gitlab.com/ps2max/udpbd-server) by Maximus32
-  - Supports serving physical disks or disk images
-  - Supports read and write operations
-  - Preferred server implementation for *nix systems
-- [udpbd-vexfat](https://github.com/awaken1ng/udpbd-vexfat) by Awaken1ng
-  - Creates virtual exFAT filesystem from directory contents
-  - Supports only read operations
+Recommended UDPFS server implementations:
+- [udpfsd](https://github.com/pcm720/udpfsd) by pcm720
+  - More optimized for unattended server and router installations
+  - Supports multiple PS2 consoles at a time
+  - Does not require Python
+- [udpfs-server](https://github.com/rickgaiser/neutrino) by Maximus32
+  - Reference Python implementation
 
 #### iLink
 
@@ -158,7 +157,7 @@ If unsure where to get your cover art from, check out the latest version of [OPL
 Similar to Neutrino, NHDDL supports receiving launcher options from `argv` in the `-<arg>=<value>` format.  
 Be aware that passing any argument will cause NHDDL to completely skip loading launcher configuration files from any device.  
 
-For example, to initialize NHDDL with UDPBD mode, you can run `nhddl.elf` with `-mode=udpbd` and `-udpbd_ip=192.168.1.6`.  
+For example, to initialize NHDDL with UDPFS mode, you can run `nhddl.elf` with `-mode=udpfs` and `-udpfs_ip=192.168.1.6`.  
 
 If NHDDL receives `-mode` and `-dvd=<path to the image file>`, it will skip UI initialization and directly launch Neutrino while respecting all arguments specified in argument files.  
 Add `-noinit` argument to skip IOP initialization (make sure all required modules are already loaded).  
@@ -172,13 +171,13 @@ To work around this, you can add a postfix to `nhddl.elf` to force a specific mo
 - `nhddl-ata.elf` — force ATA mode
 - `nhddl-mmce.elf` — force MMCE mode
 - `nhddl-hdl.elf` — force HDL mode
-- `nhddl-udpbd.elf` — force UDPBD mode
+- `nhddl-udpfs.elf` — force UDPFS mode
 - `nhddl-usb.elf` — force USB mode
 - `nhddl-ilink.elf` — force iLink mode
 - `nhddl-m4s.elf` — force MX4SIO mode
 
 NHDDL will only initialize the mode specified in the file name and respect all other options from `nhddl.yaml` on the storage device.
-When forcing UDPBD mode, make sure you've configured `SYS-CONF/IPCONFIG.DAT` on your memory card.
+When forcing UDPFS mode, make sure you've configured `SYS-CONF/IPCONFIG.DAT` on your memory card.
 
 ## Configuration files
 

@@ -25,8 +25,6 @@ ModeType mapBDMDriverName(char *driverName) {
     return MODE_USB;
   else if (!strncmp(driverName, "sd", 2))
     return MODE_ILINK;
-  else if (!strncmp(driverName, "udp", 3))
-    return MODE_UDPBD;
   else if (!strncmp(driverName, "hdlfs", 3))
     return MODE_HDL;
   return MODE_NONE;
@@ -95,10 +93,6 @@ int initBDMDevices(int deviceIdx) {
     deviceModeMap[deviceIdx].scan = &findISO;
     return 1;
   }
-
-  if (LAUNCHER_OPTIONS.mode & MODE_UDPBD)
-    // UDPBD needs considerably more time to init
-    delayAttempts = 10;
 
   for (int i = 0; i < 10; i++) {
     deviceModeMap[deviceIdx].mode = MODE_NONE;

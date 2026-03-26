@@ -22,7 +22,9 @@ set(IRX_FILES
 # Local IRX files
 set(LOCAL_IRX_FILES
     mmceman
-    smap_udpbd
+    smap
+    ministack
+    udpfs_ioman
 )
 
 # mmceman
@@ -38,17 +40,40 @@ add_custom_command(
     COMMENT "Building mmceman"
 )
 
-# smap_udpbd
+
+# smap, ministack, udpfs_ioman
 add_custom_command(
     OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/smap_udpbd.irx
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/iop/smap_udpbd
+        ${CMAKE_CURRENT_BINARY_DIR}/smap.irx
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/smap
     COMMAND ${CMAKE_COMMAND} -E rename
-        ${CMAKE_CURRENT_SOURCE_DIR}/iop/smap_udpbd/smap_udpbd.irx
-        ${CMAKE_CURRENT_BINARY_DIR}/smap_udpbd.irx
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/smap/irx/smap.irx
+        ${CMAKE_CURRENT_BINARY_DIR}/smap.irx
     WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/iop/smap_udpbd
-    COMMENT "Building smap_udpbd"
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/smap
+    COMMENT "Building smap"
+)
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/ministack.irx
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/ministack
+    COMMAND ${CMAKE_COMMAND} -E rename
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/ministack/irx/ministack.irx
+        ${CMAKE_CURRENT_BINARY_DIR}/ministack.irx
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/ministack
+    COMMENT "Building ministack"
+)
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/udpfs_ioman.irx
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/udpfs UDPFS_IOMAN=1
+    COMMAND ${CMAKE_COMMAND} -E rename
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/udpfs/irx/udpfs_ioman.irx
+        ${CMAKE_CURRENT_BINARY_DIR}/udpfs_ioman.irx
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/iop/udpfs/udpfs
+    COMMENT "Building udpfs"
 )
 
 foreach(IRX_FILE ${IRX_FILES})

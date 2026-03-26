@@ -21,8 +21,8 @@ char *modeToString(ModeType mode) {
     return "ATA";
   case MODE_MX4SIO:
     return "MX4SIO";
-  case MODE_UDPBD:
-    return "UDPBD";
+  case MODE_UDPFS:
+    return "UDPFS";
   case MODE_USB:
     return "USB";
   case MODE_ILINK:

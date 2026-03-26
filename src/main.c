@@ -29,7 +29,7 @@ static char nhddlStorageFallbackPath[] = "/nhddl/nhddl.yaml";
 // Supported options
 #define OPTION_VMODE "video"
 #define OPTION_MODE "mode"
-#define OPTION_UDPBD_IP "udpbd_ip"
+#define OPTION_UDPFS_IP "udpfs_ip"
 #define OPTION_IMAGE "dvd"
 #define OPTION_NO_INIT "noinit"
 
@@ -188,7 +188,7 @@ int init(ModeType mode) {
   // Initialize launcher options
   LAUNCHER_OPTIONS.vmode = VMODE_NONE;
   LAUNCHER_OPTIONS.mode = mode;
-  LAUNCHER_OPTIONS.udpbdIp[0] = '\0';
+  LAUNCHER_OPTIONS.udpfsIp[0] = '\0';
 
   int initType = INIT_TYPE_BASIC;
   int optionsFileNotRead = -1;
@@ -263,8 +263,8 @@ ModeType parseMode(const char *modeStr) {
     return MODE_ATA;
   if (!strcmp(modeStr, "mx4sio"))
     return MODE_MX4SIO;
-  if (!strcmp(modeStr, "udpbd"))
-    return MODE_UDPBD;
+  if (!strcmp(modeStr, "udpfs"))
+    return MODE_UDPFS;
   if (!strcmp(modeStr, "usb"))
     return MODE_USB;
   if (!strcmp(modeStr, "ilink"))
@@ -288,8 +288,8 @@ ModeType parseFilename(const char *path) {
     return MODE_ATA;
   if (!strncmp(modeStr, "m4s", 3))
     return MODE_MX4SIO;
-  if (!strncmp(modeStr, "udpbd", 5))
-    return MODE_UDPBD;
+  if (!strncmp(modeStr, "udpfs", 5))
+    return MODE_UDPFS;
   if (!strncmp(modeStr, "usb", 3))
     return MODE_USB;
   if (!strncmp(modeStr, "ilink", 5))
@@ -337,9 +337,9 @@ void parseArgv(int argc, char *argv[]) {
     } else if (val && !strcmp(OPTION_MODE, arg)) {
       DPRINTF("Using mode %s\n", val);
       LAUNCHER_OPTIONS.mode |= parseMode(val);
-    } else if (val && !strcmp(OPTION_UDPBD_IP, arg)) {
-      DPRINTF("Using UDPBD IP %s\n", val);
-      strlcpy(LAUNCHER_OPTIONS.udpbdIp, val, sizeof(LAUNCHER_OPTIONS.udpbdIp));
+    } else if (val && !strcmp(OPTION_UDPFS_IP, arg)) {
+      DPRINTF("Using UDPFS IP %s\n", val);
+      strlcpy(LAUNCHER_OPTIONS.udpfsIp, val, sizeof(LAUNCHER_OPTIONS.udpfsIp));
     } else if (val && !strcmp(OPTION_IMAGE, arg)) {
       DPRINTF("Using image %s\n", val);
       LAUNCHER_OPTIONS.image = strdup(val);
@@ -431,11 +431,11 @@ fileExists:
         LAUNCHER_OPTIONS.vmode = parseVMode(arg->value);
       } else if (strcmp(OPTION_MODE, arg->arg) == 0) {
         // Reset MODE_ALL to MODE_NONE if mode flag exists
-        if (LAUNCHER_OPTIONS.mode == MODE_ALL)
+        if (LAUNCHER_OPTIONS.mode == (MODE_ALL & ~MODE_MX4SIO))
           LAUNCHER_OPTIONS.mode = MODE_NONE;
         LAUNCHER_OPTIONS.mode |= parseMode(arg->value);
-      } else if (strcmp(OPTION_UDPBD_IP, arg->arg) == 0) {
-        strlcpy(LAUNCHER_OPTIONS.udpbdIp, arg->value, sizeof(LAUNCHER_OPTIONS.udpbdIp));
+      } else if (strcmp(OPTION_UDPFS_IP, arg->arg) == 0) {
+        strlcpy(LAUNCHER_OPTIONS.udpfsIp, arg->value, sizeof(LAUNCHER_OPTIONS.udpfsIp));
       }
     }
     arg = arg->next;
