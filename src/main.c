@@ -22,7 +22,7 @@ LauncherOptions LAUNCHER_OPTIONS;
 static const char optionsFile[] = "nhddl.yaml";
 // nhddl.yaml fallback paths
 static char *nhddlFallbackPaths[] = {
-    "mcX:/APP_NHDDL/nhddl.yaml",
+    "mc0:/APP_NHDDL/nhddl.yaml",
 };
 static char nhddlStorageFallbackPath[] = "/nhddl/nhddl.yaml";
 
@@ -356,50 +356,54 @@ void parseArgv(int argc, char *argv[]) {
 // Loads NHDDL options from optionsFile
 int loadOptions(char *cwdPath, ModuleInitType initType) {
   char lineBuffer[PATH_MAX + sizeof(optionsFile) + 1];
-
-  // Intentar primero en CWD si existe
   if (cwdPath[0] != '\0') {
+    // If path is valid, try it
     strcpy(lineBuffer, cwdPath);
     strcat(lineBuffer, optionsFile);
     if (!tryFile(lineBuffer))
+      // Skip fallbacks
       goto fileExists;
   }
 
-  // --- MODIFICACIÓN: siempre probar fallbacks, sin depender de initType ---
-  struct DeviceMapEntry *device;
-  for (int i = 0; i < MAX_DEVICES; i++) {
-    lineBuffer[0] = '\0';
-    if (deviceModeMap[i].mode == MODE_NONE)
-      break;
+  if (initType == INIT_TYPE_FULL) {
+    // If config file doesn't exist in CWD and all modules are loaded, try fallback paths
+    struct DeviceMapEntry *device;
+    for (int i = 0; i < MAX_DEVICES; i++) {
+      lineBuffer[0] = '\0';
+      if (deviceModeMap[i].mode == MODE_NONE)
+        break;
 
-    if (deviceModeMap[i].metadev)
-      device = deviceModeMap[i].metadev;
-    else
-      device = &deviceModeMap[i];
+      if (deviceModeMap[i].metadev)
+        device = deviceModeMap[i].metadev;
+      else
+        device = &deviceModeMap[i];
 
-    if (device->mountpoint != NULL) {
-      strcpy(lineBuffer, device->mountpoint);
-      strcat(lineBuffer, nhddlStorageFallbackPath);
-      if (!tryFile(lineBuffer))
-        goto fileExists;
+      if (device->mountpoint != NULL) {
+        strcpy(lineBuffer, device->mountpoint);
+        strcat(lineBuffer, nhddlStorageFallbackPath);
+        if (!tryFile(lineBuffer))
+          goto fileExists;
+      }
     }
   }
 
-  // Probar MMCE siempre
-  for (int i = 0; i < 2; i++) {
-    sprintf(lineBuffer, "mmce%d:%s", i, nhddlStorageFallbackPath);
-    if (!tryFile(lineBuffer))
-      goto fileExists;
+  if (initType > INIT_TYPE_BASIC) {
+    // Try MMCE if init type is EXTENDED or FULL
+    for (int i = 0; i < 2; i++) {
+      sprintf(lineBuffer, "mmce%d:%s", i, nhddlStorageFallbackPath);
+      if (!tryFile(lineBuffer))
+        break;
+    }
   }
 
-  // Probar siempre en memorias mc0 y mc1
+  // Fallback to memory card paths
   lineBuffer[0] = '\0';
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < (sizeof(nhddlFallbackPaths) / sizeof(char *)); j++) {
       nhddlFallbackPaths[j][2] = i + '0';
       if (!tryFile(nhddlFallbackPaths[j])) {
         strcpy(lineBuffer, nhddlFallbackPaths[j]);
-        goto fileExists;
+        break;
       }
     }
   }
@@ -410,19 +414,23 @@ int loadOptions(char *cwdPath, ModuleInitType initType) {
   }
 
 fileExists:
+  // Load NHDDL options file into ArgumentList
   ArgumentList *options = calloc(1, sizeof(ArgumentList));
   if (loadArgumentList(options, NULL, lineBuffer)) {
+    // Else, fail
     DPRINTF("Can't load options file, will use defaults\n");
     freeArgumentList(options);
     return -ENOENT;
   }
 
+  // Parse the list into Options
   Argument *arg = options->first;
   while (arg != NULL) {
     if (!arg->isDisabled) {
       if (strcmp(OPTION_VMODE, arg->arg) == 0) {
         LAUNCHER_OPTIONS.vmode = parseVMode(arg->value);
       } else if (strcmp(OPTION_MODE, arg->arg) == 0) {
+        // Reset MODE_ALL to MODE_NONE if mode flag exists
         if (LAUNCHER_OPTIONS.mode == (MODE_ALL & ~MODE_MX4SIO))
           LAUNCHER_OPTIONS.mode = MODE_NONE;
         LAUNCHER_OPTIONS.mode |= parseMode(arg->value);
