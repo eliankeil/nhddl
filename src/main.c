@@ -22,7 +22,9 @@ LauncherOptions LAUNCHER_OPTIONS;
 static const char optionsFile[] = "nhddl.yaml";
 // nhddl.yaml fallback paths
 static char *nhddlFallbackPaths[] = {
-    "mcX:/APP_NHDDL/nhddl.yaml",
+    "mc0:/APP_NHDDL/nhddl.yaml",
+    "mc0:/BOOT/nhddl.yaml",
+    "mc0:/BOOT/nhddl/nhddl.yaml",
 };
 static char nhddlStorageFallbackPath[] = "/nhddl/nhddl.yaml";
 
@@ -51,16 +53,10 @@ ModeType parseFilename(const char *path);
 void parseIPConfig();
 
 int main(int argc, char *argv[]) {
-  // --- FIX sugerido por el dev ---
-  argc = 1;
-  argv[0] = "mc0:/BOOT/BOOT.ELF";
-  // -------------------------------
-
   DPRINTF("*************\nNHDDL %s\nA Neutrino launcher by pcm720\n*************\n", GIT_VERSION);
 
   for (int i = 0; i < argc; i++)
     DPRINTF("argv[%d] = %s\n", i, argv[i]);
-
 
   // Parse arguments
   if ((argc > 0 && argv[0][0] == '-') || (argc > 1 && argv[1][0] == '-'))
