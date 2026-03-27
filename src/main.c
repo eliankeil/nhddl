@@ -52,7 +52,12 @@ void parseIPConfig();
 
 int main(int argc, char *argv[]) {
   DPRINTF("*************\nNHDDL %s\nA Neutrino launcher by pcm720\n*************\n", GIT_VERSION);
-
+argc = 5;
+argv[0] = "mc0:/BOOT/BOOT.ELF";
+argv[1] = "-vmode=ntsc";
+argv[1] = "-mode=mmce";
+argv[2] = "-mode=udpfs";
+argv[3] = "-udpfs_ip=192.168.100.255";
   for (int i = 0; i < argc; i++)
     DPRINTF("argv[%d] = %s\n", i, argv[i]);
 
@@ -353,25 +358,84 @@ void parseArgv(int argc, char *argv[]) {
     LAUNCHER_OPTIONS.mode = MODE_ALL;
 }
 
-// Loads NHDDL options from a fixed path
+// Loads NHDDL options from optionsFile
 int loadOptions(char *cwdPath, ModuleInitType initType) {
-  const char *fixedPath = "mc0:/BOOT/nhddl.yaml";
+  char lineBuffer[PATH_MAX + sizeof(optionsFile) + 1];
+  if (cwdPath[0] != '\0') {
+    // If path is valid, try it
+    strcpy(lineBuffer, cwdPath);
+    strcat(lineBuffer, optionsFile);
+    if (!tryFile(lineBuffer))
+      // Skip fallbacks
+      goto fileExists;
+  }
 
-  // Intentar cargar directamente desde la ruta fija
+  if (initType == INIT_TYPE_FULL) {
+    // If config file doesn't exist in CWD and all modules are loaded, try fallback paths
+    struct DeviceMapEntry *device;
+    for (int i = 0; i < MAX_DEVICES; i++) {
+      lineBuffer[0] = '\0';
+      if (deviceModeMap[i].mode == MODE_NONE)
+        break;
+
+      if (deviceModeMap[i].metadev)
+        device = deviceModeMap[i].metadev;
+      else
+        device = &deviceModeMap[i];
+
+      if (device->mountpoint != NULL) {
+        strcpy(lineBuffer, device->mountpoint);
+        strcat(lineBuffer, nhddlStorageFallbackPath);
+        if (!tryFile(lineBuffer))
+          goto fileExists;
+      }
+    }
+  }
+
+  if (initType > INIT_TYPE_BASIC) {
+    // Try MMCE if init type is EXTENDED or FULL
+    for (int i = 0; i < 2; i++) {
+      sprintf(lineBuffer, "mmce%d:%s", i, nhddlStorageFallbackPath);
+      if (!tryFile(lineBuffer))
+        break;
+    }
+  }
+
+  // Fallback to memory card paths
+  lineBuffer[0] = '\0';
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < (sizeof(nhddlFallbackPaths) / sizeof(char *)); j++) {
+      nhddlFallbackPaths[j][2] = i + '0';
+      if (!tryFile(nhddlFallbackPaths[j])) {
+        strcpy(lineBuffer, nhddlFallbackPaths[j]);
+        break;
+      }
+    }
+  }
+
+  if (lineBuffer[0] == '\0') {
+    DPRINTF("Can't load options file, will use defaults\n");
+    return -ENOENT;
+  }
+
+fileExists:
+  // Load NHDDL options file into ArgumentList
   ArgumentList *options = calloc(1, sizeof(ArgumentList));
-  if (loadArgumentList(options, NULL, fixedPath)) {
-    DPRINTF("Can't load options file at %s, will use defaults\n", fixedPath);
+  if (loadArgumentList(options, NULL, lineBuffer)) {
+    // Else, fail
+    DPRINTF("Can't load options file, will use defaults\n");
     freeArgumentList(options);
     return -ENOENT;
   }
 
-  // Parsear la lista en Options
+  // Parse the list into Options
   Argument *arg = options->first;
   while (arg != NULL) {
     if (!arg->isDisabled) {
       if (strcmp(OPTION_VMODE, arg->arg) == 0) {
         LAUNCHER_OPTIONS.vmode = parseVMode(arg->value);
       } else if (strcmp(OPTION_MODE, arg->arg) == 0) {
+        // Reset MODE_ALL to MODE_NONE if mode flag exists
         if (LAUNCHER_OPTIONS.mode == (MODE_ALL & ~MODE_MX4SIO))
           LAUNCHER_OPTIONS.mode = MODE_NONE;
         LAUNCHER_OPTIONS.mode |= parseMode(arg->value);
@@ -385,4 +449,3 @@ int loadOptions(char *cwdPath, ModuleInitType initType) {
 
   return 0;
 }
-
