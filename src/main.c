@@ -52,12 +52,10 @@ void parseIPConfig();
 
 int main(int argc, char *argv[]) {
   DPRINTF("*************\nNHDDL %s\nA Neutrino launcher by pcm720\n*************\n", GIT_VERSION);
-argc = 5;
+argc = 3;
 argv[0] = "mc0:/BOOT/BOOT.ELF";
-argv[1] = "-vmode=ntsc";
+argv[1] = "-video=ntsc";
 argv[2] = "-mode=mmce";
-argv[3] = "-mode=udpfs";
-argv[4] = "-udpfs_ip=192.168.100.255";
 
   for (int i = 0; i < argc; i++)
     DPRINTF("argv[%d] = %s\n", i, argv[i]);
