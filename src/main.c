@@ -55,9 +55,10 @@ int main(int argc, char *argv[]) {
 argc = 5;
 argv[0] = "mc0:/BOOT/BOOT.ELF";
 argv[1] = "-vmode=ntsc";
-argv[1] = "-mode=mmce";
-argv[2] = "-mode=udpfs";
-argv[3] = "-udpfs_ip=192.168.100.255";
+argv[2] = "-mode=mmce";
+argv[3] = "-mode=udpfs";
+argv[4] = "-udpfs_ip=192.168.100.255";
+
   for (int i = 0; i < argc; i++)
     DPRINTF("argv[%d] = %s\n", i, argv[i]);
 
