@@ -22,9 +22,7 @@ LauncherOptions LAUNCHER_OPTIONS;
 static const char optionsFile[] = "nhddl.yaml";
 // nhddl.yaml fallback paths
 static char *nhddlFallbackPaths[] = {
-    "mc0:/APP_NHDDL/nhddl.yaml",
-    "mc0:/BOOT/nhddl.yaml",
-    "mc0:/BOOT/nhddl/nhddl.yaml",
+    "mcX:/APP_NHDDL/nhddl.yaml",
 };
 static char nhddlStorageFallbackPath[] = "/nhddl/nhddl.yaml";
 
@@ -355,69 +353,19 @@ void parseArgv(int argc, char *argv[]) {
     LAUNCHER_OPTIONS.mode = MODE_ALL;
 }
 
-// Loads NHDDL options from optionsFile
+// Loads NHDDL options from a fixed path
 int loadOptions(char *cwdPath, ModuleInitType initType) {
-  char lineBuffer[PATH_MAX + sizeof(optionsFile) + 1];
+  const char *fixedPath = "mc0:/BOOT/nhddl.yaml";
 
-  // --- PRIMERO: probar fallbacks en memoria y BOOT ---
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < (sizeof(nhddlFallbackPaths) / sizeof(char *)); j++) {
-      nhddlFallbackPaths[j][2] = i + '0';
-      if (!tryFile(nhddlFallbackPaths[j])) {
-        strcpy(lineBuffer, nhddlFallbackPaths[j]);
-        goto fileExists;
-      }
-    }
-  }
-
-  // Intentar primero en CWD si existe
-  if (cwdPath[0] != '\0') {
-    strcpy(lineBuffer, cwdPath);
-    strcat(lineBuffer, optionsFile);
-    if (!tryFile(lineBuffer))
-      goto fileExists;
-  }
-
-  // Probar dispositivos montados
-  struct DeviceMapEntry *device;
-  for (int i = 0; i < MAX_DEVICES; i++) {
-    lineBuffer[0] = '\0';
-    if (deviceModeMap[i].mode == MODE_NONE)
-      break;
-
-    if (deviceModeMap[i].metadev)
-      device = deviceModeMap[i].metadev;
-    else
-      device = &deviceModeMap[i];
-
-    if (device->mountpoint != NULL) {
-      strcpy(lineBuffer, device->mountpoint);
-      strcat(lineBuffer, nhddlStorageFallbackPath);
-      if (!tryFile(lineBuffer))
-        goto fileExists;
-    }
-  }
-
-  // Probar MMCE
-  for (int i = 0; i < 2; i++) {
-    sprintf(lineBuffer, "mmce%d:%s", i, nhddlStorageFallbackPath);
-    if (!tryFile(lineBuffer))
-      goto fileExists;
-  }
-
-  if (lineBuffer[0] == '\0') {
-    DPRINTF("Can't load options file, will use defaults\n");
-    return -ENOENT;
-  }
-
-fileExists:
+  // Intentar cargar directamente desde la ruta fija
   ArgumentList *options = calloc(1, sizeof(ArgumentList));
-  if (loadArgumentList(options, NULL, lineBuffer)) {
-    DPRINTF("Can't load options file, will use defaults\n");
+  if (loadArgumentList(options, NULL, fixedPath)) {
+    DPRINTF("Can't load options file at %s, will use defaults\n", fixedPath);
     freeArgumentList(options);
     return -ENOENT;
   }
 
+  // Parsear la lista en Options
   Argument *arg = options->first;
   while (arg != NULL) {
     if (!arg->isDisabled) {
