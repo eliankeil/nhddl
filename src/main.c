@@ -236,7 +236,7 @@ int init(ModeType mode) {
 
     // Try to init options
     if ((optionsFileNotRead = loadOptions(cwdPath, initType)) < 0)
-      cwdPath[0] = '\0'; // Drop CWD if there was no options file
+      //cwdPath[0] = '\0'; // Drop CWD if there was no options file
 
     // Search for neutrino.elf
     if ((neutrinoNotFound < 0) && !(neutrinoNotFound = findNeutrinoELF(cwdPath, initType)))
